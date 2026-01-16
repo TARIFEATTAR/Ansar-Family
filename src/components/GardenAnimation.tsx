@@ -52,14 +52,14 @@ export function GardenAnimation({ className = "" }: GardenAnimationProps) {
   return (
     <div
       ref={containerRef}
-      className={`fixed right-0 top-0 h-screen w-[200px] pointer-events-none z-30 hidden xl:block opacity-80 ${className}`}
+      className={`fixed right-0 bottom-0 w-[220px] pointer-events-none z-30 hidden xl:block opacity-90 ${className}`}
       style={{
-        transform: isPlanted ? "translateY(20px)" : "translateY(0)",
+        transform: isPlanted ? "translateY(0)" : "translateY(0)",
         transition: "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
       }}
     >
-      {/* Garden SVG Container */}
-      <div className="absolute bottom-20 right-8 w-[220px] h-[400px]">
+      {/* Garden SVG Container - anchored to footer soil */}
+      <div className="absolute bottom-4 right-4 w-[200px] h-[450px]">
         <svg
           viewBox="0 0 320 450"
           className="w-full h-full"
@@ -101,18 +101,7 @@ export function GardenAnimation({ className = "" }: GardenAnimationProps) {
             </filter>
           </defs>
 
-          {/* Ground/Soil line - always visible */}
-          <line
-            x1="60"
-            y1="420"
-            x2="260"
-            y2="420"
-            stroke="#8FA07A"
-            strokeWidth="3"
-            strokeLinecap="round"
-            opacity={isPlanted ? 1 : 0.3}
-            style={{ transition: "opacity 0.5s ease" }}
-          />
+          {/* Ground/Soil line - hidden, footer soil strip serves as ground */}
 
           {/* === STAGE 1: Main Stem === */}
           <motion.path

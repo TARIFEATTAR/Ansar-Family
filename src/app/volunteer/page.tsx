@@ -235,7 +235,7 @@ export default function VolunteerPage() {
         <div className="px-6 md:px-12 mt-8">
           <div className="max-w-xl mx-auto text-center">
             <p className="font-body text-sm text-ansar-gray">
-              Ansar Family is a platform that pairs practicing Muslims with those who are new to Islam or reconnecting with their faith—so no one walks this path alone. We are looking for brothers and sisters who can offer in-person support rooted in sincerity, presence, and good company.
+              Ansar Family is a platform that pairs practicing Muslims with those who are new to Islam or reconnecting with their faith, so no one walks this path alone. We are looking for brothers and sisters who can offer in-person support rooted in sincerity, presence, and good company.
             </p>
           </div>
         </div>

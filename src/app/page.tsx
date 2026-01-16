@@ -111,7 +111,7 @@ export default function Home() {
             custom={2}
           >
             We provide the infrastructure so local communities can focus on nurturing 
-            those new to Islam. We handle the system — you provide the support.
+            those new to Islam. We handle the system. You provide the support.
           </motion.p>
 
           {/* CTA Cards */}

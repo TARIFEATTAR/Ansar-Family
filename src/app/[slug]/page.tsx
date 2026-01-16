@@ -114,7 +114,7 @@ export default function PartnerLandingPage() {
             animate="visible"
             custom={2}
           >
-            Part of the Ansar Family network — supporting new Muslims and those 
+            Part of the Ansar Family network, supporting new Muslims and those 
             reconnecting with their faith in {organization.city}.
           </motion.p>
 

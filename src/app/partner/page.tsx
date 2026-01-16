@@ -153,11 +153,11 @@ function calculateHubLevel(infrastructure: Infrastructure): number {
 }
 
 const hubLevelDescriptions: Record<number, { title: string; description: string }> = {
-  1: { title: "Seed Hub", description: "Starting from scratch — we'll help you build" },
-  2: { title: "Emerging Hub", description: "Foundation in place — ready to grow" },
-  3: { title: "Growing Hub", description: "Solid infrastructure — scaling support" },
-  4: { title: "Advanced Hub", description: "Most services available — refining operations" },
-  5: { title: "Full-Service Hub", description: "Complete infrastructure — model community" },
+  1: { title: "Seed Hub", description: "Starting from scratch. We'll help you build." },
+  2: { title: "Emerging Hub", description: "Foundation in place. Ready to grow." },
+  3: { title: "Growing Hub", description: "Solid infrastructure. Scaling support." },
+  4: { title: "Advanced Hub", description: "Most services available. Refining operations." },
+  5: { title: "Full-Service Hub", description: "Complete infrastructure. Model community." },
 };
 
 export default function PartnerPage() {
@@ -453,7 +453,7 @@ export default function PartnerPage() {
           {step === 3 && (
             <FormStep title="Infrastructure & Services" subtitle="Your Hub Level">
               <p className="font-body text-sm text-ansar-gray mb-6">
-                Answer honestly — there's no wrong level. We tailor our support to meet you where you are.
+                Answer honestly. There's no wrong level. We tailor our support to meet you where you are.
               </p>
 
               {/* Hub Level Display */}

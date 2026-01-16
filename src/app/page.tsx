@@ -2,7 +2,7 @@
 
 /**
  * ANSAR FAMILY - Enhanced Homepage
- * "Every Heart Anchored" - Where every journey begins.
+ * "Every Heart Rooted" - Where every journey begins.
  * 
  * Features:
  * - Garden animation that grows with scroll
@@ -73,7 +73,7 @@ export default function Home() {
             >
               Get Started
             </Link>
-          </div>
+        </div>
         </nav>
       </header>
 
@@ -103,7 +103,7 @@ export default function Home() {
               custom={0.1}
               className="font-display text-5xl md:text-7xl text-ansar-charcoal mb-6 leading-tight"
             >
-              Every Heart Anchored
+              Every Heart Rooted
             </motion.h1>
 
             <motion.p
@@ -601,7 +601,7 @@ export default function Home() {
               {/* Copyright */}
               <div className="pt-8 border-t border-ansar-sage-100 text-center">
                 <p className="font-body text-sm text-ansar-gray">
-                  © 2026 Ansar Family. Every Heart Anchored.
+                  © 2026 Ansar Family. Every Heart Rooted.
                 </p>
               </div>
             </div>
@@ -610,7 +610,7 @@ export default function Home() {
           {/* Sage-green "soil" strip where the garden plants */}
           <div className="h-4 bg-ansar-sage-600" />
         </footer>
-      </div>
-    </main>
+        </div>
+      </main>
   );
 }

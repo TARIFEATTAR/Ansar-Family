@@ -193,7 +193,7 @@ export default function PrivacyPage() {
       <footer className="px-6 md:px-12 py-8 border-t border-ansar-sage-100">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="font-body text-sm text-ansar-gray">
-            © 2026 Ansar Family. Every Heart Anchored.
+            © 2026 Ansar Family. Every Heart Rooted.
           </p>
           <div className="flex items-center gap-6">
             <Link

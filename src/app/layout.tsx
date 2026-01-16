@@ -26,12 +26,12 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Ansar Family | Every Heart Anchored",
+  title: "Ansar Family | Every Heart Rooted",
   description: "The infrastructure layer for supporting New Muslims and those returning to Islam. We provide the toolkit so local communities can focus on people, not paperwork.",
   keywords: ["Ansar", "New Muslim", "Convert", "Islam", "Community", "Support"],
   authors: [{ name: "Ansar Family" }],
   openGraph: {
-    title: "Ansar Family | Every Heart Anchored",
+    title: "Ansar Family | Every Heart Rooted",
     description: "The infrastructure layer for supporting New Muslims and those returning to Islam.",
     type: "website",
     url: "https://ansar.family",

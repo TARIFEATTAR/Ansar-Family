@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 
 /**
  * GARDEN ANIMATION - Scroll-Driven Growth
@@ -9,8 +9,8 @@ import { useEffect, useState, useCallback } from "react";
  * The stem is ALWAYS anchored to the viewport bottom.
  * As user scrolls, the garden grows upward from the soil.
  * 
- * Uses CSS classes for smooth transitions rather than React state
- * for better performance and simpler code.
+ * Uses CSS classes for smooth transitions and a ref to track
+ * animated elements (avoiding re-renders).
  */
 
 interface GardenAnimationProps {
@@ -30,60 +30,59 @@ const GARDEN_STAGES = {
 
 export function GardenAnimation({ className = "" }: GardenAnimationProps) {
   const [gardenHeight, setGardenHeight] = useState(80);
-  const [animatedElements, setAnimatedElements] = useState<Set<string>>(new Set());
-
-  const updateGarden = useCallback((scrollProgress: number) => {
-    // Calculate height: 80px at start, 500px at end
-    const minHeight = 80;
-    const maxHeight = 500;
-    const newHeight = minHeight + (scrollProgress * (maxHeight - minHeight));
-    setGardenHeight(newHeight);
-
-    // Trigger animations for each stage
-    const newAnimated = new Set(animatedElements);
-    Object.values(GARDEN_STAGES).forEach((stage) => {
-      if (scrollProgress >= stage.scroll) {
-        stage.elements.forEach(id => {
-          if (!newAnimated.has(id)) {
-            newAnimated.add(id);
-            // Apply CSS class to element
-            const el = document.getElementById(id);
-            if (el) {
-              if (el.classList.contains('garden-stem')) {
-                el.classList.add('grow');
-              } else if (el.classList.contains('garden-leaf')) {
-                el.classList.add('bloom');
-              } else if (el.classList.contains('garden-flower')) {
-                el.classList.add('bloom');
-              } else if (el.classList.contains('garden-bud')) {
-                el.classList.add('bloom');
-              } else if (el.classList.contains('garden-grass')) {
-                el.classList.add('grow');
-              } else if (el.classList.contains('garden-dot')) {
-                el.classList.add('visible');
-              } else if (el.classList.contains('garden-butterfly')) {
-                el.classList.add('visible');
-              }
-            }
-          }
-        });
-      }
-    });
-    setAnimatedElements(newAnimated);
-  }, [animatedElements]);
+  // Use ref instead of state to avoid re-renders
+  const animatedElementsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    const updateGarden = (scrollProgress: number) => {
+      // Calculate height: 80px at start, 500px at end
+      const minHeight = 80;
+      const maxHeight = 500;
+      const newHeight = minHeight + (scrollProgress * (maxHeight - minHeight));
+      setGardenHeight(newHeight);
+
+      // Trigger animations for each stage
+      Object.values(GARDEN_STAGES).forEach((stage) => {
+        if (scrollProgress >= stage.scroll) {
+          stage.elements.forEach(id => {
+            if (!animatedElementsRef.current.has(id)) {
+              animatedElementsRef.current.add(id);
+              // Apply CSS class to element
+              const el = document.getElementById(id);
+              if (el) {
+                if (el.classList.contains('garden-stem')) {
+                  el.classList.add('grow');
+                } else if (el.classList.contains('garden-leaf')) {
+                  el.classList.add('bloom');
+                } else if (el.classList.contains('garden-flower')) {
+                  el.classList.add('bloom');
+                } else if (el.classList.contains('garden-bud')) {
+                  el.classList.add('bloom');
+                } else if (el.classList.contains('garden-grass')) {
+                  el.classList.add('grow');
+                } else if (el.classList.contains('garden-dot')) {
+                  el.classList.add('visible');
+                } else if (el.classList.contains('garden-butterfly')) {
+                  el.classList.add('visible');
+                }
+              }
+            }
+          });
+        }
+      });
+    };
+
     const handleScroll = () => {
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const scrollProgress = Math.min(scrollTop / docHeight, 1);
+      const scrollProgress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
       updateGarden(scrollProgress);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Initial call
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [updateGarden]);
+  }, []);
 
   return (
     <div

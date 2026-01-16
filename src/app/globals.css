@@ -1,26 +1,282 @@
 @import "tailwindcss";
 
+/**
+ * ANSAR FAMILY — Design System
+ * "Warmth & Simplicity" - Sage greens, terracotta, ochre palette
+ * Typography: Cormorant Garamond (headings) + Outfit (body)
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   COLOR SYSTEM — Sage, Terracotta, Ochre
+   ═══════════════════════════════════════════════════════════════ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Primary Palette */
+  --ansar-sage-50: #f6f7f6;
+  --ansar-sage-100: #e3e7e3;
+  --ansar-sage-200: #c7d0c7;
+  --ansar-sage-300: #a3b2a3;
+  --ansar-sage-400: #7d917d;
+  --ansar-sage-500: #5f755f;
+  --ansar-sage-600: #4a5d4a;
+  --ansar-sage-700: #3d4c3d;
+  --ansar-sage-800: #333f33;
+  --ansar-sage-900: #2c352c;
+
+  /* Accent Colors */
+  --ansar-terracotta: #c67a5e;
+  --ansar-terracotta-light: #d99a82;
+  --ansar-ochre: #c9a227;
+  --ansar-ochre-light: #e0bc4a;
+
+  /* Neutrals */
+  --ansar-cream: #faf8f5;
+  --ansar-charcoal: #2d2d2d;
+  --ansar-gray: #6b6b6b;
+  --ansar-gray-light: #9a9a9a;
+
+  /* Semantic */
+  --ansar-success: #5f755f;
+  --ansar-error: #b85c5c;
+  --ansar-warning: #c9a227;
+
+  /* Mappings */
+  --background: var(--ansar-cream);
+  --foreground: var(--ansar-charcoal);
+  --primary: var(--ansar-sage-600);
+  --primary-hover: var(--ansar-sage-700);
+  --accent: var(--ansar-terracotta);
+  --muted: var(--ansar-gray-light);
+
+  /* Typography */
+  --font-heading: var(--font-cormorant), Georgia, serif;
+  --font-body: var(--font-outfit), system-ui, sans-serif;
+
+  /* Physics */
+  --ease-smooth: cubic-bezier(0.19, 1, 0.22, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   TAILWIND THEME
+   ═══════════════════════════════════════════════════════════════ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ansar-cream: var(--ansar-cream);
+  --color-ansar-charcoal: var(--ansar-charcoal);
+  --color-ansar-gray: var(--ansar-gray);
+  --color-ansar-gray-light: var(--ansar-gray-light);
+  --color-ansar-sage-50: var(--ansar-sage-50);
+  --color-ansar-sage-100: var(--ansar-sage-100);
+  --color-ansar-sage-200: var(--ansar-sage-200);
+  --color-ansar-sage-300: var(--ansar-sage-300);
+  --color-ansar-sage-400: var(--ansar-sage-400);
+  --color-ansar-sage-500: var(--ansar-sage-500);
+  --color-ansar-sage-600: var(--ansar-sage-600);
+  --color-ansar-sage-700: var(--ansar-sage-700);
+  --color-ansar-sage-800: var(--ansar-sage-800);
+  --color-ansar-sage-900: var(--ansar-sage-900);
+  --color-ansar-terracotta: var(--ansar-terracotta);
+  --color-ansar-terracotta-light: var(--ansar-terracotta-light);
+  --color-ansar-ochre: var(--ansar-ochre);
+  --color-ansar-ochre-light: var(--ansar-ochre-light);
+  --color-ansar-success: var(--ansar-success);
+  --color-ansar-error: var(--ansar-error);
+
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ═══════════════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════════════ */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TYPOGRAPHY
+   ═══════════════════════════════════════════════════════════════ */
+.font-heading {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.font-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPONENTS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Primary Button — Sage */
+.btn-primary {
+  background: var(--ansar-sage-600);
+  color: white;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  padding: 0.875rem 2rem;
+  border-radius: 4px;
+  transition: all var(--duration-normal) var(--ease-smooth);
+}
+
+.btn-primary:hover {
+  background: var(--ansar-sage-700);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(95, 117, 95, 0.25);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background: transparent;
+  color: var(--ansar-charcoal);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  padding: 0.875rem 2rem;
+  border: 1px solid var(--ansar-sage-300);
+  border-radius: 4px;
+  transition: all var(--duration-normal) var(--ease-smooth);
+}
+
+.btn-secondary:hover {
+  background: var(--ansar-sage-50);
+  border-color: var(--ansar-sage-400);
+}
+
+/* Form Input */
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: white;
+  border: 1px solid var(--ansar-sage-200);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--ansar-sage-500);
+  box-shadow: 0 0 0 3px rgba(95, 117, 95, 0.15);
+}
+
+.form-input::placeholder {
+  color: var(--ansar-gray-light);
+}
+
+/* Form Label */
+.form-label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ansar-gray);
+  margin-bottom: 0.5rem;
+}
+
+/* Helper Text */
+.form-helper {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--ansar-gray-light);
+  margin-top: 0.375rem;
+}
+
+/* Card */
+.card {
+  background: white;
+  border: 1px solid var(--ansar-sage-100);
+  border-radius: 8px;
+  transition: all var(--duration-normal) var(--ease-smooth);
+}
+
+.card:hover {
+  box-shadow: 0 8px 24px rgba(45, 45, 45, 0.08);
+}
+
+/* Selection Option (Radio/Checkbox style buttons) */
+.selection-option {
+  padding: 1rem;
+  border: 1px solid var(--ansar-sage-200);
+  border-radius: 4px;
+  text-align: left;
+  transition: all var(--duration-fast) var(--ease-smooth);
+  cursor: pointer;
+}
+
+.selection-option:hover {
+  border-color: var(--ansar-sage-400);
+  background: var(--ansar-sage-50);
+}
+
+.selection-option.selected {
+  border-color: var(--ansar-sage-600);
+  background: var(--ansar-sage-50);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SELECTION
+   ═══════════════════════════════════════════════════════════════ */
+::selection {
+  background: var(--ansar-sage-200);
+  color: var(--ansar-charcoal);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ansar-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ansar-sage-300);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ansar-sage-400);
 }

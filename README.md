@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ansar Family Platform
 
-## Getting Started
+> Every Heart Anchored — The infrastructure layer for supporting New Muslims and those returning to Islam.
 
-First, run the development server:
+## MVP Features
+
+- **Landing Page** (`/`) — Three clear paths: Join, Volunteer, Partner
+- **Seeker Intake Form** (`/join`) — 5-step form for New Muslims and those reconnecting
+- **Admin Dashboard** (`/admin`) — View and triage disconnected seekers
+- **Convex Backend** — Real-time database for intake submissions
+
+## Quick Start
+
+### 1. Install Dependencies
+
+```bash
+cd ansar-platform
+npm install
+```
+
+### 2. Set Up Convex
+
+Run the Convex development server (you'll need to create a Convex account):
+
+```bash
+npx convex dev
+```
+
+This will:
+- Prompt you to log in or create a Convex account
+- Create a new Convex project
+- Generate your `NEXT_PUBLIC_CONVEX_URL`
+- Deploy your schema and functions
+
+### 3. Start Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit:
+- **Landing**: http://localhost:3000
+- **Join Form**: http://localhost:3000/join
+- **Admin**: http://localhost:3000/admin (password: `ansarfamily2026`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy to Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Push to GitHub
 
-## Learn More
+```bash
+git add .
+git commit -m "Initial MVP"
+git push origin main
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Connect to Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Go to [vercel.com](https://vercel.com)
+2. Import your GitHub repository
+3. Add environment variable:
+   - `NEXT_PUBLIC_CONVEX_URL` — Your Convex deployment URL
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. Deploy Convex to Production
 
-## Deploy on Vercel
+```bash
+npx convex deploy
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+ansar-platform/
+├── convex/                 # Convex backend
+│   ├── schema.ts           # Database schema
+│   ├── intakes.ts          # Intake mutations/queries
+│   └── _generated/         # Auto-generated types
+├── src/
+│   ├── app/
+│   │   ├── page.tsx        # Landing page
+│   │   ├── join/page.tsx   # Seeker intake form
+│   │   ├── admin/page.tsx  # Admin dashboard
+│   │   ├── layout.tsx      # Root layout
+│   │   └── globals.css     # Design tokens
+│   └── components/
+│       └── providers/      # Convex provider
+└── package.json
+```
+
+## Design System
+
+- **Colors**: Alabaster, Charcoal, Gold, Industrial
+- **Typography**: EB Garamond (editorial), JetBrains Mono (system)
+- **Philosophy**: Quiet luxury meets warm hospitality
+
+## Terminology
+
+| Term | Meaning |
+|------|---------|
+| Seeker | New Muslim or someone returning to Islam |
+| Ansar | Volunteer companion who supports a Seeker |
+| Disconnected | A Seeker not yet assigned to a community |
+| Partner | A community organization (masjid, MSA, etc.) |
+
+## Admin Access
+
+- **URL**: `/admin`
+- **Password**: `ansarfamily2026` (change in production!)
+
+## Next Steps (Post-MVP)
+
+1. [ ] Add Clerk authentication
+2. [ ] Build Ansar volunteer form
+3. [ ] Build Partner application form
+4. [ ] Create Partner dashboard
+5. [ ] Add email/SMS notifications
+6. [ ] Implement pairing system
+
+---
+
+Built with ❤️ for the Ummah

@@ -165,6 +165,154 @@ export default function Home() {
         </section>
 
         {/* ============================================
+            SECTION 2: THE CHALLENGE
+            ============================================ */}
+        <section id="challenge" className="py-24 px-6 bg-white">
+          <div className="max-w-[900px] mx-auto">
+            <p className="font-body text-xs font-normal tracking-[0.2em] uppercase text-ansar-terracotta-600 mb-4">
+              The Challenge
+            </p>
+            <h2 className="font-display text-[clamp(2rem,1.5rem+2.5vw,3rem)] text-ansar-charcoal mb-8">
+              Too many new Muslims walk alone
+            </h2>
+            <div className="space-y-6 font-body text-lg text-ansar-gray leading-relaxed">
+              <p>
+                Every year, thousands embrace Islam or return to their faith after years away. 
+                They&apos;re filled with hope, curiosity, and a desire to grow. But too often, 
+                that spark fades when they can&apos;t find community.
+              </p>
+              <p>
+                Masjids are busy. Programs are scattered. Resources feel overwhelming. 
+                And the personal connection that transforms knowledge into lived faith? 
+                That&apos;s rare.
+              </p>
+              <p className="text-ansar-charcoal font-medium">
+                We believe no one should walk this path alone.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================
+            SECTION 3: OUR SOLUTION
+            ============================================ */}
+        <section id="mission" className="py-24 px-6 bg-ansar-sage-50">
+          <div className="max-w-[900px] mx-auto">
+            <p className="font-body text-xs font-normal tracking-[0.2em] uppercase text-ansar-sage-700 mb-4">
+              Our Solution
+            </p>
+            <h2 className="font-display text-[clamp(2rem,1.5rem+2.5vw,3rem)] text-ansar-charcoal mb-8">
+              The infrastructure layer for new Muslim support
+            </h2>
+            <div className="space-y-6 font-body text-lg text-ansar-gray leading-relaxed mb-12">
+              <p>
+                Ansar Family is a platform that connects seekers with trained volunteer mentors 
+                called <strong className="text-ansar-sage-700">Ansars</strong>, coordinated 
+                through local <strong className="text-ansar-sage-700">Partner Hubs</strong> like 
+                masjids, MSAs, and community organizations.
+              </p>
+              <p>
+                We don&apos;t replace your local community. We give them the tools, training, 
+                and systems to do what they already want to do: welcome and support those 
+                new to the faith.
+              </p>
+            </div>
+
+            {/* Key benefits */}
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-xl">
+                <div className="w-10 h-10 bg-ansar-sage-100 rounded-lg flex items-center justify-center mb-4">
+                  <Heart className="w-5 h-5 text-ansar-sage-600" strokeWidth={1.5} />
+                </div>
+                <h4 className="font-display text-lg text-ansar-charcoal mb-2">Personal Connection</h4>
+                <p className="font-body text-sm text-ansar-gray">
+                  One-on-one mentorship rooted in friendship, not just curriculum.
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-xl">
+                <div className="w-10 h-10 bg-ansar-sage-100 rounded-lg flex items-center justify-center mb-4">
+                  <Building2 className="w-5 h-5 text-ansar-sage-600" strokeWidth={1.5} />
+                </div>
+                <h4 className="font-display text-lg text-ansar-charcoal mb-2">Local Roots</h4>
+                <p className="font-body text-sm text-ansar-gray">
+                  Connected to your neighborhood masjid or community center.
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-xl">
+                <div className="w-10 h-10 bg-ansar-sage-100 rounded-lg flex items-center justify-center mb-4">
+                  <Users className="w-5 h-5 text-ansar-sage-600" strokeWidth={1.5} />
+                </div>
+                <h4 className="font-display text-lg text-ansar-charcoal mb-2">Sustainable System</h4>
+                <p className="font-body text-sm text-ansar-gray">
+                  We handle the coordination so communities can focus on care.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================
+            SECTION 4: THE ECOSYSTEM
+            ============================================ */}
+        <section id="ecosystem" className="py-24 px-6 bg-white">
+          <div className="max-w-[900px] mx-auto">
+            <p className="font-body text-xs font-normal tracking-[0.2em] uppercase text-ansar-ochre-600 mb-4">
+              The Ecosystem
+            </p>
+            <h2 className="font-display text-[clamp(2rem,1.5rem+2.5vw,3rem)] text-ansar-charcoal mb-12">
+              Three roles, one family
+            </h2>
+
+            <div className="space-y-8">
+              {/* Seeker */}
+              <div className="flex gap-6 items-start">
+                <div className="w-16 h-16 bg-ansar-sage-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <Heart className="w-8 h-8 text-ansar-sage-600" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 className="font-display text-2xl text-ansar-charcoal mb-2">Seekers</h3>
+                  <p className="font-body text-ansar-gray leading-relaxed">
+                    Those new to Islam or reconnecting after time away. You&apos;re not a project. 
+                    You&apos;re a person with questions, hopes, and a journey that matters. 
+                    We pair you with an Ansar who walks beside you at your pace.
+                  </p>
+                </div>
+              </div>
+
+              {/* Ansar */}
+              <div className="flex gap-6 items-start">
+                <div className="w-16 h-16 bg-ansar-terracotta-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <Users className="w-8 h-8 text-ansar-terracotta-600" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 className="font-display text-2xl text-ansar-charcoal mb-2">Ansars</h3>
+                  <p className="font-body text-ansar-gray leading-relaxed">
+                    Volunteer mentors who offer their time, knowledge, and presence. 
+                    You don&apos;t need to be a scholar. You need to be kind, consistent, 
+                    and willing to learn alongside your seeker. We train and support you.
+                  </p>
+                </div>
+              </div>
+
+              {/* Partner Hubs */}
+              <div className="flex gap-6 items-start">
+                <div className="w-16 h-16 bg-ansar-ochre-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-8 h-8 text-ansar-ochre-600" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 className="font-display text-2xl text-ansar-charcoal mb-2">Partner Hubs</h3>
+                  <p className="font-body text-ansar-gray leading-relaxed">
+                    Masjids, MSAs, and organizations that host the program locally. 
+                    You provide the space and community. We provide the dashboard, 
+                    training, and matching system. Together, you anchor hearts.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================
             CTA SECTION
             ============================================ */}
         <section className="py-32 px-6 text-center reveal">

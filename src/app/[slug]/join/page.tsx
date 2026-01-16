@@ -15,6 +15,8 @@ import { ArrowLeft, ArrowRight, Check, Loader2, Building2 } from "lucide-react";
  * for routing directly to that community's Partner Lead.
  */
 
+const EASE_OUT_QUINT = [0.19, 1, 0.22, 1] as const;
+
 type JourneyType = "new_muslim" | "reconnecting" | "seeker";
 type Gender = "male" | "female";
 
@@ -206,7 +208,7 @@ export default function PartnerJoinPage() {
               className="h-full bg-ansar-sage-600"
               initial={{ width: 0 }}
               animate={{ width: `${(step / 5) * 100}%` }}
-              transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}
+              transition={{ duration: 0.3, ease: EASE_OUT_QUINT }}
             />
           </div>
         </div>
@@ -488,7 +490,7 @@ function FormStep({
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}
+      transition={{ duration: 0.3, ease: EASE_OUT_QUINT }}
     >
       <p className="font-body text-sm text-ansar-sage-600 mb-2">
         {subtitle}
@@ -507,7 +509,7 @@ function SuccessScreen({ orgName, slug }: { orgName: string; slug: string }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
+        transition={{ duration: 0.5, ease: EASE_OUT_QUINT }}
         className="text-center max-w-md"
       >
         <div className="w-16 h-16 bg-ansar-sage-100 rounded-full flex items-center justify-center mx-auto mb-6">

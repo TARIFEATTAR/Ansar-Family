@@ -14,6 +14,8 @@ import { ArrowLeft, ArrowRight, Check, Loader2, Building2 } from "lucide-react";
  * official Partner Hubs in the Ansar Family network.
  */
 
+const EASE_OUT_QUINT = [0.19, 1, 0.22, 1] as const;
+
 type OrgType = "masjid" | "msa" | "nonprofit" | "informal_circle" | "other";
 type GenderFocus = "brothers" | "sisters" | "both";
 
@@ -277,7 +279,7 @@ export default function PartnerPage() {
               className="h-full bg-ansar-sage-600"
               initial={{ width: 0 }}
               animate={{ width: `${(step / 5) * 100}%` }}
-              transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}
+              transition={{ duration: 0.3, ease: EASE_OUT_QUINT }}
             />
           </div>
         </div>
@@ -725,7 +727,7 @@ function FormStep({
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}
+      transition={{ duration: 0.3, ease: EASE_OUT_QUINT }}
     >
       <p className="font-body text-sm text-ansar-sage-600 mb-2">
         {subtitle}
@@ -744,7 +746,7 @@ function SuccessScreen({ orgName, hubLevel }: { orgName: string; hubLevel: numbe
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
+        transition={{ duration: 0.5, ease: EASE_OUT_QUINT }}
         className="text-center max-w-md"
       >
         <div className="w-16 h-16 bg-ansar-sage-100 rounded-full flex items-center justify-center mx-auto mb-6">

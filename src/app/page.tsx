@@ -11,6 +11,8 @@ import { ArrowRight, Heart, Users, Building2 } from "lucide-react";
  * Three clear paths: Join (Seeker), Volunteer (Ansar), Partner
  */
 
+const EASE_OUT_QUINT = [0.19, 1, 0.22, 1] as const;
+
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (delay: number) => ({
@@ -18,7 +20,7 @@ const fadeInUp = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: [0.19, 1, 0.22, 1],
+      ease: EASE_OUT_QUINT,
       delay: delay * 0.15,
     },
   }),
@@ -178,7 +180,7 @@ function CTACard({ card }: CTACardProps) {
   return (
     <motion.div
       whileHover={{ y: -4 }}
-      transition={{ duration: 0.2, ease: [0.19, 1, 0.22, 1] }}
+      transition={{ duration: 0.2, ease: EASE_OUT_QUINT }}
     >
       <Link href={card.href} className="card p-8 text-left block group">
         <Icon className="w-8 h-8 text-ansar-sage-600 mb-4" strokeWidth={1.5} />

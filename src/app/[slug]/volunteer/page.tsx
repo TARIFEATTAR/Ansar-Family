@@ -15,6 +15,8 @@ import { ArrowLeft, ArrowRight, Check, Loader2, Heart, Building2 } from "lucide-
  * a partner will be tagged and assigned to that community.
  */
 
+const EASE_OUT_QUINT = [0.19, 1, 0.22, 1] as const;
+
 type Gender = "male" | "female";
 type PracticeLevel = "consistent" | "steady" | "reconnecting";
 type CheckInFrequency = "weekly" | "biweekly" | "monthly";
@@ -227,7 +229,7 @@ export default function PartnerVolunteerPage() {
               className="h-full bg-ansar-sage-600"
               initial={{ width: 0 }}
               animate={{ width: `${(step / 4) * 100}%` }}
-              transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}
+              transition={{ duration: 0.3, ease: EASE_OUT_QUINT }}
             />
           </div>
         </div>
@@ -415,7 +417,7 @@ export default function PartnerVolunteerPage() {
 
 function FormStep({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3, ease: EASE_OUT_QUINT }}>
       <p className="font-body text-sm text-ansar-sage-600 mb-2">{subtitle}</p>
       <h1 className="font-heading text-3xl md:text-4xl text-ansar-charcoal mb-8">{title}</h1>
       {children}
@@ -426,7 +428,7 @@ function FormStep({ title, subtitle, children }: { title: string; subtitle: stri
 function SuccessScreen({ orgName, slug }: { orgName: string; slug: string }) {
   return (
     <main className="min-h-screen flex items-center justify-center px-6 bg-ansar-cream">
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }} className="text-center max-w-md">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, ease: EASE_OUT_QUINT }} className="text-center max-w-md">
         <div className="w-16 h-16 bg-ansar-sage-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <Heart className="w-8 h-8 text-ansar-sage-600" />
         </div>

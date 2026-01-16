@@ -67,12 +67,6 @@ export default function Home() {
             >
               Programs
             </Link>
-            <Link
-              href="/join"
-              className="font-body text-sm px-5 py-2.5 bg-ansar-sage-600 text-white rounded-full hover:bg-ansar-sage-700 transition-colors"
-            >
-              Get Started
-            </Link>
         </div>
         </nav>
       </header>

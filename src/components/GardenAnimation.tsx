@@ -561,14 +561,6 @@ export function GardenAnimation({ className = "" }: GardenAnimationProps) {
         </svg>
       </div>
 
-      {/* Scroll progress indicator (subtle) */}
-      <div className="absolute top-8 right-8 w-1 h-32 bg-ansar-sage-100 rounded-full overflow-hidden">
-        <motion.div
-          className="w-full bg-ansar-sage-500 rounded-full"
-          style={{ height: `${scrollProgress * 100}%` }}
-          transition={{ duration: 0.1 }}
-        />
-      </div>
     </div>
   );
 }

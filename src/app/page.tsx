@@ -12,7 +12,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Heart, Users, Building2, BookOpen, MessageCircle, Calendar, Home } from "lucide-react";
+import { Heart, Users, Building2, BookOpen, MessageCircle, Calendar, Home as HomeIcon } from "lucide-react";
 import GardenAnimation from "@/components/GardenAnimation";
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
@@ -421,7 +421,7 @@ export default function Home() {
                 <div className="bg-white p-8 rounded-2xl border border-ansar-sage-100">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-12 h-12 bg-ansar-sage-50 rounded-xl flex items-center justify-center">
-                      <Home className="w-6 h-6 text-ansar-sage-600" />
+                      <HomeIcon className="w-6 h-6 text-ansar-sage-600" />
                     </div>
                     <h3 className="font-display text-xl text-ansar-charcoal">Resource Access</h3>
                   </div>

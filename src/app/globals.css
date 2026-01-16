@@ -22,11 +22,28 @@
   --ansar-sage-800: #333f33;
   --ansar-sage-900: #2c352c;
 
-  /* Accent Colors */
-  --ansar-terracotta: #c67a5e;
-  --ansar-terracotta-light: #d99a82;
-  --ansar-ochre: #c9a227;
-  --ansar-ochre-light: #e0bc4a;
+  /* Terracotta Palette */
+  --ansar-terracotta-50: #FBF6F4;
+  --ansar-terracotta-100: #F5EAE6;
+  --ansar-terracotta-200: #EBDAD4;
+  --ansar-terracotta-300: #D4A89A;
+  --ansar-terracotta-400: #C9968A;
+  --ansar-terracotta-500: #C4887A;
+  --ansar-terracotta-600: #B87D6E;
+  --ansar-terracotta-700: #A86D5E;
+  --ansar-terracotta-800: #8B5A4E;
+  --ansar-terracotta-900: #6E4840;
+
+  /* Ochre Palette */
+  --ansar-ochre-50: #FAF8F2;
+  --ansar-ochre-100: #F5F0E4;
+  --ansar-ochre-200: #E8D9B5;
+  --ansar-ochre-300: #D4C49A;
+  --ansar-ochre-400: #C9B896;
+  --ansar-ochre-500: #BCA87A;
+  --ansar-ochre-600: #A8956A;
+  --ansar-ochre-700: #8F7D58;
+  --ansar-ochre-800: #736548;
 
   /* Neutrals */
   --ansar-cream: #faf8f5;
@@ -78,12 +95,28 @@
   --color-ansar-sage-700: var(--ansar-sage-700);
   --color-ansar-sage-800: var(--ansar-sage-800);
   --color-ansar-sage-900: var(--ansar-sage-900);
-  --color-ansar-terracotta: var(--ansar-terracotta);
-  --color-ansar-terracotta-light: var(--ansar-terracotta-light);
-  --color-ansar-ochre: var(--ansar-ochre);
-  --color-ansar-ochre-light: var(--ansar-ochre-light);
+  --color-ansar-terracotta-50: var(--ansar-terracotta-50);
+  --color-ansar-terracotta-100: var(--ansar-terracotta-100);
+  --color-ansar-terracotta-200: var(--ansar-terracotta-200);
+  --color-ansar-terracotta-300: var(--ansar-terracotta-300);
+  --color-ansar-terracotta-400: var(--ansar-terracotta-400);
+  --color-ansar-terracotta-500: var(--ansar-terracotta-500);
+  --color-ansar-terracotta-600: var(--ansar-terracotta-600);
+  --color-ansar-terracotta-700: var(--ansar-terracotta-700);
+  --color-ansar-terracotta-800: var(--ansar-terracotta-800);
+  --color-ansar-terracotta-900: var(--ansar-terracotta-900);
+  --color-ansar-ochre-50: var(--ansar-ochre-50);
+  --color-ansar-ochre-100: var(--ansar-ochre-100);
+  --color-ansar-ochre-200: var(--ansar-ochre-200);
+  --color-ansar-ochre-300: var(--ansar-ochre-300);
+  --color-ansar-ochre-400: var(--ansar-ochre-400);
+  --color-ansar-ochre-500: var(--ansar-ochre-500);
+  --color-ansar-ochre-600: var(--ansar-ochre-600);
+  --color-ansar-ochre-700: var(--ansar-ochre-700);
+  --color-ansar-ochre-800: var(--ansar-ochre-800);
   --color-ansar-success: var(--ansar-success);
   --color-ansar-error: var(--ansar-error);
+  --color-ansar-muted: var(--ansar-gray-light);
 
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
@@ -279,4 +312,58 @@ h1, h2, h3, h4 {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--ansar-sage-400);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Floating animation for butterflies in garden */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    transform: translateY(-8px) translateX(4px);
+  }
+  50% {
+    transform: translateY(-4px) translateX(-4px);
+  }
+  75% {
+    transform: translateY(-12px) translateX(2px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Fade in up animation */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s var(--ease-smooth) forwards;
+}
+
+/* Gentle pulse for highlights */
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
 }

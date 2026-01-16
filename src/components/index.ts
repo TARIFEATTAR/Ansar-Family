@@ -2,4 +2,5 @@
  * ANSAR FAMILY - Components Export
  */
 
-export { default as GardenAnimation } from "./GardenAnimation";
+export { GardenAnimation } from "./GardenAnimation";
+export { default as GardenAnimationDefault } from "./GardenAnimation";

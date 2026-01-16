@@ -77,8 +77,8 @@ export default function Home() {
         </nav>
       </header>
 
-      {/* Content wrapper - leaves space for garden on right */}
-      <div className="lg:pr-[280px]">
+      {/* Content wrapper - garden overlays on right side */}
+      <div className="relative">
         
         {/* ============================================
             SECTION 1: HERO

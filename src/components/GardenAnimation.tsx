@@ -52,7 +52,7 @@ export function GardenAnimation({ className = "" }: GardenAnimationProps) {
   return (
     <div
       ref={containerRef}
-      className={`fixed right-0 top-0 h-screen w-[280px] pointer-events-none z-40 hidden lg:block ${className}`}
+      className={`fixed right-0 top-0 h-screen w-[200px] pointer-events-none z-30 hidden xl:block opacity-80 ${className}`}
       style={{
         transform: isPlanted ? "translateY(20px)" : "translateY(0)",
         transition: "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)",

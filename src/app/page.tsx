@@ -313,24 +313,33 @@ export default function Home() {
         </section>
 
         {/* ============================================
-            CTA SECTION
+            CTA SECTION - Begin Your Journey
             ============================================ */}
-        <section className="py-32 px-6 text-center reveal">
-          <div className="max-w-[600px] mx-auto">
+        <section className="py-24 px-6 bg-white">
+          <div className="max-w-[900px] mx-auto text-center">
             <h2 className="font-display text-[clamp(2.5rem,2rem+2.5vw,4rem)] text-ansar-charcoal mb-6">
               Begin Your Journey
             </h2>
-            <p className="font-body text-lg text-ansar-gray mb-10">
+            <p className="font-body text-lg text-ansar-gray max-w-xl mx-auto mb-12">
               Whether you&apos;re seeking connection, ready to give back, or want to bring this to your community, there&apos;s a place for you in the Ansar Family.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/join" className="btn-primary">
+            <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
+              <Link 
+                href="/join" 
+                className="inline-flex items-center justify-center px-8 py-4 bg-ansar-sage-600 text-white font-body rounded-full hover:bg-ansar-sage-700 transition-all hover:-translate-y-0.5"
+              >
                 I&apos;m a Seeker
               </Link>
-              <Link href="/volunteer" className="btn-secondary">
+              <Link 
+                href="/volunteer" 
+                className="inline-flex items-center justify-center px-8 py-4 bg-ansar-terracotta-600 text-white font-body rounded-full hover:bg-ansar-terracotta-700 transition-all hover:-translate-y-0.5"
+              >
                 I Want to Volunteer
               </Link>
-              <Link href="/partner" className="btn-outline">
+              <Link 
+                href="/partner" 
+                className="inline-flex items-center justify-center px-8 py-4 border-2 border-ansar-ochre-600 text-ansar-ochre-700 font-body rounded-full hover:bg-ansar-ochre-50 transition-all hover:-translate-y-0.5"
+              >
                 Register a Hub
               </Link>
             </div>

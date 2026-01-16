@@ -12,7 +12,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Heart, Users, Building2, BookOpen, MessageCircle, Calendar, Home as HomeIcon } from "lucide-react";
+import { Heart, Users, Building2 } from "lucide-react";
 import GardenAnimation from "@/components/GardenAnimation";
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
@@ -61,13 +61,7 @@ export default function Home() {
             >
               The Ecosystem
             </Link>
-            <Link
-              href="#programs"
-              className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors"
-            >
-              Programs
-            </Link>
-        </div>
+          </div>
         </nav>
       </header>
 
@@ -351,138 +345,7 @@ export default function Home() {
         </section>
 
         {/* ============================================
-            SECTION 5: PROGRAMS / PATHWAYS
-            ============================================ */}
-        <section id="programs" className="py-24 px-6 md:px-12 bg-ansar-cream">
-          <div className="max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.8, ease: EASE_OUT }}
-            >
-              <p className="font-body text-sm text-ansar-sage-600 uppercase tracking-widest mb-4">
-                Pathways to Belonging
-              </p>
-              <h2 className="font-display text-3xl md:text-4xl text-ansar-charcoal mb-12">
-                Four ways we nurture growth
-              </h2>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* 1:1 Mentorship */}
-                <div className="bg-white p-8 rounded-2xl border border-ansar-sage-100">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 bg-ansar-sage-50 rounded-xl flex items-center justify-center">
-                      <MessageCircle className="w-6 h-6 text-ansar-sage-600" />
-                    </div>
-                    <h3 className="font-display text-xl text-ansar-charcoal">1:1 Mentorship</h3>
-                  </div>
-                  <p className="font-body text-ansar-gray">
-                    Your personal Ansar meets with you regularly for conversation, 
-                    questions, and companionship on the journey.
-                  </p>
-                </div>
-
-                {/* Learning Circles */}
-                <div className="bg-white p-8 rounded-2xl border border-ansar-sage-100">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 bg-ansar-terracotta-50 rounded-xl flex items-center justify-center">
-                      <BookOpen className="w-6 h-6 text-ansar-terracotta-600" />
-                    </div>
-                    <h3 className="font-display text-xl text-ansar-charcoal">Learning Circles</h3>
-                  </div>
-                  <p className="font-body text-ansar-gray">
-                    Small group sessions covering the essentials: prayer, Quran basics, 
-                    and building a daily practice.
-                  </p>
-                </div>
-
-                {/* Community Gatherings */}
-                <div className="bg-white p-8 rounded-2xl border border-ansar-sage-100">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 bg-ansar-ochre-50 rounded-xl flex items-center justify-center">
-                      <Calendar className="w-6 h-6 text-ansar-ochre-600" />
-                    </div>
-                    <h3 className="font-display text-xl text-ansar-charcoal">Community Gatherings</h3>
-                  </div>
-                  <p className="font-body text-ansar-gray">
-                    Monthly dinners and events where seekers meet other seekers, 
-                    build friendships, and feel at home.
-                  </p>
-                </div>
-
-                {/* Resource Access */}
-                <div className="bg-white p-8 rounded-2xl border border-ansar-sage-100">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 bg-ansar-sage-50 rounded-xl flex items-center justify-center">
-                      <HomeIcon className="w-6 h-6 text-ansar-sage-600" />
-                    </div>
-                    <h3 className="font-display text-xl text-ansar-charcoal">Resource Access</h3>
-                  </div>
-                  <p className="font-body text-ansar-gray">
-                    Curated books, apps, and materials to support your learning 
-                    at whatever pace feels right for you.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* ============================================
-            SECTION 6: IMPACT / SOCIAL PROOF
-            ============================================ */}
-        <section className="py-24 px-6 md:px-12 bg-ansar-sage-600 text-white">
-          <div className="max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.8, ease: EASE_OUT }}
-              className="text-center"
-            >
-              <p className="font-body text-sm text-ansar-sage-200 uppercase tracking-widest mb-4">
-                Our Impact
-              </p>
-              <h2 className="font-display text-3xl md:text-4xl text-white mb-16">
-                Growing together across communities
-              </h2>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                <div>
-                  <p className="font-display text-4xl md:text-5xl text-white mb-2">2,400+</p>
-                  <p className="font-body text-sm text-ansar-sage-200">Seekers Supported</p>
-                </div>
-                <div>
-                  <p className="font-display text-4xl md:text-5xl text-white mb-2">850+</p>
-                  <p className="font-body text-sm text-ansar-sage-200">Active Ansars</p>
-                </div>
-                <div>
-                  <p className="font-display text-4xl md:text-5xl text-white mb-2">120+</p>
-                  <p className="font-body text-sm text-ansar-sage-200">Partner Hubs</p>
-                </div>
-                <div>
-                  <p className="font-display text-4xl md:text-5xl text-white mb-2">45</p>
-                  <p className="font-body text-sm text-ansar-sage-200">Cities Nationwide</p>
-                </div>
-              </div>
-
-              {/* Testimonial */}
-              <div className="mt-16 max-w-2xl mx-auto">
-                <blockquote className="font-display text-xl md:text-2xl text-white/90 italic mb-6">
-                  &quot;My Ansar didn&apos;t just teach me how to pray. She became my sister. 
-                  That&apos;s something no YouTube video could give me.&quot;
-                </blockquote>
-                <p className="font-body text-sm text-ansar-sage-200">
-                  Sarah M., Chicago
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* ============================================
-            SECTION 7: FINAL CTA
+            SECTION 5: FINAL CTA
             ============================================ */}
         <section className="py-24 px-6 md:px-12 bg-white">
           <div className="max-w-4xl mx-auto text-center">

@@ -1,555 +1,274 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState, useCallback } from "react";
 
 /**
- * GARDEN ANIMATION - The Visual Journey
+ * GARDEN ANIMATION - Scroll-Driven Growth
  * 
- * A scroll-based SVG garden that grows as the user explores the page.
- * The flower grows from a seed to a full bloom, representing the
- * seeker's journey from curiosity to being planted in community.
+ * A beautiful SVG garden that grows as the user scrolls.
+ * The stem is ALWAYS anchored to the viewport bottom.
+ * As user scrolls, the garden grows upward from the soil.
  * 
- * Positioned fixed on the right side of the viewport.
- * At the footer, the flower "plants" into the sage-green soil.
+ * Uses CSS classes for smooth transitions rather than React state
+ * for better performance and simpler code.
  */
 
 interface GardenAnimationProps {
   className?: string;
 }
 
-export function GardenAnimation({ className = "" }: GardenAnimationProps) {
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [isPlanted, setIsPlanted] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+// Garden growth stages - each stage reveals more elements
+const GARDEN_STAGES = {
+  stage1: { scroll: 0.02, elements: ['mainStem', 'grass1', 'grass2', 'leaf1', 'leaf2'], height: 100 },
+  stage2: { scroll: 0.12, elements: ['grass3', 'grass4', 'branch1', 'branch2', 'leaf3', 'leaf4', 'leaf5', 'leaf6'], height: 180 },
+  stage3: { scroll: 0.28, elements: ['branch3', 'branch4', 'leaf7', 'leaf8', 'leaf9', 'leaf10', 'bud1', 'dot1', 'dot2'], height: 260 },
+  stage4: { scroll: 0.42, elements: ['branch5', 'branch6', 'leaf11', 'leaf12', 'leaf13', 'leaf14', 'flower1', 'flower2', 'bud2', 'dot3', 'dot4'], height: 340 },
+  stage5: { scroll: 0.58, elements: ['branch7', 'branch8', 'leaf15', 'leaf16', 'flower3', 'flower4', 'bud3', 'dot5', 'dot6'], height: 400 },
+  stage6: { scroll: 0.72, elements: ['flower5', 'flower6', 'butterfly1'], height: 450 },
+  stage7: { scroll: 0.88, elements: ['flower7', 'flower8', 'flower9', 'dot7'], height: 500 },
+};
 
-  // Track scroll progress
+export function GardenAnimation({ className = "" }: GardenAnimationProps) {
+  const [gardenHeight, setGardenHeight] = useState(80);
+  const [animatedElements, setAnimatedElements] = useState<Set<string>>(new Set());
+
+  const updateGarden = useCallback((scrollProgress: number) => {
+    // Calculate height: 80px at start, 500px at end
+    const minHeight = 80;
+    const maxHeight = 500;
+    const newHeight = minHeight + (scrollProgress * (maxHeight - minHeight));
+    setGardenHeight(newHeight);
+
+    // Trigger animations for each stage
+    const newAnimated = new Set(animatedElements);
+    Object.values(GARDEN_STAGES).forEach((stage) => {
+      if (scrollProgress >= stage.scroll) {
+        stage.elements.forEach(id => {
+          if (!newAnimated.has(id)) {
+            newAnimated.add(id);
+            // Apply CSS class to element
+            const el = document.getElementById(id);
+            if (el) {
+              if (el.classList.contains('garden-stem')) {
+                el.classList.add('grow');
+              } else if (el.classList.contains('garden-leaf')) {
+                el.classList.add('bloom');
+              } else if (el.classList.contains('garden-flower')) {
+                el.classList.add('bloom');
+              } else if (el.classList.contains('garden-bud')) {
+                el.classList.add('bloom');
+              } else if (el.classList.contains('garden-grass')) {
+                el.classList.add('grow');
+              } else if (el.classList.contains('garden-dot')) {
+                el.classList.add('visible');
+              } else if (el.classList.contains('garden-butterfly')) {
+                el.classList.add('visible');
+              }
+            }
+          }
+        });
+      }
+    });
+    setAnimatedElements(newAnimated);
+  }, [animatedElements]);
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = Math.min(scrollTop / docHeight, 1);
-      setScrollProgress(progress);
-      setIsPlanted(progress > 0.95);
+      const scrollProgress = Math.min(scrollTop / docHeight, 1);
+      updateGarden(scrollProgress);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Initial call
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Stage thresholds for progressive reveal
-  const stages = {
-    stage1: scrollProgress >= 0.02,  // Main stem, first leaves
-    stage2: scrollProgress >= 0.12,  // Ground grass, branches 1-2
-    stage3: scrollProgress >= 0.30,  // More branches, buds
-    stage4: scrollProgress >= 0.50,  // First flowers
-    stage5: scrollProgress >= 0.70,  // More flowers
-    stage6: scrollProgress >= 0.85,  // Crown flowers, butterfly
-    stage7: scrollProgress >= 0.95,  // Final flourish, planted
-  };
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [updateGarden]);
 
   return (
     <div
-      ref={containerRef}
-      className={`fixed right-0 bottom-0 w-[220px] pointer-events-none z-30 hidden xl:block opacity-90 ${className}`}
-      style={{
-        transform: isPlanted ? "translateY(0)" : "translateY(0)",
-        transition: "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+      className={`fixed bottom-0 right-5 md:right-10 pointer-events-none z-50 hidden md:block ${className}`}
+      style={{ 
+        width: 'clamp(140px, 15vw, 220px)',
+        height: `${gardenHeight}px`,
+        transition: 'height 0.3s ease-out'
       }}
+      aria-hidden="true"
     >
-      {/* Garden SVG Container - anchored to footer soil */}
-      <div className="absolute bottom-4 right-4 w-[200px] h-[450px]">
-        <svg
-          viewBox="0 0 320 450"
-          className="w-full h-full"
-          aria-hidden="true"
-        >
-          {/* Definitions for gradients and filters */}
-          <defs>
-            {/* Stem gradient */}
-            <linearGradient id="stemGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-              <stop offset="0%" stopColor="#5A6A4E" />
-              <stop offset="100%" stopColor="#7D8B6A" />
-            </linearGradient>
-            
-            {/* Leaf gradient */}
-            <linearGradient id="leafGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#8FA07A" />
-              <stop offset="100%" stopColor="#6B7D5C" />
-            </linearGradient>
-            
-            {/* Terracotta flower gradient */}
-            <radialGradient id="terracottaGradient" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#D4A89A" />
-              <stop offset="100%" stopColor="#C4887A" />
-            </radialGradient>
-            
-            {/* Ochre flower gradient */}
-            <radialGradient id="ochreGradient" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#D4C49A" />
-              <stop offset="100%" stopColor="#BCA87A" />
-            </radialGradient>
+      <svg 
+        className="w-full h-full overflow-visible" 
+        viewBox="0 0 220 500" 
+        preserveAspectRatio="xMidYMax meet"
+      >
+        <defs>
+          <linearGradient id="stemGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="var(--sage-700, #5A6A4E)" />
+            <stop offset="100%" stopColor="var(--sage-500, #8FA07A)" />
+          </linearGradient>
+        </defs>
 
-            {/* Soft glow filter */}
-            <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="2" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
+        {/* Ground grass (Stage 1) */}
+        <path id="grass1" className="garden-grass" d="M20 500 Q22 490 20 480 Q18 490 20 500"/>
+        <path id="grass2" className="garden-grass" d="M35 500 Q38 492 35 484 Q32 492 35 500"/>
+        <path id="grass3" className="garden-grass" d="M180 500 Q182 492 180 484 Q178 492 180 500"/>
+        <path id="grass4" className="garden-grass" d="M195 500 Q198 494 195 488 Q192 494 195 500"/>
 
-          {/* Ground/Soil line - hidden, footer soil strip serves as ground */}
+        {/* Main stem - grows from bottom */}
+        <path id="mainStem" className="garden-stem" d="M110 500 Q108 460 112 410 Q108 360 115 300 Q110 240 118 180 Q113 120 120 70"/>
 
-          {/* === STAGE 1: Main Stem === */}
-          <motion.path
-            d="M160 420 Q160 380 158 340 Q156 300 160 260 Q164 220 160 180"
-            fill="none"
-            stroke="url(#stemGradient)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{
-              pathLength: stages.stage1 ? 1 : 0,
-              opacity: stages.stage1 ? 1 : 0,
-            }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-          />
+        {/* Branch 1 - Lower left (Stage 2) */}
+        <path id="branch1" className="garden-stem garden-stem-thin" d="M112 410 Q90 395 65 385"/>
+        {/* Branch 2 - Lower right (Stage 2) */}
+        <path id="branch2" className="garden-stem garden-stem-thin" d="M112 400 Q135 385 160 380"/>
 
-          {/* First pair of leaves */}
-          <motion.ellipse
-            cx="148"
-            cy="360"
-            rx="18"
-            ry="8"
-            fill="url(#leafGradient)"
-            transform="rotate(-30 148 360)"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage1 ? 1 : 0,
-              opacity: stages.stage1 ? 1 : 0,
-            }}
-            transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-          />
-          <motion.ellipse
-            cx="172"
-            cy="355"
-            rx="16"
-            ry="7"
-            fill="url(#leafGradient)"
-            transform="rotate(25 172 355)"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage1 ? 1 : 0,
-              opacity: stages.stage1 ? 1 : 0,
-            }}
-            transition={{ duration: 0.6, delay: 0.5, ease: "easeOut" }}
-          />
+        {/* Branch 3 - Mid left (Stage 3) */}
+        <path id="branch3" className="garden-stem garden-stem-thin" d="M110 330 Q85 315 55 305"/>
+        {/* Branch 4 - Mid right (Stage 3) */}
+        <path id="branch4" className="garden-stem garden-stem-thin" d="M115 320 Q140 305 170 300"/>
 
-          {/* === STAGE 2: Ground grass and more leaves === */}
-          {/* Ground grass */}
-          <motion.g
-            initial={{ scaleY: 0, opacity: 0 }}
-            animate={{
-              scaleY: stages.stage2 ? 1 : 0,
-              opacity: stages.stage2 ? 1 : 0,
-            }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            style={{ transformOrigin: "center bottom" }}
-          >
-            <path d="M90 420 Q92 400 88 385" fill="none" stroke="#A8B89A" strokeWidth="2" />
-            <path d="M100 420 Q98 395 102 375" fill="none" stroke="#8FA07A" strokeWidth="2" />
-            <path d="M220 420 Q222 398 218 380" fill="none" stroke="#A8B89A" strokeWidth="2" />
-            <path d="M230 420 Q228 402 232 388" fill="none" stroke="#8FA07A" strokeWidth="2" />
-          </motion.g>
+        {/* Branch 5 - Upper left (Stage 4) */}
+        <path id="branch5" className="garden-stem garden-stem-thin" d="M113 240 Q88 225 58 218"/>
+        {/* Branch 6 - Upper right (Stage 4) */}
+        <path id="branch6" className="garden-stem garden-stem-thin" d="M118 230 Q145 215 175 210"/>
 
-          {/* Branch 1 - left */}
-          <motion.path
-            d="M158 320 Q140 310 120 315"
-            fill="none"
-            stroke="url(#stemGradient)"
-            strokeWidth="3"
-            strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{
-              pathLength: stages.stage2 ? 1 : 0,
-              opacity: stages.stage2 ? 1 : 0,
-            }}
-            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-          />
+        {/* Branch 7 - Top left (Stage 5) */}
+        <path id="branch7" className="garden-stem garden-stem-thin" d="M116 150 Q95 138 70 132"/>
+        {/* Branch 8 - Top right (Stage 5) */}
+        <path id="branch8" className="garden-stem garden-stem-thin" d="M120 140 Q145 128 168 122"/>
 
-          {/* Branch 2 - right */}
-          <motion.path
-            d="M162 300 Q180 290 200 295"
-            fill="none"
-            stroke="url(#stemGradient)"
-            strokeWidth="3"
-            strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{
-              pathLength: stages.stage2 ? 1 : 0,
-              opacity: stages.stage2 ? 1 : 0,
-            }}
-            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          />
+        {/* Leaves - Stage 1 (base) */}
+        <ellipse id="leaf1" className="garden-leaf" cx="125" cy="460" rx="14" ry="6" transform="rotate(-35 125 460)"/>
+        <ellipse id="leaf2" className="garden-leaf garden-leaf-light" cx="95" cy="465" rx="13" ry="5" transform="rotate(30 95 465)"/>
 
-          {/* More leaves on branches */}
-          <motion.ellipse
-            cx="125"
-            cy="308"
-            rx="14"
-            ry="6"
-            fill="url(#leafGradient)"
-            transform="rotate(-15 125 308)"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage2 ? 1 : 0,
-              opacity: stages.stage2 ? 1 : 0,
-            }}
-            transition={{ duration: 0.5, delay: 0.6, ease: "easeOut" }}
-          />
-          <motion.ellipse
-            cx="195"
-            cy="288"
-            rx="14"
-            ry="6"
-            fill="url(#leafGradient)"
-            transform="rotate(20 195 288)"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage2 ? 1 : 0,
-              opacity: stages.stage2 ? 1 : 0,
-            }}
-            transition={{ duration: 0.5, delay: 0.8, ease: "easeOut" }}
-          />
+        {/* Leaves - Stage 2 */}
+        <ellipse id="leaf3" className="garden-leaf" cx="75" cy="390" rx="14" ry="6" transform="rotate(25 75 390)"/>
+        <ellipse id="leaf4" className="garden-leaf garden-leaf-dark" cx="150" cy="385" rx="13" ry="6" transform="rotate(-30 150 385)"/>
+        <ellipse id="leaf5" className="garden-leaf garden-leaf-light" cx="60" cy="378" rx="10" ry="4" transform="rotate(40 60 378)"/>
+        <ellipse id="leaf6" className="garden-leaf" cx="165" cy="375" rx="11" ry="5" transform="rotate(-35 165 375)"/>
 
-          {/* === STAGE 3: More branches and buds === */}
-          <motion.path
-            d="M156 260 Q135 250 115 258"
-            fill="none"
-            stroke="url(#stemGradient)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{
-              pathLength: stages.stage3 ? 1 : 0,
-              opacity: stages.stage3 ? 1 : 0,
-            }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-          />
-          <motion.path
-            d="M164 240 Q185 230 205 238"
-            fill="none"
-            stroke="url(#stemGradient)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{
-              pathLength: stages.stage3 ? 1 : 0,
-              opacity: stages.stage3 ? 1 : 0,
-            }}
-            transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
-          />
+        {/* Leaves - Stage 3 */}
+        <ellipse id="leaf7" className="garden-leaf" cx="65" cy="310" rx="13" ry="6" transform="rotate(30 65 310)"/>
+        <ellipse id="leaf8" className="garden-leaf garden-leaf-dark" cx="160" cy="305" rx="14" ry="6" transform="rotate(-25 160 305)"/>
+        <ellipse id="leaf9" className="garden-leaf garden-leaf-light" cx="50" cy="298" rx="10" ry="4" transform="rotate(45 50 298)"/>
+        <ellipse id="leaf10" className="garden-leaf" cx="175" cy="295" rx="11" ry="5" transform="rotate(-40 175 295)"/>
 
-          {/* Buds */}
-          <motion.ellipse
-            cx="115"
-            cy="255"
-            rx="5"
-            ry="8"
-            fill="#C4CDB9"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage3 ? 1 : 0,
-              opacity: stages.stage3 ? 1 : 0,
-            }}
-            transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
-          />
-          <motion.ellipse
-            cx="205"
-            cy="235"
-            rx="5"
-            ry="8"
-            fill="#C4CDB9"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage3 ? 1 : 0,
-              opacity: stages.stage3 ? 1 : 0,
-            }}
-            transition={{ duration: 0.5, delay: 0.6, ease: "easeOut" }}
-          />
+        {/* Leaves - Stage 4 */}
+        <ellipse id="leaf11" className="garden-leaf" cx="68" cy="222" rx="12" ry="5" transform="rotate(35 68 222)"/>
+        <ellipse id="leaf12" className="garden-leaf garden-leaf-dark" cx="165" cy="215" rx="13" ry="5" transform="rotate(-30 165 215)"/>
+        <ellipse id="leaf13" className="garden-leaf garden-leaf-light" cx="52" cy="212" rx="9" ry="4" transform="rotate(40 52 212)"/>
+        <ellipse id="leaf14" className="garden-leaf" cx="180" cy="205" rx="10" ry="4" transform="rotate(-35 180 205)"/>
 
-          {/* Decorative dots */}
-          <motion.circle
-            cx="230"
-            cy="340"
-            r="3"
-            fill="#D4DBC9"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage3 ? 1 : 0,
-              opacity: stages.stage3 ? 0.6 : 0,
-            }}
-            transition={{ duration: 0.4, delay: 0.8, ease: "easeOut" }}
-          />
-          <motion.circle
-            cx="95"
-            cy="350"
-            r="2.5"
-            fill="#D4DBC9"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage3 ? 1 : 0,
-              opacity: stages.stage3 ? 0.6 : 0,
-            }}
-            transition={{ duration: 0.4, delay: 1, ease: "easeOut" }}
-          />
+        {/* Leaves - Stage 5 */}
+        <ellipse id="leaf15" className="garden-leaf" cx="78" cy="138" rx="11" ry="4" transform="rotate(30 78 138)"/>
+        <ellipse id="leaf16" className="garden-leaf garden-leaf-dark" cx="160" cy="128" rx="12" ry="4" transform="rotate(-25 160 128)"/>
 
-          {/* === STAGE 4: First flowers === */}
-          {/* Terracotta flower - right branch */}
-          <motion.g
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage4 ? 1 : 0,
-              opacity: stages.stage4 ? 1 : 0,
-            }}
-            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            filter="url(#softGlow)"
-          >
-            <ellipse cx="205" cy="295" rx="10" ry="16" fill="#D4A89A" transform="rotate(-15 205 295)" />
-            <ellipse cx="212" cy="289" rx="10" ry="16" fill="#C9968A" transform="rotate(25 212 289)" />
-            <ellipse cx="200" cy="285" rx="10" ry="16" fill="#D4A89A" transform="rotate(-55 200 285)" />
-            <ellipse cx="218" cy="299" rx="10" ry="16" fill="#C9968A" transform="rotate(65 218 299)" />
-            <circle cx="208" cy="293" r="6" fill="#8B5A4E" />
-          </motion.g>
+        {/* Buds */}
+        <ellipse id="bud1" className="garden-bud" cx="55" cy="300" rx="4" ry="7"/>
+        <ellipse id="bud2" className="garden-bud" cx="175" cy="210" rx="3" ry="6"/>
+        <ellipse id="bud3" className="garden-bud" cx="70" cy="130" rx="3" ry="5"/>
 
-          {/* Ochre flower - left branch */}
-          <motion.g
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage4 ? 1 : 0,
-              opacity: stages.stage4 ? 1 : 0,
-            }}
-            transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
-            filter="url(#softGlow)"
-          >
-            <ellipse cx="118" cy="310" rx="9" ry="14" fill="#D4C49A" transform="rotate(20 118 310)" />
-            <ellipse cx="111" cy="304" rx="9" ry="14" fill="#C9B896" transform="rotate(-20 111 304)" />
-            <ellipse cx="123" cy="302" rx="9" ry="14" fill="#D4C49A" transform="rotate(60 123 302)" />
-            <ellipse cx="108" cy="312" rx="9" ry="14" fill="#C9B896" transform="rotate(-60 108 312)" />
-            <circle cx="115" cy="308" r="5" fill="#736548" />
-          </motion.g>
+        {/* Flower 1 - Terracotta (Lower right branch) Stage 4 */}
+        <g id="flower1" className="garden-flower">
+          <ellipse className="petal-terracotta" cx="160" cy="375" rx="10" ry="16" transform="rotate(-15 160 375)"/>
+          <ellipse className="petal-terracotta-light" cx="167" cy="369" rx="10" ry="16" transform="rotate(25 167 369)"/>
+          <ellipse className="petal-terracotta" cx="155" cy="365" rx="10" ry="16" transform="rotate(-55 155 365)"/>
+          <ellipse className="petal-terracotta-light" cx="173" cy="379" rx="10" ry="16" transform="rotate(65 173 379)"/>
+          <ellipse className="petal-terracotta" cx="163" cy="385" rx="10" ry="16" transform="rotate(100 163 385)"/>
+          <circle className="flower-center" cx="163" cy="373" r="6"/>
+        </g>
 
-          {/* === STAGE 5: More flowers bloom === */}
-          {/* Terracotta flower - upper right */}
-          <motion.g
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage5 ? 1 : 0,
-              opacity: stages.stage5 ? 1 : 0,
-            }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            filter="url(#softGlow)"
-          >
-            <ellipse cx="210" cy="238" rx="8" ry="13" fill="#C9968A" transform="rotate(-10 210 238)" />
-            <ellipse cx="217" cy="232" rx="8" ry="13" fill="#D4A89A" transform="rotate(30 217 232)" />
-            <ellipse cx="205" cy="228" rx="8" ry="13" fill="#C9968A" transform="rotate(-50 205 228)" />
-            <ellipse cx="220" cy="242" rx="8" ry="13" fill="#D4A89A" transform="rotate(70 220 242)" />
-            <circle cx="212" cy="236" r="5" fill="#8B5A4E" />
-          </motion.g>
+        {/* Flower 2 - Ochre (Lower left branch) Stage 4 */}
+        <g id="flower2" className="garden-flower">
+          <ellipse className="petal-ochre" cx="65" cy="385" rx="9" ry="14" transform="rotate(20 65 385)"/>
+          <ellipse className="petal-ochre-dark" cx="58" cy="379" rx="9" ry="14" transform="rotate(-20 58 379)"/>
+          <ellipse className="petal-ochre" cx="70" cy="377" rx="9" ry="14" transform="rotate(60 70 377)"/>
+          <ellipse className="petal-ochre-dark" cx="55" cy="387" rx="9" ry="14" transform="rotate(-60 55 387)"/>
+          <ellipse className="petal-ochre" cx="62" cy="393" rx="9" ry="14" transform="rotate(-100 62 393)"/>
+          <circle className="flower-center-dark" cx="62" cy="383" r="5"/>
+        </g>
 
-          {/* Ochre flower - upper left */}
-          <motion.g
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage5 ? 1 : 0,
-              opacity: stages.stage5 ? 1 : 0,
-            }}
-            transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
-            filter="url(#softGlow)"
-          >
-            <ellipse cx="112" cy="255" rx="7" ry="11" fill="#C9B896" transform="rotate(15 112 255)" />
-            <ellipse cx="106" cy="250" rx="7" ry="11" fill="#D4C49A" transform="rotate(-25 106 250)" />
-            <ellipse cx="116" cy="248" rx="7" ry="11" fill="#C9B896" transform="rotate(55 116 248)" />
-            <ellipse cx="104" cy="258" rx="7" ry="11" fill="#D4C49A" transform="rotate(-65 104 258)" />
-            <circle cx="110" cy="253" r="4" fill="#736548" />
-          </motion.g>
+        {/* Flower 3 - Terracotta (Mid right) Stage 5 */}
+        <g id="flower3" className="garden-flower">
+          <ellipse className="petal-terracotta-light" cx="170" cy="295" rx="8" ry="13" transform="rotate(-10 170 295)"/>
+          <ellipse className="petal-terracotta" cx="176" cy="290" rx="8" ry="13" transform="rotate(30 176 290)"/>
+          <ellipse className="petal-terracotta-light" cx="165" cy="287" rx="8" ry="13" transform="rotate(-50 165 287)"/>
+          <ellipse className="petal-terracotta" cx="179" cy="300" rx="8" ry="13" transform="rotate(70 179 300)"/>
+          <circle className="flower-center" cx="171" cy="294" r="5"/>
+        </g>
 
-          {/* More decorative dots */}
-          <motion.circle
-            cx="240"
-            cy="260"
-            r="2"
-            fill="#E8D9B5"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage5 ? 1 : 0,
-              opacity: stages.stage5 ? 0.7 : 0,
-            }}
-            transition={{ duration: 0.4, delay: 0.5, ease: "easeOut" }}
-          />
-          <motion.circle
-            cx="85"
-            cy="275"
-            r="2.5"
-            fill="#EBDAD4"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage5 ? 1 : 0,
-              opacity: stages.stage5 ? 0.7 : 0,
-            }}
-            transition={{ duration: 0.4, delay: 0.7, ease: "easeOut" }}
-          />
+        {/* Flower 4 - Ochre (Mid left) Stage 5 */}
+        <g id="flower4" className="garden-flower">
+          <ellipse className="petal-ochre-dark" cx="55" cy="305" rx="8" ry="12" transform="rotate(15 55 305)"/>
+          <ellipse className="petal-ochre" cx="49" cy="300" rx="8" ry="12" transform="rotate(-25 49 300)"/>
+          <ellipse className="petal-ochre-dark" cx="59" cy="298" rx="8" ry="12" transform="rotate(55 59 298)"/>
+          <ellipse className="petal-ochre" cx="47" cy="308" rx="8" ry="12" transform="rotate(-65 47 308)"/>
+          <circle className="flower-center" cx="53" cy="303" r="4"/>
+        </g>
 
-          {/* === STAGE 6: Crown flowers and first butterfly === */}
-          {/* Top stem extension */}
-          <motion.path
-            d="M160 180 Q158 150 162 120"
-            fill="none"
-            stroke="url(#stemGradient)"
-            strokeWidth="3"
-            strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{
-              pathLength: stages.stage6 ? 1 : 0,
-              opacity: stages.stage6 ? 1 : 0,
-            }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          />
+        {/* Flower 5 - Terracotta (Upper right) Stage 6 */}
+        <g id="flower5" className="garden-flower">
+          <ellipse className="petal-terracotta" cx="175" cy="205" rx="9" ry="14" transform="rotate(-5 175 205)"/>
+          <ellipse className="petal-terracotta-light" cx="182" cy="199" rx="9" ry="14" transform="rotate(35 182 199)"/>
+          <ellipse className="petal-terracotta" cx="169" cy="196" rx="9" ry="14" transform="rotate(-45 169 196)"/>
+          <ellipse className="petal-terracotta-light" cx="185" cy="210" rx="9" ry="14" transform="rotate(75 185 210)"/>
+          <ellipse className="petal-terracotta" cx="177" cy="215" rx="9" ry="14" transform="rotate(105 177 215)"/>
+          <circle className="flower-center-dark" cx="177" cy="204" r="5"/>
+        </g>
 
-          {/* Crown flower - terracotta */}
-          <motion.g
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{
-              scale: stages.stage6 ? 1 : 0,
-              opacity: stages.stage6 ? 1 : 0,
-            }}
-            transition={{ duration: 0.9, delay: 0.3, ease: "easeOut" }}
-            filter="url(#softGlow)"
-          >
-            <ellipse cx="162" cy="115" rx="12" ry="18" fill="#D4A89A" transform="rotate(-8 162 115)" />
-            <ellipse cx="170" cy="108" rx="12" ry="18" fill="#C9968A" transform="rotate(32 170 108)" />
-            <ellipse cx="155" cy="105" rx="12" ry="18" fill="#D4A89A" transform="rotate(-48 155 105)" />
-            <ellipse cx="174" cy="120" rx="12" ry="18" fill="#C9968A" transform="rotate(72 174 120)" />
-            <ellipse cx="162" cy="128" rx="12" ry="18" fill="#D4A89A" transform="rotate(108 162 128)" />
-            <circle cx="164" cy="114" r="7" fill="#8B5A4E" />
-          </motion.g>
+        {/* Flower 6 - Ochre (Upper left) Stage 6 */}
+        <g id="flower6" className="garden-flower">
+          <ellipse className="petal-ochre" cx="58" cy="218" rx="8" ry="12" transform="rotate(10 58 218)"/>
+          <ellipse className="petal-ochre-dark" cx="52" cy="213" rx="8" ry="12" transform="rotate(-30 52 213)"/>
+          <ellipse className="petal-ochre" cx="62" cy="211" rx="8" ry="12" transform="rotate(50 62 211)"/>
+          <ellipse className="petal-ochre-dark" cx="50" cy="221" rx="8" ry="12" transform="rotate(-70 50 221)"/>
+          <circle className="flower-center" cx="56" cy="216" r="4"/>
+        </g>
 
-          {/* First butterfly */}
-          <motion.g
-            initial={{ x: -30, y: 20, opacity: 0 }}
-            animate={{
-              x: stages.stage6 ? 0 : -30,
-              y: stages.stage6 ? 0 : 20,
-              opacity: stages.stage6 ? 1 : 0,
-            }}
-            transition={{ duration: 1.2, delay: 0.6, ease: "easeOut" }}
-          >
-            <motion.g
-              animate={{
-                y: stages.stage6 ? [0, -5, 0, -3, 0] : 0,
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            >
-              <ellipse cx="240" cy="180" rx="10" ry="6" fill="#E8D9B5" transform="rotate(-20 240 180)" opacity="0.9" />
-              <ellipse cx="250" cy="178" rx="10" ry="6" fill="#D4C49A" transform="rotate(20 250 178)" opacity="0.9" />
-              <ellipse cx="245" cy="182" rx="2.5" ry="7" fill="#5A6A4E" />
-            </motion.g>
-          </motion.g>
+        {/* Crown Flower 7 - Terracotta (Top right) Stage 7 */}
+        <g id="flower7" className="garden-flower">
+          <ellipse className="petal-terracotta-light" cx="168" cy="118" rx="10" ry="15" transform="rotate(-8 168 118)"/>
+          <ellipse className="petal-terracotta" cx="176" cy="111" rx="10" ry="15" transform="rotate(32 176 111)"/>
+          <ellipse className="petal-terracotta-light" cx="161" cy="108" rx="10" ry="15" transform="rotate(-48 161 108)"/>
+          <ellipse className="petal-terracotta" cx="180" cy="123" rx="10" ry="15" transform="rotate(72 180 123)"/>
+          <ellipse className="petal-terracotta-light" cx="168" cy="131" rx="10" ry="15" transform="rotate(108 168 131)"/>
+          <circle className="flower-center" cx="170" cy="117" r="6"/>
+        </g>
 
-          {/* === STAGE 7: Final flourish - second butterfly and falling petals === */}
-          {/* Second butterfly */}
-          <motion.g
-            initial={{ x: 30, y: -20, opacity: 0 }}
-            animate={{
-              x: stages.stage7 ? 0 : 30,
-              y: stages.stage7 ? 0 : -20,
-              opacity: stages.stage7 ? 1 : 0,
-            }}
-            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-          >
-            <motion.g
-              animate={{
-                y: stages.stage7 ? [0, -4, 0, -6, 0] : 0,
-                x: stages.stage7 ? [0, 3, 0, -2, 0] : 0,
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            >
-              <ellipse cx="85" cy="200" rx="8" ry="5" fill="#EBDAD4" transform="rotate(15 85 200)" opacity="0.85" />
-              <ellipse cx="93" cy="199" rx="8" ry="5" fill="#D4A89A" transform="rotate(-15 93 199)" opacity="0.85" />
-              <ellipse cx="89" cy="201" rx="2" ry="6" fill="#5A6A4E" />
-            </motion.g>
-          </motion.g>
+        {/* Crown Flower 8 - Ochre (Top left) Stage 7 */}
+        <g id="flower8" className="garden-flower">
+          <ellipse className="petal-ochre-dark" cx="70" cy="128" rx="8" ry="12" transform="rotate(12 70 128)"/>
+          <ellipse className="petal-ochre" cx="64" cy="122" rx="8" ry="12" transform="rotate(-28 64 122)"/>
+          <ellipse className="petal-ochre-dark" cx="74" cy="120" rx="8" ry="12" transform="rotate(52 74 120)"/>
+          <ellipse className="petal-ochre" cx="62" cy="131" rx="8" ry="12" transform="rotate(-68 62 131)"/>
+          <circle className="flower-center-dark" cx="68" cy="125" r="4"/>
+        </g>
 
-          {/* Falling petals */}
-          <motion.ellipse
-            cx="180"
-            cy="90"
-            rx="5"
-            ry="7"
-            fill="#EBDAD4"
-            transform="rotate(25 180 90)"
-            initial={{ y: 0, opacity: 0 }}
-            animate={{
-              y: stages.stage7 ? [0, 30, 60] : 0,
-              opacity: stages.stage7 ? [0.8, 0.6, 0] : 0,
-              rotate: stages.stage7 ? [25, 45, 65] : 25,
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeIn",
-              delay: 0.5,
-            }}
-          />
-          <motion.ellipse
-            cx="145"
-            cy="140"
-            rx="4"
-            ry="6"
-            fill="#E8D9B5"
-            transform="rotate(-15 145 140)"
-            initial={{ y: 0, opacity: 0 }}
-            animate={{
-              y: stages.stage7 ? [0, 25, 50] : 0,
-              opacity: stages.stage7 ? [0.7, 0.5, 0] : 0,
-              rotate: stages.stage7 ? [-15, 5, 25] : -15,
-            }}
-            transition={{
-              duration: 3.5,
-              repeat: Infinity,
-              ease: "easeIn",
-              delay: 1,
-            }}
-          />
+        {/* Top Crown - Main Flower (Stage 7) */}
+        <g id="flower9" className="garden-flower">
+          <ellipse className="petal-terracotta" cx="120" cy="60" rx="12" ry="18" transform="rotate(0 120 60)"/>
+          <ellipse className="petal-terracotta-light" cx="130" cy="52" rx="12" ry="18" transform="rotate(40 130 52)"/>
+          <ellipse className="petal-terracotta" cx="110" cy="50" rx="12" ry="18" transform="rotate(-40 110 50)"/>
+          <ellipse className="petal-terracotta-light" cx="135" cy="68" rx="12" ry="18" transform="rotate(80 135 68)"/>
+          <ellipse className="petal-terracotta" cx="105" cy="70" rx="12" ry="18" transform="rotate(-80 105 70)"/>
+          <circle className="flower-center-dark" cx="120" cy="62" r="7"/>
+        </g>
 
-          {/* Planted state - roots appearing */}
-          <motion.g
-            initial={{ opacity: 0, scaleY: 0 }}
-            animate={{
-              opacity: isPlanted ? 1 : 0,
-              scaleY: isPlanted ? 1 : 0,
-            }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            style={{ transformOrigin: "160px 420px" }}
-          >
-            <path d="M160 420 Q155 435 145 445" fill="none" stroke="#5A6A4E" strokeWidth="2" opacity="0.6" />
-            <path d="M160 420 Q165 438 175 448" fill="none" stroke="#5A6A4E" strokeWidth="2" opacity="0.6" />
-            <path d="M160 420 Q160 440 160 455" fill="none" stroke="#5A6A4E" strokeWidth="2.5" opacity="0.7" />
-          </motion.g>
-        </svg>
-      </div>
+        {/* Decorative dots */}
+        <circle id="dot1" className="garden-dot" cx="185" cy="400" r="2"/>
+        <circle id="dot2" className="garden-dot" cx="40" cy="395" r="2"/>
+        <circle id="dot3" className="garden-dot" cx="190" cy="320" r="1.5"/>
+        <circle id="dot4" className="garden-dot" cx="35" cy="315" r="1.5"/>
+        <circle id="dot5" className="garden-dot" cx="195" cy="235" r="2"/>
+        <circle id="dot6" className="garden-dot" cx="30" cy="230" r="2"/>
+        <circle id="dot7" className="garden-dot" cx="120" cy="40" r="2"/>
 
+        {/* Butterfly */}
+        <g id="butterfly1" className="garden-butterfly">
+          <ellipse className="butterfly-wing" cx="195" cy="160" rx="8" ry="5" transform="rotate(-20 195 160)"/>
+          <ellipse className="butterfly-wing" cx="203" cy="158" rx="8" ry="5" transform="rotate(20 203 158)"/>
+          <ellipse className="butterfly-body" cx="199" cy="162" rx="2" ry="6"/>
+        </g>
+      </svg>
     </div>
   );
 }

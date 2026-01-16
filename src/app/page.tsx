@@ -362,18 +362,18 @@ export default function Home() {
               </h4>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/join" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors">
-                    Join as a Seeker
+                  <Link href="/join" className="font-body text-sm text-ansar-sage-700 hover:text-ansar-sage-600 hover:underline transition-colors cursor-pointer">
+                    Join as a Seeker →
                   </Link>
                 </li>
                 <li>
-                  <Link href="/volunteer" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors">
-                    Become an Ansar
+                  <Link href="/volunteer" className="font-body text-sm text-ansar-sage-700 hover:text-ansar-sage-600 hover:underline transition-colors cursor-pointer">
+                    Become an Ansar →
                   </Link>
                 </li>
                 <li>
-                  <Link href="/partner" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors">
-                    Partner With Us
+                  <Link href="/partner" className="font-body text-sm text-ansar-sage-700 hover:text-ansar-sage-600 hover:underline transition-colors cursor-pointer">
+                    Partner With Us →
                   </Link>
                 </li>
               </ul>

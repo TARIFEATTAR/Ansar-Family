@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { Loader2, AlertCircle, Building2 } from "lucide-react";
@@ -21,11 +21,24 @@ export default function DashboardGatewayPage() {
     const { user, isLoaded } = useUser();
     const router = useRouter();
 
+    // Sync user to Convex
+    const upsertUser = useMutation(api.users.upsertFromClerk);
+
     // Get current user from Convex
     const currentUser = useQuery(
         api.users.getByClerkId,
         user?.id ? { clerkId: user.id } : "skip"
     );
+
+    useEffect(() => {
+        if (user && isLoaded) {
+            upsertUser({
+                clerkId: user.id,
+                email: user.primaryEmailAddress?.emailAddress ?? "",
+                name: user.fullName ?? user.firstName ?? "User",
+            });
+        }
+    }, [user, isLoaded, upsertUser]);
 
     // If user is a partner_lead, get their organization to find the slug
     const organization = useQuery(

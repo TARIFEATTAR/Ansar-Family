@@ -45,13 +45,13 @@ export default function Home() {
             >
               The Ecosystem
             </Link>
-            <Link
-              href="/sign-in"
-              className="font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors"
-            >
-              Partner Login
-            </Link>
           </nav>
+          <Link
+            href="/sign-in"
+            className="md:ml-0 ml-auto font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors"
+          >
+            Partner Login
+          </Link>
         </div>
       </header>
 

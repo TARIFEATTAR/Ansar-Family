@@ -79,6 +79,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
   const deletePartner = useMutation(api.partners.deletePartner);
   const rejectPartner = useMutation(api.partners.rejectPartner);
   const deleteOrganization = useMutation(api.organizations.deleteOrganization);
+  const clearAllData = useMutation(api.admin.clearAllData);
 
   // Seeker stats
   const disconnectedSeekers = intakes?.filter((i) => i.status === "disconnected") ?? [];
@@ -138,6 +139,17 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
     }
   };
 
+  const handleClearAllData = async () => {
+    const confirmation = prompt(
+      "WARNING: This will delete ALL data (Seekers, Ansars, Partners, Hubs). This cannot be undone.\n\nType 'DELETE ALL' to confirm:"
+    );
+
+    if (confirmation === "DELETE ALL") {
+      const result = await clearAllData();
+      alert(`Deleted:\n- ${result.deleted.intakes} Intakes\n- ${result.deleted.ansars} Ansars\n- ${result.deleted.partners} Partners\n- ${result.deleted.organizations} Organizations`);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-ansar-cream">
       {/* Header */}
@@ -153,6 +165,12 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={handleClearAllData}
+              className="text-xs text-red-600 border border-red-200 px-3 py-1 rounded hover:bg-red-50 transition-colors mr-2"
+            >
+              Clear All Data
+            </button>
             {currentUser && (
               <span className="font-body text-sm text-ansar-gray">
                 {currentUser.name} • <span className="text-ansar-sage-600 capitalize">{currentUser.role?.replace("_", " ")}</span>

@@ -10,7 +10,8 @@
 
 import type * as admin from "../admin.js";
 import type * as ansars from "../ansars.js";
-import type * as debug from "../debug.js";
+import type * as debug_user from "../debug_user.js";
+import type * as fix_my_role from "../fix_my_role.js";
 import type * as intakes from "../intakes.js";
 import type * as organizations from "../organizations.js";
 import type * as pairings from "../pairings.js";
@@ -26,7 +27,8 @@ import type {
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   ansars: typeof ansars;
-  debug: typeof debug;
+  debug_user: typeof debug_user;
+  fix_my_role: typeof fix_my_role;
   intakes: typeof intakes;
   organizations: typeof organizations;
   pairings: typeof pairings;

@@ -242,6 +242,17 @@ export const getById = query({
 export const deletePartner = mutation({
   args: { id: v.id("partners") },
   handler: async (ctx, args) => {
+    const partner = await ctx.db.get(args.id);
+    if (!partner) return;
+
+    // If this partner has an active organization, delete it too
+    if (partner.organizationId) {
+      const org = await ctx.db.get(partner.organizationId);
+      if (org) {
+        await ctx.db.delete(partner.organizationId);
+      }
+    }
+
     await ctx.db.delete(args.id);
   },
 });

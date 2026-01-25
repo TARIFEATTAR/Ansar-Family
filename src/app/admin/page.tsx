@@ -6,7 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Clock, Users, Building2, Heart, Phone, Mail, MapPin, Shield, Loader2, Trash2 } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * SUPER ADMIN DASHBOARD — Central Command
@@ -65,6 +65,8 @@ export default function AdminPage() {
 }
 
 function AdminDashboard({ currentUser }: { currentUser: { role: string; name: string } | null | undefined }) {
+  const [activeTab, setActiveTab] = useState<"inbox" | "directory">("inbox");
+
   const intakes = useQuery(api.intakes.listAll);
   const ansars = useQuery(api.ansars.listAll);
   const partners = useQuery(api.partners.listAll);
@@ -150,6 +152,8 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
     }
   };
 
+  const inboxCount = disconnectedSeekers.length + pendingAnsars.length + pendingPartners.length;
+
   return (
     <main className="min-h-screen bg-ansar-cream">
       {/* Header */}
@@ -181,217 +185,214 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
         </div>
       </header>
 
-      {/* Stats Bar */}
-      <div className="px-6 md:px-12 py-4 bg-white border-b border-ansar-sage-100">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-4 gap-4">
-            {/* Seekers */}
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-ansar-terracotta/10 rounded-full flex items-center justify-center">
-                <Heart className="w-5 h-5 text-ansar-terracotta" />
-              </div>
-              <div>
-                <p className="font-body text-xs uppercase tracking-wider text-ansar-gray">Seekers</p>
-                <p className="font-heading text-lg text-ansar-charcoal">
-                  <span className="text-ansar-terracotta">{disconnectedSeekers.length}</span>
-                  <span className="text-ansar-gray-light mx-1">/</span>
-                  {intakes?.length ?? 0}
-                </p>
-              </div>
-            </div>
-
-            {/* Ansars */}
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-ansar-sage-100 rounded-full flex items-center justify-center">
-                <Users className="w-5 h-5 text-ansar-sage-600" />
-              </div>
-              <div>
-                <p className="font-body text-xs uppercase tracking-wider text-ansar-gray">Ansars</p>
-                <p className="font-heading text-lg text-ansar-charcoal">
-                  <span className="text-ansar-ochre">{pendingAnsars.length}</span>
-                  <span className="text-ansar-gray-light mx-1">/</span>
-                  {ansars?.length ?? 0}
-                </p>
-              </div>
-            </div>
-
-            {/* Partners */}
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-ansar-ochre/10 rounded-full flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-ansar-ochre" />
-              </div>
-              <div>
-                <p className="font-body text-xs uppercase tracking-wider text-ansar-gray">Partners</p>
-                <p className="font-heading text-lg text-ansar-charcoal">
-                  <span className="text-ansar-ochre">{pendingPartners.length}</span>
-                  <span className="text-ansar-gray-light mx-1">/</span>
-                  {partners?.length ?? 0}
-                </p>
-              </div>
-            </div>
-
-            {/* Active Pairings */}
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-ansar-success/10 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-ansar-success" />
-              </div>
-              <div>
-                <p className="font-body text-xs uppercase tracking-wider text-ansar-gray">Active Pairings</p>
-                <p className="font-heading text-lg text-ansar-charcoal">
-                  {activePairings.length}
-                </p>
-              </div>
-            </div>
-          </div>
+      {/* Tabs */}
+      <div className="bg-white border-b border-ansar-sage-100 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 md:px-12 flex items-center gap-8">
+          <button
+            onClick={() => setActiveTab("inbox")}
+            className={`py-4 font-heading text-lg relative ${activeTab === "inbox" ? "text-ansar-charcoal" : "text-ansar-gray hover:text-ansar-sage-600"
+              }`}
+          >
+            Inbox
+            {inboxCount > 0 && (
+              <span className="ml-2 bg-ansar-terracotta text-white text-xs px-2 py-0.5 rounded-full font-body align-middle">
+                {inboxCount}
+              </span>
+            )}
+            {activeTab === "inbox" && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-ansar-sage-600" />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("directory")}
+            className={`py-4 font-heading text-lg relative ${activeTab === "directory" ? "text-ansar-charcoal" : "text-ansar-gray hover:text-ansar-sage-600"
+              }`}
+          >
+            Directory (Active)
+            {activeTab === "directory" && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-ansar-sage-600" />
+            )}
+          </button>
         </div>
       </div>
 
       {/* Content */}
       <div className="px-6 md:px-12 py-8">
         <div className="max-w-6xl mx-auto space-y-12">
-          {/* Disconnected Seekers Section */}
-          <section>
-            <SectionHeader
-              icon={<Heart className="w-4 h-4" />}
-              title="Disconnected Seekers"
-              count={disconnectedSeekers.length}
-              color="terracotta"
-              subtitle="Needs immediate attention"
-            />
 
-            {disconnectedSeekers.length === 0 ? (
-              <EmptyState message="Everyone has a home. Alhamdulillah." />
-            ) : (
-              <div className="grid gap-4">
-                {disconnectedSeekers.map((intake) => (
-                  <IntakeCard
-                    key={intake._id}
-                    intake={intake}
-                    onTriage={() => handleUpdateIntakeStatus(intake._id, "triaged")}
-                    onConnect={() => handleUpdateIntakeStatus(intake._id, "connected")}
-                    onDelete={() => handleDeleteIntake(intake._id)}
+          {activeTab === "inbox" && (
+            <>
+              {/* Disconnected Seekers Section */}
+              <section>
+                <SectionHeader
+                  icon={<Heart className="w-4 h-4" />}
+                  title="Disconnected Seekers"
+                  count={disconnectedSeekers.length}
+                  color="terracotta"
+                  subtitle="Needs immediate attention"
+                />
+
+                {disconnectedSeekers.length === 0 ? (
+                  <EmptyState message="Everyone has a home. Alhamdulillah." />
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {disconnectedSeekers.map((intake) => (
+                      <IntakeCard
+                        key={intake._id}
+                        intake={intake}
+                        onTriage={() => handleUpdateIntakeStatus(intake._id, "triaged")}
+                        onConnect={() => handleUpdateIntakeStatus(intake._id, "connected")}
+                        onDelete={() => handleDeleteIntake(intake._id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* Triaged Seekers (In Progress) */}
+              {triagedSeekers.length > 0 && (
+                <section>
+                  <SectionHeader
+                    icon={<Clock className="w-4 h-4" />}
+                    title="Triaged Seekers"
+                    count={triagedSeekers.length}
+                    color="gray"
+                    subtitle="In progress / Matching"
                   />
-                ))}
-              </div>
-            )}
-          </section>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {triagedSeekers.map((intake) => (
+                      <IntakeCard
+                        key={intake._id}
+                        intake={intake}
+                        onConnect={() => handleUpdateIntakeStatus(intake._id, "connected")}
+                        onDelete={() => handleDeleteIntake(intake._id)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
 
-          {/* Pending Ansars Section */}
-          <section>
-            <SectionHeader
-              icon={<Users className="w-4 h-4" />}
-              title="Pending Ansar Applications"
-              count={pendingAnsars.length}
-              color="sage"
-              subtitle="Awaiting approval"
-            />
+              {/* Pending Ansars Section */}
+              <section>
+                <SectionHeader
+                  icon={<Users className="w-4 h-4" />}
+                  title="Pending Ansar Applications"
+                  count={pendingAnsars.length}
+                  color="sage"
+                  subtitle="Awaiting approval"
+                />
 
-            {pendingAnsars.length === 0 ? (
-              <EmptyState message="No pending Ansar applications." />
-            ) : (
-              <div className="grid gap-4">
-                {pendingAnsars.map((ansar) => (
-                  <AnsarCard
-                    key={ansar._id}
-                    ansar={ansar}
-                    onApprove={() => handleApproveAnsar(ansar._id)}
-                    onDelete={() => handleDeleteAnsar(ansar._id)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
+                {pendingAnsars.length === 0 ? (
+                  <EmptyState message="No pending Ansar applications." />
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {pendingAnsars.map((ansar) => (
+                      <AnsarCard
+                        key={ansar._id}
+                        ansar={ansar}
+                        onApprove={() => handleApproveAnsar(ansar._id)}
+                        onDelete={() => handleDeleteAnsar(ansar._id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
 
-          {/* Pending Partners Section */}
-          <section>
-            <SectionHeader
-              icon={<Building2 className="w-4 h-4" />}
-              title="Pending Partner Applications"
-              count={pendingPartners.length}
-              color="ochre"
-              subtitle="Awaiting approval"
-            />
+              {/* Pending Partners Section */}
+              <section>
+                <SectionHeader
+                  icon={<Building2 className="w-4 h-4" />}
+                  title="Pending Partner Applications"
+                  count={pendingPartners.length}
+                  color="ochre"
+                  subtitle="Awaiting approval"
+                />
 
-            {pendingPartners.length === 0 ? (
-              <EmptyState message="No pending Partner applications." />
-            ) : (
-              <div className="grid gap-4">
-                {pendingPartners.map((partner) => (
-                  <PartnerCard
-                    key={partner._id}
-                    partner={partner}
-                    onApprove={() => handleApprovePartner(partner._id)}
-                    onReject={() => handleRejectPartner(partner._id)}
-                    onDelete={() => handleDeletePartner(partner._id)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Approved Partners with Dashboard Links */}
-          {approvedPartners.length > 0 && (
-            <section>
-              <SectionHeader
-                icon={<CheckCircle2 className="w-4 h-4" />}
-                title="Active Partner Hubs"
-                count={approvedPartners.length}
-                color="success"
-              />
-              <div className="grid gap-4">
-                {approvedPartners.map((partner) => (
-                  <PartnerCard
-                    key={partner._id}
-                    partner={partner}
-                    showDashboardLink
-                    onDeleteOrg={partner.organizationId ? () => handleDeleteOrganization(partner.organizationId!) : undefined}
-                  />
-                ))}
-              </div>
-            </section>
+                {pendingPartners.length === 0 ? (
+                  <EmptyState message="No pending Partner applications." />
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {pendingPartners.map((partner) => (
+                      <PartnerCard
+                        key={partner._id}
+                        partner={partner}
+                        onApprove={() => handleApprovePartner(partner._id)}
+                        onReject={() => handleRejectPartner(partner._id)}
+                        onDelete={() => handleDeletePartner(partner._id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            </>
           )}
 
-          {/* Triaged Seekers */}
-          {triagedSeekers.length > 0 && (
-            <section>
-              <SectionHeader
-                icon={<Clock className="w-4 h-4" />}
-                title="Triaged Seekers"
-                count={triagedSeekers.length}
-                color="gray"
-              />
-              <div className="grid gap-4">
-                {triagedSeekers.map((intake) => (
-                  <IntakeCard
-                    key={intake._id}
-                    intake={intake}
-                    onConnect={() => handleUpdateIntakeStatus(intake._id, "connected")}
-                    onDelete={() => handleDeleteIntake(intake._id)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+          {activeTab === "directory" && (
+            <>
+              {/* Approved Partners with Dashboard Links */}
+              <section>
+                <SectionHeader
+                  icon={<CheckCircle2 className="w-4 h-4" />}
+                  title="Active Partner Hubs"
+                  count={approvedPartners.length}
+                  color="ochre"
+                />
+                {approvedPartners.length === 0 ? <EmptyState message="No active partner hubs yet." /> : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {approvedPartners.map((partner) => (
+                      <PartnerCard
+                        key={partner._id}
+                        partner={partner}
+                        showDashboardLink
+                        onDelete={() => handleDeletePartner(partner._id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
 
-          {/* Connected Seekers */}
-          {connectedSeekers.length > 0 && (
-            <section>
-              <SectionHeader
-                icon={<CheckCircle2 className="w-4 h-4" />}
-                title="Connected Seekers"
-                count={connectedSeekers.length}
-                color="success"
-              />
-              <div className="grid gap-4">
-                {connectedSeekers.map((intake) => (
-                  <IntakeCard
-                    key={intake._id}
-                    intake={intake}
-                    onDelete={() => handleDeleteIntake(intake._id)}
-                  />
-                ))}
-              </div>
-            </section>
+              {/* Connected Seekers */}
+              <section>
+                <SectionHeader
+                  icon={<CheckCircle2 className="w-4 h-4" />}
+                  title="Connected Seekers"
+                  count={connectedSeekers.length}
+                  color="success"
+                />
+                {connectedSeekers.length === 0 ? <EmptyState message="No connected seekers yet." /> : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {connectedSeekers.map((intake) => (
+                      <IntakeCard
+                        key={intake._id}
+                        intake={intake}
+                        onDelete={() => handleDeleteIntake(intake._id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* Active Ansars (Approved) */}
+              <section>
+                <SectionHeader
+                  icon={<CheckCircle2 className="w-4 h-4" />}
+                  title="Active Ansars"
+                  count={approvedAnsars.length}
+                  color="sage"
+                />
+                {approvedAnsars.length === 0 ? <EmptyState message="No active Ansars yet." /> : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {approvedAnsars.map((ansar) => (
+                      <AnsarCard
+                        key={ansar._id}
+                        ansar={ansar}
+                        onDelete={() => handleDeleteAnsar(ansar._id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            </>
           )}
         </div>
       </div>

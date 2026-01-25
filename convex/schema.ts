@@ -28,7 +28,7 @@ export default defineSchema({
       v.literal("ansar"),          // Future: Ansar self-service
       v.literal("seeker")          // Future: Seeker self-service
     ),
-    organizationId: v.optional(v.id("organizations")), // For partner_leads
+    organizationId: v.optional(v.union(v.id("organizations"), v.null())), // For partner_leads
     isActive: v.boolean(),
   })
     .index("by_clerkId", ["clerkId"])
@@ -142,7 +142,7 @@ export default defineSchema({
     seekerId: v.id("intakes"),
     ansarId: v.id("ansars"),
     organizationId: v.id("organizations"),
-    
+
     status: v.union(
       v.literal("pending_intro"),  // Awaiting 3-way intro text
       v.literal("active"),         // Active pairing
@@ -150,11 +150,11 @@ export default defineSchema({
       v.literal("paused"),         // Temporarily paused
       v.literal("ended")           // Ended early
     ),
-    
+
     // Tracking
     pairedAt: v.number(), // Timestamp
     pairedBy: v.optional(v.id("users")), // Partner Lead who made the pairing
-    
+
     // Notes
     notes: v.optional(v.string()),
     endReason: v.optional(v.string()),
@@ -224,7 +224,8 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("approved"),
       v.literal("active"),
-      v.literal("inactive")
+      v.literal("inactive"),
+      v.literal("rejected")
     ),
     organizationId: v.optional(v.id("organizations")),
     notes: v.optional(v.string()),

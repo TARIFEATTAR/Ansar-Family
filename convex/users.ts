@@ -57,7 +57,7 @@ export const upsertFromClerk = mutation({
       // FORCE Super Admin if email matches (Overrides everything else)
       if (newRole === "super_admin") {
         updates.role = "super_admin";
-        updates.organizationId = undefined; // Remove user from any organization
+        updates.organizationId = null; // Remove user from any organization
       }
       // Otherwise, handle partner promotion only if not already a super admin
       else if (newRole === "partner_lead" && existing.role !== "super_admin") {

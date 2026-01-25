@@ -47,6 +47,18 @@ export default function AdminPage() {
     );
   }
 
+  // While syncing user...
+  if (!currentUser && user) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-ansar-sage-600 animate-spin" />
+          <p className="text-ansar-gray font-body">Syncing admin profile...</p>
+        </div>
+      </main>
+    );
+  }
+
   if (!user) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-ansar-cream">

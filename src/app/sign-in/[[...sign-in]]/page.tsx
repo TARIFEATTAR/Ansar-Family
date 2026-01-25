@@ -18,7 +18,8 @@ export default function SignInPage() {
             Sign in to access your dashboard
           </p>
         </div>
-        <SignIn 
+        <SignIn
+          forceRedirectUrl="/dashboard"
           appearance={{
             elements: {
               formButtonPrimary: "bg-ansar-sage-600 hover:bg-ansar-sage-700",

@@ -69,9 +69,17 @@ export default function PartnerLandingPage() {
               {organization.name}
             </span>
           </div>
-          <Link href="/" className="font-body text-sm text-ansar-gray hover:text-ansar-charcoal transition-colors">
-            Ansar Family Network
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link href="/" className="font-body text-sm text-ansar-gray hover:text-ansar-charcoal transition-colors">
+              Ansar Family Network
+            </Link>
+            <Link
+              href="/sign-in"
+              className="font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors flex items-center gap-1.5"
+            >
+              Partner Login →
+            </Link>
+          </div>
         </nav>
       </header>
 
@@ -114,7 +122,7 @@ export default function PartnerLandingPage() {
             animate="visible"
             custom={2}
           >
-            Part of the Ansar Family network, supporting new Muslims and those 
+            Part of the Ansar Family network, supporting new Muslims and those
             reconnecting with their faith in {organization.city}.
           </motion.p>
 

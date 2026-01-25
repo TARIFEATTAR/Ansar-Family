@@ -6,15 +6,15 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import Link from "next/link";
 import { useParams, notFound } from "next/navigation";
-import { 
-  ArrowLeft, 
-  CheckCircle2, 
-  Users, 
-  Heart, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Building2, 
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Users,
+  Heart,
+  Phone,
+  Mail,
+  MapPin,
+  Building2,
   Loader2,
   Link2,
   X,
@@ -40,7 +40,7 @@ export default function PartnerDashboardPage() {
 
   // Get organization by slug
   const organization = useQuery(api.organizations.getBySlug, { slug });
-  
+
   // Sync user to Convex
   const upsertUser = useMutation(api.users.upsertFromClerk);
   const currentUser = useQuery(
@@ -85,6 +85,25 @@ export default function PartnerDashboardPage() {
     notFound();
   }
 
+  // Authorization check: Partner Leads can only access their own organization
+  if (currentUser && currentUser.role === "partner_lead") {
+    if (currentUser.organizationId !== organization._id) {
+      return (
+        <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
+          <div className="text-center max-w-md mx-auto px-6">
+            <h1 className="font-heading text-2xl text-ansar-charcoal mb-4">Access Denied</h1>
+            <p className="font-body text-ansar-gray mb-6">
+              You don&apos;t have permission to access this organization&apos;s dashboard.
+            </p>
+            <a href="/dashboard" className="btn-primary inline-block">
+              Go to Your Dashboard
+            </a>
+          </div>
+        </main>
+      );
+    }
+  }
+
   return <PartnerDashboard organization={organization} currentUser={currentUser} />;
 }
 
@@ -97,10 +116,10 @@ interface Organization {
   hubLevel: number;
 }
 
-function PartnerDashboard({ 
-  organization, 
-  currentUser 
-}: { 
+function PartnerDashboard({
+  organization,
+  currentUser
+}: {
   organization: Organization;
   currentUser: { _id: Id<"users">; role: string; name: string } | null | undefined;
 }) {
@@ -112,7 +131,7 @@ function PartnerDashboard({
   const ansars = useQuery(api.ansars.listByOrganization, { organizationId: organization._id });
   const pairings = useQuery(api.pairings.listByOrganization, { organizationId: organization._id });
   const pairingStats = useQuery(api.pairings.getOrgStats, { organizationId: organization._id });
-  
+
   // Available for pairing
   const readyToPair = useQuery(api.intakes.listReadyForPairing, { organizationId: organization._id });
   const availableAnsars = useQuery(api.ansars.listAvailableForPairing, { organizationId: organization._id });
@@ -190,26 +209,26 @@ function PartnerDashboard({
       <div className="px-6 md:px-12 py-4 bg-white border-b border-ansar-sage-100">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-4 gap-4">
-            <StatCard 
+            <StatCard
               icon={<Heart className="w-5 h-5 text-ansar-terracotta" />}
               label="Seekers"
               value={seekers?.length ?? 0}
               highlight={triagedSeekers.length}
               highlightLabel="ready to pair"
             />
-            <StatCard 
+            <StatCard
               icon={<Users className="w-5 h-5 text-ansar-sage-600" />}
               label="Ansars"
               value={ansars?.length ?? 0}
               highlight={approvedAnsars.length}
               highlightLabel="available"
             />
-            <StatCard 
+            <StatCard
               icon={<Link2 className="w-5 h-5 text-ansar-ochre" />}
               label="Active Pairings"
               value={activePairings.length}
             />
-            <StatCard 
+            <StatCard
               icon={<CheckCircle2 className="w-5 h-5 text-ansar-success" />}
               label="Completed"
               value={pairingStats?.completed ?? 0}
@@ -244,8 +263,8 @@ function PartnerDashboard({
             ) : (
               <div className="grid gap-4">
                 {triagedSeekers.map((seeker) => (
-                  <SeekerCard 
-                    key={seeker._id} 
+                  <SeekerCard
+                    key={seeker._id}
                     seeker={seeker}
                     action={
                       availableAnsars && availableAnsars.length > 0 ? (
@@ -280,8 +299,8 @@ function PartnerDashboard({
               </h2>
               <div className="grid gap-4">
                 {activePairings.filter(p => p.status === "pending_intro").map((pairing) => (
-                  <PairingCard 
-                    key={pairing._id} 
+                  <PairingCard
+                    key={pairing._id}
                     pairing={pairing}
                     seekers={seekers ?? []}
                     ansars={ansars ?? []}
@@ -304,8 +323,8 @@ function PartnerDashboard({
               </h2>
               <div className="grid gap-4">
                 {activePairings.filter(p => p.status === "active").map((pairing) => (
-                  <PairingCard 
-                    key={pairing._id} 
+                  <PairingCard
+                    key={pairing._id}
                     pairing={pairing}
                     seekers={seekers ?? []}
                     ansars={ansars ?? []}
@@ -372,13 +391,13 @@ function PartnerDashboard({
 // COMPONENTS
 // ═══════════════════════════════════════════════════════════════
 
-function StatCard({ 
-  icon, 
-  label, 
-  value, 
-  highlight, 
-  highlightLabel 
-}: { 
+function StatCard({
+  icon,
+  label,
+  value,
+  highlight,
+  highlightLabel
+}: {
   icon: React.ReactNode;
   label: string;
   value: number;
@@ -405,10 +424,10 @@ function StatCard({
   );
 }
 
-function SeekerCard({ 
-  seeker, 
-  action 
-}: { 
+function SeekerCard({
+  seeker,
+  action
+}: {
   seeker: {
     _id: Id<"intakes">;
     fullName: string;
@@ -465,15 +484,17 @@ function SeekerCard({
   );
 }
 
-function AnsarCard({ ansar }: { ansar: {
-  _id: Id<"ansars">;
-  fullName: string;
-  phone: string;
-  city: string;
-  practiceLevel: string;
-  supportAreas: string[];
-  gender: string;
-}}) {
+function AnsarCard({ ansar }: {
+  ansar: {
+    _id: Id<"ansars">;
+    fullName: string;
+    phone: string;
+    city: string;
+    practiceLevel: string;
+    supportAreas: string[];
+    gender: string;
+  }
+}) {
   return (
     <div className="card p-6">
       <div className="flex items-start justify-between">
@@ -510,12 +531,12 @@ function AnsarCard({ ansar }: { ansar: {
   );
 }
 
-function PairingCard({ 
-  pairing, 
-  seekers, 
+function PairingCard({
+  pairing,
+  seekers,
   ansars,
-  onMarkIntroSent 
-}: { 
+  onMarkIntroSent
+}: {
   pairing: {
     _id: Id<"pairings">;
     seekerId: Id<"intakes">;
@@ -572,12 +593,12 @@ function PairingCard({
   );
 }
 
-function PairingModal({ 
-  seeker, 
-  availableAnsars, 
-  onSelect, 
-  onClose 
-}: { 
+function PairingModal({
+  seeker,
+  availableAnsars,
+  onSelect,
+  onClose
+}: {
   seeker?: {
     _id: Id<"intakes">;
     fullName: string;
@@ -617,7 +638,7 @@ function PairingModal({
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <div className="p-6 overflow-y-auto max-h-[60vh]">
           {genderMatchedAnsars.length === 0 ? (
             <div className="text-center py-8">

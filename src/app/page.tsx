@@ -45,54 +45,56 @@ export default function Home() {
             >
               The Ecosystem
             </Link>
+            <Link
+              href="/sign-in"
+              className="font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors"
+            >
+              Partner Login
+            </Link>
           </nav>
         </div>
       </header>
 
       {/* Content wrapper */}
       <div className="relative">
-        
+
         {/* ============================================
             HERO SECTION
             ============================================ */}
         <section className="min-h-screen flex flex-col justify-center px-6 pt-32 pb-16">
           <div className="max-w-[900px] mx-auto text-center">
             {/* Label */}
-            <p 
-              className={`font-body text-xs font-normal tracking-[0.2em] uppercase text-ansar-muted mb-6 transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
-              }`}
+            <p
+              className={`font-body text-xs font-normal tracking-[0.2em] uppercase text-ansar-muted mb-6 transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+                }`}
               style={{ transitionDelay: '200ms' }}
             >
               No One Walks Alone
             </p>
 
             {/* Title */}
-            <h1 
-              className={`font-display text-[clamp(3rem,2.5rem+2.5vw,5rem)] text-ansar-charcoal mb-8 leading-[1.15] transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[30px]'
-              }`}
+            <h1
+              className={`font-display text-[clamp(3rem,2.5rem+2.5vw,5rem)] text-ansar-charcoal mb-8 leading-[1.15] transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[30px]'
+                }`}
               style={{ transitionDelay: '400ms' }}
             >
               Every Heart Rooted
             </h1>
 
             {/* Description */}
-            <p 
-              className={`font-body text-lg text-ansar-gray max-w-[680px] mx-auto mb-16 transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
-              }`}
+            <p
+              className={`font-body text-lg text-ansar-gray max-w-[680px] mx-auto mb-16 transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+                }`}
               style={{ transitionDelay: '600ms' }}
             >
-              We provide the infrastructure so local communities can focus on nurturing 
+              We provide the infrastructure so local communities can focus on nurturing
               those new to Islam. We handle the system. You provide the support.
             </p>
 
             {/* Three Pathways */}
-            <div 
-              className={`grid md:grid-cols-3 gap-6 transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[30px]'
-              }`}
+            <div
+              className={`grid md:grid-cols-3 gap-6 transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[30px]'
+                }`}
               style={{ transitionDelay: '800ms' }}
             >
               {/* Seeker Card */}
@@ -177,13 +179,13 @@ export default function Home() {
             </h2>
             <div className="space-y-6 font-body text-lg text-ansar-gray leading-relaxed">
               <p>
-                Every year, thousands embrace Islam or return to their faith after years away. 
-                They&apos;re filled with hope, curiosity, and a desire to grow. But too often, 
+                Every year, thousands embrace Islam or return to their faith after years away.
+                They&apos;re filled with hope, curiosity, and a desire to grow. But too often,
                 that spark fades when they can&apos;t find community.
               </p>
               <p>
-                Masjids are busy. Programs are scattered. Resources feel overwhelming. 
-                And the personal connection that transforms knowledge into lived faith? 
+                Masjids are busy. Programs are scattered. Resources feel overwhelming.
+                And the personal connection that transforms knowledge into lived faith?
                 That&apos;s rare.
               </p>
               <p className="text-ansar-charcoal font-medium">
@@ -206,14 +208,14 @@ export default function Home() {
             </h2>
             <div className="space-y-6 font-body text-lg text-ansar-gray leading-relaxed mb-12">
               <p>
-                Ansar Family is a platform that connects seekers with trained volunteer mentors 
-                called <strong className="text-ansar-sage-700">Ansars</strong>, coordinated 
-                through local <strong className="text-ansar-sage-700">Partner Hubs</strong> like 
+                Ansar Family is a platform that connects seekers with trained volunteer mentors
+                called <strong className="text-ansar-sage-700">Ansars</strong>, coordinated
+                through local <strong className="text-ansar-sage-700">Partner Hubs</strong> like
                 masjids, MSAs, and community organizations.
               </p>
               <p>
-                We don&apos;t replace your local community. We give them the tools, training, 
-                and systems to do what they already want to do: welcome and support those 
+                We don&apos;t replace your local community. We give them the tools, training,
+                and systems to do what they already want to do: welcome and support those
                 new to the faith.
               </p>
             </div>
@@ -272,8 +274,8 @@ export default function Home() {
                 <div>
                   <h3 className="font-display text-2xl text-ansar-charcoal mb-2">Seekers</h3>
                   <p className="font-body text-ansar-gray leading-relaxed">
-                    Those new to Islam or reconnecting after time away. You&apos;re not a project. 
-                    You&apos;re a person with questions, hopes, and a journey that matters. 
+                    Those new to Islam or reconnecting after time away. You&apos;re not a project.
+                    You&apos;re a person with questions, hopes, and a journey that matters.
                     We pair you with an Ansar who walks beside you at your pace.
                   </p>
                 </div>
@@ -287,8 +289,8 @@ export default function Home() {
                 <div>
                   <h3 className="font-display text-2xl text-ansar-charcoal mb-2">Ansars</h3>
                   <p className="font-body text-ansar-gray leading-relaxed">
-                    Volunteer mentors who offer their time, knowledge, and presence. 
-                    You don&apos;t need to be a scholar. You need to be kind, consistent, 
+                    Volunteer mentors who offer their time, knowledge, and presence.
+                    You don&apos;t need to be a scholar. You need to be kind, consistent,
                     and willing to learn alongside your seeker. We train and support you.
                   </p>
                 </div>
@@ -302,8 +304,8 @@ export default function Home() {
                 <div>
                   <h3 className="font-display text-2xl text-ansar-charcoal mb-2">Partner Hubs</h3>
                   <p className="font-body text-ansar-gray leading-relaxed">
-                    Masjids, MSAs, and organizations that host the program locally. 
-                    You provide the space and community. We provide the dashboard, 
+                    Masjids, MSAs, and organizations that host the program locally.
+                    You provide the space and community. We provide the dashboard,
                     training, and matching system. Together, you anchor hearts.
                   </p>
                 </div>
@@ -324,20 +326,20 @@ export default function Home() {
               Whether you&apos;re seeking connection, ready to give back, or want to bring this to your community, there&apos;s a place for you in the Ansar Family.
             </p>
             <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
-              <Link 
-                href="/join" 
+              <Link
+                href="/join"
                 className="inline-flex items-center justify-center px-8 py-4 bg-ansar-sage-600 text-white font-body rounded-full hover:bg-ansar-sage-700 transition-all hover:-translate-y-0.5"
               >
                 I&apos;m a Seeker
               </Link>
-              <Link 
-                href="/volunteer" 
+              <Link
+                href="/volunteer"
                 className="inline-flex items-center justify-center px-8 py-4 bg-ansar-terracotta-600 text-white font-body rounded-full hover:bg-ansar-terracotta-700 transition-all hover:-translate-y-0.5"
               >
                 I Want to Volunteer
               </Link>
-              <Link 
-                href="/partner" 
+              <Link
+                href="/partner"
                 className="inline-flex items-center justify-center px-8 py-4 border-2 border-ansar-ochre-600 text-ansar-ochre-700 font-body rounded-full hover:bg-ansar-ochre-50 transition-all hover:-translate-y-0.5"
               >
                 Register a Hub
@@ -359,7 +361,7 @@ export default function Home() {
                 Ansar Family
               </h3>
               <p className="font-body text-sm text-ansar-gray leading-relaxed">
-                Every heart rooted. Building bridges between those new to Islam 
+                Every heart rooted. Building bridges between those new to Islam
                 and the communities that welcome them home.
               </p>
             </div>

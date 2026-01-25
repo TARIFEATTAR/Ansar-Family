@@ -20,20 +20,25 @@ export const upsertFromClerk = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    // 1. Check if this email is associated with an approved Partner Application
-    const partnerApp = await ctx.db
-      .query("partners")
-      .withIndex("by_email", (q) => q.eq("leadEmail", args.email))
-      .filter((q) => q.neq(q.field("status"), "pending"))
-      .first();
-
-    // 2. Determine intended role and organization based on partner app
+    // 1. Check for Super Admin emails (TODO: Move to env/config)
+    const superAdminEmails = ["jordan@tarifeattar.com"];
     let newRole: "super_admin" | "partner_lead" | "ansar" | "seeker" | undefined = undefined;
     let newOrganizationId = undefined;
 
-    if (partnerApp && partnerApp.organizationId) {
-      newRole = "partner_lead";
-      newOrganizationId = partnerApp.organizationId;
+    if (superAdminEmails.includes(args.email.toLowerCase())) {
+      newRole = "super_admin";
+    } else {
+      // 2. Check if this email is associated with an approved Partner Application
+      const partnerApp = await ctx.db
+        .query("partners")
+        .withIndex("by_email", (q) => q.eq("leadEmail", args.email))
+        .filter((q) => q.neq(q.field("status"), "pending"))
+        .first();
+
+      if (partnerApp && partnerApp.organizationId) {
+        newRole = "partner_lead";
+        newOrganizationId = partnerApp.organizationId;
+      }
     }
 
     // 3. Check if user already exists
@@ -49,8 +54,10 @@ export const upsertFromClerk = mutation({
         name: args.name,
       };
 
-      // Upgrade role if they are now a partner lead (and not a super_admin)
-      if (existing.role !== "super_admin" && newRole === "partner_lead") {
+      // Upgrade role if needed
+      if (newRole === "super_admin" && existing.role !== "super_admin") {
+        updates.role = "super_admin";
+      } else if (newRole === "partner_lead" && existing.role !== "super_admin") {
         updates.role = "partner_lead";
         updates.organizationId = newOrganizationId;
       }

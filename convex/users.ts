@@ -31,7 +31,7 @@ export const upsertFromClerk = mutation({
       // 2. Check if this email is associated with an approved Partner Application
       const partnerApp = await ctx.db
         .query("partners")
-        .withIndex("by_email", (q) => q.eq("leadEmail", args.email))
+        .withIndex("by_email", (q) => q.eq("leadEmail", args.email.toLowerCase()))
         .filter((q) => q.neq(q.field("status"), "pending"))
         .first();
 

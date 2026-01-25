@@ -108,7 +108,7 @@ export const create = mutation({
     const partnerId = await ctx.db.insert("partners", {
       leadName: args.leadName,
       leadPhone: args.leadPhone,
-      leadEmail: args.leadEmail,
+      leadEmail: args.leadEmail.toLowerCase(),
       leadIsConvert: args.leadIsConvert,
       orgName: args.orgName,
       orgType: args.orgType,

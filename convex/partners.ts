@@ -235,3 +235,23 @@ export const getById = query({
     return await ctx.db.get(args.id);
   },
 });
+
+/**
+ * Deletes a Partner record.
+ */
+export const deletePartner = mutation({
+  args: { id: v.id("partners") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
+  },
+});
+
+/**
+ * Rejects a Partner application.
+ */
+export const rejectPartner = mutation({
+  args: { id: v.id("partners") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { status: "rejected" as any });
+  },
+});

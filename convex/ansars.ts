@@ -186,3 +186,13 @@ export const assignToOrganization = mutation({
     });
   },
 });
+
+/**
+ * Deletes an Ansar record.
+ */
+export const deleteAnsar = mutation({
+  args: { id: v.id("ansars") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
+  },
+});

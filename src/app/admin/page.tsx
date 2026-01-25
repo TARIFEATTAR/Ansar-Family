@@ -4,7 +4,7 @@ import { useUser, UserButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Clock, Users, Building2, Heart, Phone, Mail, MapPin, Shield, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, Users, Building2, Heart, Phone, Mail, MapPin, Shield, Loader2, Trash2 } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
 import { useEffect } from "react";
 
@@ -74,6 +74,11 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
   const updateAnsarStatus = useMutation(api.ansars.updateStatus);
   const approvePartner = useMutation(api.partners.approveAndCreateOrg);
   const setUserRole = useMutation(api.users.setRole);
+  const deleteIntake = useMutation(api.intakes.deleteIntake);
+  const deleteAnsar = useMutation(api.ansars.deleteAnsar);
+  const deletePartner = useMutation(api.partners.deletePartner);
+  const rejectPartner = useMutation(api.partners.rejectPartner);
+  const deleteOrganization = useMutation(api.organizations.deleteOrganization);
 
   // Seeker stats
   const disconnectedSeekers = intakes?.filter((i) => i.status === "disconnected") ?? [];
@@ -95,12 +100,42 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
     await updateIntakeStatus({ id, status });
   };
 
+  const handleDeleteIntake = async (id: Id<"intakes">) => {
+    if (confirm("Are you sure you want to delete this intake? This action cannot be undone.")) {
+      await deleteIntake({ id });
+    }
+  };
+
   const handleApproveAnsar = async (id: Id<"ansars">) => {
     await updateAnsarStatus({ id, status: "approved" });
   };
 
+  const handleDeleteAnsar = async (id: Id<"ansars">) => {
+    if (confirm("Are you sure you want to delete this Ansar? This action cannot be undone.")) {
+      await deleteAnsar({ id });
+    }
+  };
+
   const handleApprovePartner = async (id: Id<"partners">) => {
     await approvePartner({ id });
+  };
+
+  const handleRejectPartner = async (id: Id<"partners">) => {
+    if (confirm("Are you sure you want to reject this Partner application?")) {
+      await rejectPartner({ id });
+    }
+  };
+
+  const handleDeletePartner = async (id: Id<"partners">) => {
+    if (confirm("Are you sure you want to delete this Partner? This action cannot be undone.")) {
+      await deletePartner({ id });
+    }
+  };
+
+  const handleDeleteOrganization = async (id: Id<"organizations">) => {
+    if (confirm("Are you sure you want to delete this Partner Hub? This action cannot be undone.")) {
+      await deleteOrganization({ id });
+    }
   };
 
   return (
@@ -216,6 +251,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
                     intake={intake}
                     onTriage={() => handleUpdateIntakeStatus(intake._id, "triaged")}
                     onConnect={() => handleUpdateIntakeStatus(intake._id, "connected")}
+                    onDelete={() => handleDeleteIntake(intake._id)}
                   />
                 ))}
               </div>
@@ -241,6 +277,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
                     key={ansar._id}
                     ansar={ansar}
                     onApprove={() => handleApproveAnsar(ansar._id)}
+                    onDelete={() => handleDeleteAnsar(ansar._id)}
                   />
                 ))}
               </div>
@@ -266,6 +303,8 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
                     key={partner._id}
                     partner={partner}
                     onApprove={() => handleApprovePartner(partner._id)}
+                    onReject={() => handleRejectPartner(partner._id)}
+                    onDelete={() => handleDeletePartner(partner._id)}
                   />
                 ))}
               </div>
@@ -283,7 +322,12 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
               />
               <div className="grid gap-4">
                 {approvedPartners.map((partner) => (
-                  <PartnerCard key={partner._id} partner={partner} showDashboardLink />
+                  <PartnerCard
+                    key={partner._id}
+                    partner={partner}
+                    showDashboardLink
+                    onDeleteOrg={partner.organizationId ? () => handleDeleteOrganization(partner.organizationId!) : undefined}
+                  />
                 ))}
               </div>
             </section>
@@ -304,6 +348,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
                     key={intake._id}
                     intake={intake}
                     onConnect={() => handleUpdateIntakeStatus(intake._id, "connected")}
+                    onDelete={() => handleDeleteIntake(intake._id)}
                   />
                 ))}
               </div>
@@ -321,7 +366,11 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
               />
               <div className="grid gap-4">
                 {connectedSeekers.map((intake) => (
-                  <IntakeCard key={intake._id} intake={intake} />
+                  <IntakeCard
+                    key={intake._id}
+                    intake={intake}
+                    onDelete={() => handleDeleteIntake(intake._id)}
+                  />
                 ))}
               </div>
             </section>
@@ -395,9 +444,10 @@ interface IntakeCardProps {
   };
   onTriage?: () => void;
   onConnect?: () => void;
+  onDelete?: () => void;
 }
 
-function IntakeCard({ intake, onTriage, onConnect }: IntakeCardProps) {
+function IntakeCard({ intake, onTriage, onConnect, onDelete }: IntakeCardProps) {
   const journeyLabels = {
     new_muslim: "New Muslim",
     reconnecting: "Reconnecting",
@@ -446,7 +496,7 @@ function IntakeCard({ intake, onTriage, onConnect }: IntakeCardProps) {
             </div>
           )}
         </div>
-        <div className="flex gap-2 ml-4">
+        <div className="flex actions gap-2 ml-4">
           {onTriage && (
             <button
               onClick={onTriage}
@@ -461,6 +511,15 @@ function IntakeCard({ intake, onTriage, onConnect }: IntakeCardProps) {
               className="btn-primary text-sm py-2 px-4"
             >
               Mark Connected
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="p-2 text-ansar-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Delete Intake"
+            >
+              <Trash2 className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -481,9 +540,10 @@ interface AnsarCardProps {
     status: string;
   };
   onApprove?: () => void;
+  onDelete?: () => void;
 }
 
-function AnsarCard({ ansar, onApprove }: AnsarCardProps) {
+function AnsarCard({ ansar, onApprove, onDelete }: AnsarCardProps) {
   const practiceLevelLabels: Record<string, string> = {
     consistent: "Consistent",
     steady: "Steady",
@@ -527,14 +587,25 @@ function AnsarCard({ ansar, onApprove }: AnsarCardProps) {
             </div>
           )}
         </div>
-        {onApprove && (
-          <button
-            onClick={onApprove}
-            className="btn-primary text-sm py-2 px-4 ml-4"
-          >
-            Approve
-          </button>
-        )}
+        <div className="flex gap-2 ml-4">
+          {onApprove && (
+            <button
+              onClick={onApprove}
+              className="btn-primary text-sm py-2 px-4"
+            >
+              Approve
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="p-2 text-ansar-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Delete Ansar"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -554,10 +625,13 @@ interface PartnerCardProps {
     organizationId?: Id<"organizations">;
   };
   onApprove?: () => void;
+  onReject?: () => void;
+  onDelete?: () => void;
+  onDeleteOrg?: () => void;
   showDashboardLink?: boolean;
 }
 
-function PartnerCard({ partner, onApprove, showDashboardLink }: PartnerCardProps) {
+function PartnerCard({ partner, onApprove, onReject, onDelete, onDeleteOrg, showDashboardLink }: PartnerCardProps) {
   const orgTypeLabels: Record<string, string> = {
     masjid: "Masjid",
     msa: "MSA",
@@ -618,6 +692,32 @@ function PartnerCard({ partner, onApprove, showDashboardLink }: PartnerCardProps
               className="btn-primary text-sm py-2 px-4"
             >
               Approve & Create Hub
+            </button>
+          )}
+          {onReject && (
+            <button
+              onClick={onReject}
+              className="btn-secondary text-sm py-2 px-4 text-red-600 border-red-200 hover:bg-red-50"
+            >
+              Reject
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="p-2 text-ansar-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Delete Partner"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+          {onDeleteOrg && (
+            <button
+              onClick={onDeleteOrg}
+              className="p-2 text-ansar-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Delete Partner Hub"
+            >
+              <Trash2 className="w-4 h-4" />
             </button>
           )}
         </div>

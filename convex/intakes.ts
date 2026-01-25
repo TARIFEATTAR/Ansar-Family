@@ -121,6 +121,16 @@ export const getById = query({
 });
 
 // ═══════════════════════════════════════════════════════════════
+// DELETE — Remove an intake (Supad Admin / Cleanup)
+// ═══════════════════════════════════════════════════════════════
+export const deleteIntake = mutation({
+  args: { id: v.id("intakes") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
 // ORGANIZATION-SCOPED QUERIES (Partner Lead Access)
 // ═══════════════════════════════════════════════════════════════
 

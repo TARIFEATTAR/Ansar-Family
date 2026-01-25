@@ -18,7 +18,8 @@ import {
   Loader2,
   Link2,
   X,
-  UserPlus
+  UserPlus,
+  Trash2
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 
@@ -141,6 +142,7 @@ function PartnerDashboard({
   const markIntroSent = useMutation(api.pairings.markIntroSent);
   const assignSeeker = useMutation(api.intakes.assignToOrganization);
   const assignAnsar = useMutation(api.ansars.assignToOrganization);
+  const deleteIntake = useMutation(api.intakes.deleteIntake);
 
   // Stats
   const triagedSeekers = seekers?.filter((s) => s.status === "triaged") ?? [];
@@ -170,6 +172,12 @@ function PartnerDashboard({
 
   const handleMarkIntroSent = async (pairingId: Id<"pairings">) => {
     await markIntroSent({ id: pairingId });
+  };
+
+  const handleDeleteSeeker = async (id: Id<"intakes">) => {
+    if (confirm("Are you sure you want to remove this seeker? This cannot be undone.")) {
+      await deleteIntake({ id });
+    }
   };
 
   const openPairingModal = (seekerId: Id<"intakes">) => {
@@ -281,6 +289,7 @@ function PartnerDashboard({
                         </span>
                       )
                     }
+                    onDelete={() => handleDeleteSeeker(seeker._id)}
                   />
                 ))}
               </div>
@@ -426,7 +435,8 @@ function StatCard({
 
 function SeekerCard({
   seeker,
-  action
+  action,
+  onDelete
 }: {
   seeker: {
     _id: Id<"intakes">;
@@ -438,6 +448,7 @@ function SeekerCard({
     supportAreas: string[];
   };
   action?: React.ReactNode;
+  onDelete?: () => void;
 }) {
   const journeyLabels: Record<string, string> = {
     new_muslim: "New Muslim",
@@ -478,7 +489,18 @@ function SeekerCard({
             </div>
           )}
         </div>
-        {action && <div className="ml-4">{action}</div>}
+        <div className="ml-4 flex items-center gap-2">
+          {action}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="p-2 text-ansar-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Remove Seeker"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

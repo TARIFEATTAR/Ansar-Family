@@ -20,44 +20,54 @@ export const upsertFromClerk = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    // Check if user exists
-    const existing = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
-      .first();
-
-    if (existing) {
-      // Update existing user
-      await ctx.db.patch(existing._id, {
-        email: args.email,
-        name: args.name,
-      });
-      return existing._id;
-    }
-
-    // Check if this email is a Partner Lead (from approved partner application)
+    // 1. Check if this email is associated with an approved Partner Application
     const partnerApp = await ctx.db
       .query("partners")
       .withIndex("by_email", (q) => q.eq("leadEmail", args.email))
       .filter((q) => q.neq(q.field("status"), "pending"))
       .first();
 
-    // Determine role
-    let role: "super_admin" | "partner_lead" | "ansar" | "seeker" = "seeker";
-    let organizationId = undefined;
+    // 2. Determine intended role and organization based on partner app
+    let newRole: "super_admin" | "partner_lead" | "ansar" | "seeker" | undefined = undefined;
+    let newOrganizationId = undefined;
 
     if (partnerApp && partnerApp.organizationId) {
-      role = "partner_lead";
-      organizationId = partnerApp.organizationId;
+      newRole = "partner_lead";
+      newOrganizationId = partnerApp.organizationId;
     }
 
-    // Create new user
+    // 3. Check if user already exists
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (existing) {
+      // Prepare updates
+      const updates: any = {
+        email: args.email,
+        name: args.name,
+      };
+
+      // Upgrade role if they are now a partner lead (and not a super_admin)
+      if (existing.role !== "super_admin" && newRole === "partner_lead") {
+        updates.role = "partner_lead";
+        updates.organizationId = newOrganizationId;
+      }
+
+      await ctx.db.patch(existing._id, updates);
+      return existing._id;
+    }
+
+    // 4. Create new user if not exists
+    const role = newRole || "seeker"; // Default to seeker if no partner app found
+
     const userId = await ctx.db.insert("users", {
       clerkId: args.clerkId,
       email: args.email,
       name: args.name,
       role,
-      organizationId,
+      organizationId: newOrganizationId,
       isActive: true,
     });
 

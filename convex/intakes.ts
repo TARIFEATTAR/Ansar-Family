@@ -32,6 +32,15 @@ export const create = mutation({
     partnerId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Determine status and organizationId based on source
+    let status = "disconnected";
+    let organizationId = undefined;
+
+    if (args.partnerId && args.source === "partner_specific") {
+      status = "triaged"; // Auto-triage for partner-specific intakes
+      organizationId = args.partnerId as any; // Cast to Id<"organizations">
+    }
+
     const intakeId = await ctx.db.insert("intakes", {
       fullName: args.fullName,
       phone: args.phone,
@@ -46,9 +55,10 @@ export const create = mutation({
       supportAreas: args.supportAreas,
       otherDetails: args.otherDetails,
       consentGiven: args.consentGiven,
-      status: "disconnected",
+      status: status as any,
       source: args.source ?? "general",
       partnerId: args.partnerId,
+      organizationId: organizationId,
     });
     return intakeId;
   },

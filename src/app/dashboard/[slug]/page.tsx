@@ -143,6 +143,7 @@ function PartnerDashboard({
   const assignSeeker = useMutation(api.intakes.assignToOrganization);
   const assignAnsar = useMutation(api.ansars.assignToOrganization);
   const deleteIntake = useMutation(api.intakes.deleteIntake);
+  const updateStatus = useMutation(api.ansars.updateStatus);
 
   // Stats
   const triagedSeekers = seekers?.filter((s) => s.status === "triaged") ?? [];
@@ -177,6 +178,15 @@ function PartnerDashboard({
   const handleDeleteSeeker = async (id: Id<"intakes">) => {
     if (confirm("Are you sure you want to remove this seeker? This cannot be undone.")) {
       await deleteIntake({ id });
+    }
+  };
+
+  const handleUpdateAnsarStatus = async (id: Id<"ansars">, status: "approved" | "inactive") => {
+    try {
+      await updateStatus({ id, status });
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      alert("Failed to update status. Please try again.");
     }
   };
 
@@ -343,6 +353,40 @@ function PartnerDashboard({
             </section>
           )}
 
+          {/* Pending Review Section */}
+          <section>
+            <h2 className="font-heading text-xl mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 bg-ansar-ochre rounded-full" />
+              Pending Applications
+              <span className="bg-ansar-sage-100 text-ansar-sage-700 text-sm px-2 py-0.5 rounded font-body">
+                {pendingAnsars.length}
+              </span>
+              <span className="font-body text-xs text-ansar-gray ml-2">
+                New volunteers waiting for approval
+              </span>
+            </h2>
+
+            {pendingAnsars.length === 0 ? (
+              <div className="card p-6 text-center border-dashed border-2 border-ansar-sage-100 bg-transparent shadow-none">
+                <p className="font-body text-sm text-ansar-gray">
+                  No new applications to review.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {pendingAnsars.map((ansar) => (
+                  <AnsarCard
+                    key={ansar._id}
+                    ansar={ansar}
+                    isPending
+                    onApprove={() => handleUpdateAnsarStatus(ansar._id, "approved")}
+                    onReject={() => handleUpdateAnsarStatus(ansar._id, "inactive")}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
           {/* Available Ansars Section */}
           <section>
             <h2 className="font-heading text-xl mb-4 flex items-center gap-2">
@@ -506,7 +550,12 @@ function SeekerCard({
   );
 }
 
-function AnsarCard({ ansar }: {
+function AnsarCard({
+  ansar,
+  isPending,
+  onApprove,
+  onReject
+}: {
   ansar: {
     _id: Id<"ansars">;
     fullName: string;
@@ -515,7 +564,11 @@ function AnsarCard({ ansar }: {
     practiceLevel: string;
     supportAreas: string[];
     gender: string;
-  }
+    motivation?: string;
+  };
+  isPending?: boolean;
+  onApprove?: () => void;
+  onReject?: () => void;
 }) {
   return (
     <div className="card p-6">
@@ -526,6 +579,11 @@ function AnsarCard({ ansar }: {
             <span className="bg-ansar-sage-100 text-ansar-sage-700 text-xs px-2 py-0.5 rounded font-body capitalize">
               {ansar.gender === "male" ? "Brother" : "Sister"}
             </span>
+            {isPending && (
+              <span className="bg-ansar-ochre/20 text-ansar-ochre text-xs px-2 py-0.5 rounded font-body">
+                Pending Review
+              </span>
+            )}
           </div>
           <div className="flex flex-wrap gap-4 text-sm text-ansar-gray font-body mb-3">
             <span className="flex items-center gap-1">
@@ -537,6 +595,13 @@ function AnsarCard({ ansar }: {
               {ansar.city}
             </span>
           </div>
+
+          {ansar.motivation && (
+            <div className="mb-3 bg-ansar-sage-50/50 p-2 rounded text-sm text-ansar-gray italic">
+              "{ansar.motivation.length > 80 ? ansar.motivation.substring(0, 80) + "..." : ansar.motivation}"
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-2">
             {ansar.supportAreas.map((area) => (
               <span
@@ -548,6 +613,19 @@ function AnsarCard({ ansar }: {
             ))}
           </div>
         </div>
+
+        {isPending && (
+          <div className="flex items-center gap-2 ml-4">
+            <button onClick={onApprove} className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1 bg-ansar-success hover:bg-ansar-success/90 border-transparent">
+              <CheckCircle2 className="w-4 h-4" />
+              Approve
+            </button>
+            <button onClick={onReject} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1 text-ansar-terracotta hover:bg-ansar-terracotta/10 border-ansar-terracotta/20">
+              <X className="w-4 h-4" />
+              Reject
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

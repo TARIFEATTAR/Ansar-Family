@@ -127,6 +127,8 @@ function PartnerDashboard({
 }) {
   const [showPairingModal, setShowPairingModal] = useState(false);
   const [selectedSeeker, setSelectedSeeker] = useState<Id<"intakes"> | null>(null);
+  const [viewAnsar, setViewAnsar] = useState<Id<"ansars"> | null>(null);
+  const [viewSeeker, setViewSeeker] = useState<Id<"intakes"> | null>(null);
 
   // Organization-scoped queries
   const seekers = useQuery(api.intakes.listByOrganization, { organizationId: organization._id });
@@ -292,18 +294,22 @@ function PartnerDashboard({
                   <SeekerCard
                     key={seeker._id}
                     seeker={seeker}
+                    onView={() => setViewSeeker(seeker._id)}
                     action={
                       availableAnsars && availableAnsars.length > 0 ? (
                         <button
-                          onClick={() => openPairingModal(seeker._id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openPairingModal(seeker._id);
+                          }}
                           className="btn-primary text-sm py-2 px-4 flex items-center gap-2"
                         >
                           <UserPlus className="w-4 h-4" />
-                          Pair with Ansar
+                          Pair
                         </button>
                       ) : (
                         <span className="font-body text-sm text-ansar-gray">
-                          No Ansars available
+                          No Ansars
                         </span>
                       )
                     }
@@ -389,6 +395,7 @@ function PartnerDashboard({
                     key={ansar._id}
                     ansar={ansar}
                     isPending
+                    onView={() => setViewAnsar(ansar._id)}
                     onApprove={() => handleUpdateAnsarStatus(ansar._id, "approved")}
                     onReject={() => handleUpdateAnsarStatus(ansar._id, "inactive")}
                   />
@@ -426,7 +433,11 @@ function PartnerDashboard({
             ) : (
               <div className="grid gap-4">
                 {approvedAnsars.map((ansar) => (
-                  <AnsarCard key={ansar._id} ansar={ansar} />
+                  <AnsarCard
+                    key={ansar._id}
+                    ansar={ansar}
+                    onView={() => setViewAnsar(ansar._id)}
+                  />
                 ))}
               </div>
             )}
@@ -444,6 +455,23 @@ function PartnerDashboard({
             setShowPairingModal(false);
             setSelectedSeeker(null);
           }}
+        />
+      )}
+
+      {/* Ansar Details Modal */}
+      {viewAnsar && (
+        <AnsarDetailsModal
+          ansar={ansars?.find(a => a._id === viewAnsar)}
+          onClose={() => setViewAnsar(null)}
+          onApprove={handleUpdateAnsarStatus}
+        />
+      )}
+
+      {/* Seeker Details Modal */}
+      {viewSeeker && (
+        <SeekerDetailsModal
+          seeker={seekers?.find(s => s._id === viewSeeker)}
+          onClose={() => setViewSeeker(null)}
         />
       )}
     </main>
@@ -490,6 +518,7 @@ function StatCard({
 function SeekerCard({
   seeker,
   action,
+  onView,
   onDelete
 }: {
   seeker: {
@@ -500,8 +529,11 @@ function SeekerCard({
     city: string;
     journeyType: string;
     supportAreas: string[];
+    notes?: string;
+    gender?: string;
   };
   action?: React.ReactNode;
+  onView: () => void;
   onDelete?: () => void;
 }) {
   const journeyLabels: Record<string, string> = {
@@ -511,11 +543,14 @@ function SeekerCard({
   };
 
   return (
-    <div className="card p-6">
+    <div
+      className="card p-6 hover:border-ansar-sage-400 transition-colors cursor-pointer group"
+      onClick={onView}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <h3 className="font-heading text-lg text-ansar-charcoal">{seeker.fullName}</h3>
+            <h3 className="font-heading text-lg text-ansar-charcoal group-hover:text-ansar-sage-600 transition-colors">{seeker.fullName}</h3>
             <span className="bg-ansar-terracotta-light/20 text-ansar-terracotta text-xs px-2 py-0.5 rounded font-body">
               {journeyLabels[seeker.journeyType] || seeker.journeyType}
             </span>
@@ -547,7 +582,10 @@ function SeekerCard({
           {action}
           {onDelete && (
             <button
-              onClick={onDelete}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
               className="p-2 text-ansar-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Remove Seeker"
             >
@@ -563,6 +601,7 @@ function SeekerCard({
 function AnsarCard({
   ansar,
   isPending,
+  onView,
   onApprove,
   onReject
 }: {
@@ -575,17 +614,27 @@ function AnsarCard({
     supportAreas: string[];
     gender: string;
     motivation?: string;
+    email?: string;
+    isConvert?: boolean;
+    checkInFrequency?: string;
+    knowledgeBackground?: string[];
+    studyDetails?: string;
+    status?: string;
   };
   isPending?: boolean;
+  onView?: () => void;
   onApprove?: () => void;
   onReject?: () => void;
 }) {
   return (
-    <div className="card p-6">
+    <div
+      className="card p-6 hover:border-ansar-sage-400 transition-colors cursor-pointer group"
+      onClick={onView}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <h3 className="font-heading text-lg text-ansar-charcoal">{ansar.fullName}</h3>
+            <h3 className="font-heading text-lg text-ansar-charcoal group-hover:text-ansar-sage-600 transition-colors">{ansar.fullName}</h3>
             <span className="bg-ansar-sage-100 text-ansar-sage-700 text-xs px-2 py-0.5 rounded font-body capitalize">
               {ansar.gender === "male" ? "Brother" : "Sister"}
             </span>
@@ -626,11 +675,17 @@ function AnsarCard({
 
         {isPending && (
           <div className="flex items-center gap-2 ml-4">
-            <button onClick={onApprove} className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1 bg-ansar-success hover:bg-ansar-success/90 border-transparent">
+            <button onClick={(e) => {
+              e.stopPropagation();
+              if (onApprove) onApprove();
+            }} className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1 bg-ansar-success hover:bg-ansar-success/90 border-transparent">
               <CheckCircle2 className="w-4 h-4" />
               Approve
             </button>
-            <button onClick={onReject} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1 text-ansar-terracotta hover:bg-ansar-terracotta/10 border-ansar-terracotta/20">
+            <button onClick={(e) => {
+              e.stopPropagation();
+              if (onReject) onReject();
+            }} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1 text-ansar-terracotta hover:bg-ansar-terracotta/10 border-ansar-terracotta/20">
               <X className="w-4 h-4" />
               Reject
             </button>
@@ -696,6 +751,7 @@ function PairingCard({
           )}
           {pairing.status === "active" && (
             <span className="bg-ansar-success/10 text-ansar-success text-xs px-3 py-1 rounded-full font-body">
+              Active
             </span>
           )}
           {onUnpair && (
@@ -798,6 +854,136 @@ function PairingModal({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function AnsarDetailsModal({
+  ansar,
+  onClose,
+  onApprove
+}: {
+  ansar: any;
+  onClose: () => void;
+  onApprove: (id: Id<"ansars">, status: "approved" | "inactive") => void;
+}) {
+  if (!ansar) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6" onClick={onClose}>
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-ansar-sage-100 flex items-center justify-between sticky top-0 bg-white">
+          <div>
+            <h2 className="font-heading text-2xl text-ansar-charcoal">{ansar.fullName}</h2>
+            <p className="font-body text-ansar-sage-600">{ansar.email} • {ansar.phone}</p>
+          </div>
+          <button onClick={onClose}><X className="w-6 h-6 text-ansar-gray" /></button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <DetailItem label="Status" value={ansar.status} capitalize />
+            <DetailItem label="Gender" value={ansar.gender === "male" ? "Brother" : "Sister"} />
+            <DetailItem label="City" value={ansar.city} />
+            <DetailItem label="Practice Level" value={ansar.practiceLevel} capitalize />
+            <DetailItem label="Convert?" value={ansar.isConvert ? "Yes" : "No"} />
+            <DetailItem label="Check-in Frequency" value={ansar.checkInFrequency} capitalize />
+          </div>
+
+          <div>
+            <h3 className="font-heading text-lg mb-2">Motivation</h3>
+            <p className="font-body text-ansar-charcoal bg-ansar-sage-50 p-4 rounded-lg italic">"{ansar.motivation}"</p>
+          </div>
+
+          <div>
+            <h3 className="font-heading text-lg mb-2">Knowledge & Background</h3>
+            <div className="flex flex-wrap gap-2">
+              {ansar.knowledgeBackground?.map((k: string) => (
+                <span key={k} className="badge bg-ansar-sage-100 text-ansar-sage-800">{k}</span>
+              ))}
+            </div>
+            <p className="mt-2 text-sm text-ansar-gray">{ansar.studyDetails}</p>
+          </div>
+
+          <div>
+            <h3 className="font-heading text-lg mb-2">Support Areas</h3>
+            <div className="flex flex-wrap gap-2">
+              {ansar.supportAreas?.map((k: string) => (
+                <span key={k} className="badge bg-ansar-terracotta-light/20 text-ansar-terracotta">{k}</span>
+              ))}
+            </div>
+          </div>
+
+          {ansar.status === "pending" && (
+            <div className="flex gap-4 pt-4 border-t border-ansar-sage-100">
+              <button
+                onClick={() => { onApprove(ansar._id, "approved"); onClose(); }}
+                className="btn-primary flex-1 flex justify-center gap-2"
+              >
+                <CheckCircle2 className="w-5 h-5" /> Approve Application
+              </button>
+              <button
+                onClick={() => { onApprove(ansar._id, "inactive"); onClose(); }}
+                className="btn-secondary flex-1 flex justify-center gap-2 text-red-600 border-red-200"
+              >
+                <X className="w-5 h-5" /> Reject
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SeekerDetailsModal({ seeker, onClose }: { seeker: any; onClose: () => void }) {
+  if (!seeker) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6" onClick={onClose}>
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-ansar-sage-100 flex items-center justify-between sticky top-0 bg-white">
+          <div>
+            <span className="font-body text-xs uppercase tracking-wider text-ansar-gray">{seeker.journeyType?.replace("_", " ")}</span>
+            <h2 className="font-heading text-2xl text-ansar-charcoal">{seeker.fullName}</h2>
+            <p className="font-body text-ansar-sage-600">{seeker.email} • {seeker.phone}</p>
+          </div>
+          <button onClick={onClose}><X className="w-6 h-6 text-ansar-gray" /></button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <DetailItem label="Status" value={seeker.status} capitalize />
+            <DetailItem label="City" value={seeker.city} />
+            <DetailItem label="Gender Preference" value={seeker.gender || "Any"} capitalize />
+          </div>
+
+          {seeker.notes && (
+            <div>
+              <h3 className="font-heading text-lg mb-2">Notes</h3>
+              <p className="font-body text-ansar-charcoal bg-ansar-sage-50 p-4 rounded-lg">{seeker.notes}</p>
+            </div>
+          )}
+
+          <div>
+            <h3 className="font-heading text-lg mb-2">Requested Support</h3>
+            <div className="flex flex-wrap gap-2">
+              {seeker.supportAreas?.map((k: string) => (
+                <span key={k} className="badge bg-ansar-terracotta-light/20 text-ansar-terracotta">{k}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailItem({ label, value, capitalize }: { label: string; value: string; capitalize?: boolean }) {
+  return (
+    <div>
+      <p className="font-body text-xs text-ansar-gray uppercase mb-1">{label}</p>
+      <p className={`font-body text-ansar-charcoal ${capitalize ? "capitalize" : ""}`}>{value || "—"}</p>
     </div>
   );
 }

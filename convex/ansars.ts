@@ -40,6 +40,7 @@ export const create = mutation({
     ),
     motivation: v.string(),
     agreementsAccepted: v.boolean(),
+    organizationId: v.optional(v.id("organizations")),
   },
   handler: async (ctx, args) => {
     // Validate agreements
@@ -65,6 +66,7 @@ export const create = mutation({
       checkInFrequency: args.checkInFrequency,
       motivation: args.motivation,
       agreementsAccepted: args.agreementsAccepted,
+      organizationId: args.organizationId,
       status: "pending",
     });
     return ansarId;

@@ -179,7 +179,7 @@ export default function PartnerVolunteerPage() {
         checkInFrequency: formData.checkInFrequency,
         motivation: formData.motivation,
         agreementsAccepted: allAgreementsAccepted,
-        // Note: communityId would be set during approval to link to this org
+        organizationId: organization._id, // Automatically link to this Hub
       });
       setIsSubmitted(true);
     } catch (error) {

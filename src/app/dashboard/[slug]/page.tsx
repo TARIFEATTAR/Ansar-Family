@@ -19,7 +19,8 @@ import {
   Link2,
   X,
   UserPlus,
-  Trash2
+  Trash2,
+  Unlink
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 
@@ -144,6 +145,7 @@ function PartnerDashboard({
   const assignAnsar = useMutation(api.ansars.assignToOrganization);
   const deleteIntake = useMutation(api.intakes.deleteIntake);
   const updateStatus = useMutation(api.ansars.updateStatus);
+  const unpair = useMutation(api.pairings.unpair);
 
   // Stats
   const triagedSeekers = seekers?.filter((s) => s.status === "triaged") ?? [];
@@ -173,6 +175,12 @@ function PartnerDashboard({
 
   const handleMarkIntroSent = async (pairingId: Id<"pairings">) => {
     await markIntroSent({ id: pairingId });
+  };
+
+  const handleUnpair = async (pairingId: Id<"pairings">) => {
+    if (confirm("Are you sure you want to unpair them? Both will become available again.")) {
+      await unpair({ id: pairingId });
+    }
   };
 
   const handleDeleteSeeker = async (id: Id<"intakes">) => {
@@ -324,6 +332,7 @@ function PartnerDashboard({
                     seekers={seekers ?? []}
                     ansars={ansars ?? []}
                     onMarkIntroSent={() => handleMarkIntroSent(pairing._id)}
+                    onUnpair={() => handleUnpair(pairing._id)}
                   />
                 ))}
               </div>
@@ -347,6 +356,7 @@ function PartnerDashboard({
                     pairing={pairing}
                     seekers={seekers ?? []}
                     ansars={ansars ?? []}
+                    onUnpair={() => handleUnpair(pairing._id)}
                   />
                 ))}
               </div>
@@ -635,7 +645,8 @@ function PairingCard({
   pairing,
   seekers,
   ansars,
-  onMarkIntroSent
+  onMarkIntroSent,
+  onUnpair
 }: {
   pairing: {
     _id: Id<"pairings">;
@@ -647,6 +658,7 @@ function PairingCard({
   seekers: { _id: Id<"intakes">; fullName: string; phone: string }[];
   ansars: { _id: Id<"ansars">; fullName: string; phone: string }[];
   onMarkIntroSent?: () => void;
+  onUnpair?: () => void;
 }) {
   const seeker = seekers.find(s => s._id === pairing.seekerId);
   const ansar = ansars.find(a => a._id === pairing.ansarId);
@@ -684,8 +696,16 @@ function PairingCard({
           )}
           {pairing.status === "active" && (
             <span className="bg-ansar-success/10 text-ansar-success text-xs px-3 py-1 rounded-full font-body">
-              Active
             </span>
+          )}
+          {onUnpair && (
+            <button
+              onClick={onUnpair}
+              className="ml-3 p-2 text-ansar-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Unpair / Cancel"
+            >
+              <Unlink className="w-4 h-4" />
+            </button>
           )}
         </div>
       </div>

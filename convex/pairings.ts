@@ -42,7 +42,7 @@ export const create = mutation({
     const existingPairing = await ctx.db
       .query("pairings")
       .withIndex("by_seeker", (q) => q.eq("seekerId", args.seekerId))
-      .filter((q) => 
+      .filter((q) =>
         q.or(
           q.eq(q.field("status"), "pending_intro"),
           q.eq(q.field("status"), "active")
@@ -121,6 +121,26 @@ export const markIntroSent = mutation({
   args: { id: v.id("pairings") },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { status: "active" });
+  },
+});
+
+/**
+ * Unpairs a Seeker and Ansar, making them both available again.
+ */
+export const unpair = mutation({
+  args: { id: v.id("pairings") },
+  handler: async (ctx, args) => {
+    const pairing = await ctx.db.get(args.id);
+    if (!pairing) throw new Error("Pairing not found.");
+
+    // Mark pairing as ended (or deleted? ended preserves history)
+    await ctx.db.patch(args.id, { status: "ended" });
+
+    // Reset Seeker to "triaged" (Ready to Pair)
+    await ctx.db.patch(pairing.seekerId, { status: "triaged" });
+
+    // Reset Ansar to "approved" (Available)
+    await ctx.db.patch(pairing.ansarId, { status: "approved" });
   },
 });
 

@@ -1,6 +1,5 @@
-import { internalMutation } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { Id } from "./_generated/dataModel";
 
 /**
  * MESSAGES — Audit Log for Notifications
@@ -38,6 +37,34 @@ export const logMessage = internalMutation({
       sentAt: Date.now(),
     });
     return messageId;
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// QUERIES
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Lists all messages (Super Admin view).
+ */
+export const listAll = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("messages").order("desc").collect();
+  },
+});
+
+/**
+ * Lists messages by recipient ID (for detail panels).
+ */
+export const listByRecipient = query({
+  args: { recipientId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("messages")
+      .withIndex("by_recipient", (q) => q.eq("recipientId", args.recipientId))
+      .order("desc")
+      .collect();
   },
 });
 

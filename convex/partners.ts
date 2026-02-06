@@ -234,6 +234,49 @@ export const approveAndCreateOrg = mutation({
 });
 
 // ═══════════════════════════════════════════════════════════════
+// UPDATE — Edit partner profile fields
+// ═══════════════════════════════════════════════════════════════
+export const update = mutation({
+  args: {
+    id: v.id("partners"),
+    leadName: v.optional(v.string()),
+    leadPhone: v.optional(v.string()),
+    leadEmail: v.optional(v.string()),
+    leadIsConvert: v.optional(v.boolean()),
+    orgName: v.optional(v.string()),
+    orgType: v.optional(v.union(
+      v.literal("masjid"),
+      v.literal("msa"),
+      v.literal("nonprofit"),
+      v.literal("informal_circle"),
+      v.literal("other")
+    )),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    stateRegion: v.optional(v.string()),
+    genderFocus: v.optional(v.union(
+      v.literal("brothers"),
+      v.literal("sisters"),
+      v.literal("both")
+    )),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...fields } = args;
+    const partner = await ctx.db.get(id);
+    if (!partner) throw new Error("Partner not found.");
+
+    const patch: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(fields)) {
+      if (value !== undefined) patch[key] = value;
+    }
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(id, patch);
+    }
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
 // QUERIES
 // ═══════════════════════════════════════════════════════════════
 

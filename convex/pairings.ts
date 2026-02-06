@@ -1,9 +1,12 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 /**
  * PAIRINGS — Seeker ↔ Ansar Connection Management
  * Partner Leads create and manage pairings within their organization.
+ * 
+ * Updated to trigger pairing notifications (SMS + Email) when seeker is paired with ansar.
  */
 
 // ═══════════════════════════════════════════════════════════════
@@ -75,6 +78,37 @@ export const create = mutation({
     await ctx.db.patch(args.ansarId, {
       status: "active",
       organizationId: args.organizationId,
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // TRIGGER PAIRING NOTIFICATIONS (SMS + Email to Seeker)
+    // ═══════════════════════════════════════════════════════════
+    
+    // Get organization details for community name
+    const organization = await ctx.db.get(args.organizationId);
+    const communityName = organization?.name || "your local community";
+    
+    // Extract first name from seeker's full name
+    const seekerFirstName = seeker.fullName.split(" ")[0] || seeker.fullName;
+    
+    // Send Pairing SMS
+    await ctx.scheduler.runAfter(0, internal.notifications.sendPairingSMS, {
+      recipientId: args.seekerId.toString(),
+      phone: seeker.phone,
+      firstName: seekerFirstName,
+      ansarName: ansar.fullName,
+      communityName,
+    });
+    
+    // Send Pairing Email
+    await ctx.scheduler.runAfter(0, internal.notifications.sendPairingEmail, {
+      recipientId: args.seekerId.toString(),
+      email: seeker.email,
+      seekerFirstName,
+      ansarName: ansar.fullName,
+      communityName,
+      // Note: jumaTime and monthlyGathering can be added to organization schema later
+      // For now, these are optional and will be omitted
     });
 
     return pairingId;

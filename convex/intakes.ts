@@ -138,6 +138,46 @@ export const updateStatus = mutation({
 });
 
 // ═══════════════════════════════════════════════════════════════
+// UPDATE — Edit seeker profile fields
+// ═══════════════════════════════════════════════════════════════
+export const update = mutation({
+  args: {
+    id: v.id("intakes"),
+    fullName: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    gender: v.optional(v.union(v.literal("male"), v.literal("female"))),
+    dateOfBirth: v.optional(v.string()),
+    countryOfOrigin: v.optional(v.string()),
+    journeyType: v.optional(v.union(
+      v.literal("new_muslim"),
+      v.literal("reconnecting"),
+      v.literal("seeker")
+    )),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    stateRegion: v.optional(v.string()),
+    supportAreas: v.optional(v.array(v.string())),
+    otherDetails: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...fields } = args;
+    const intake = await ctx.db.get(id);
+    if (!intake) throw new Error("Seeker not found.");
+
+    // Only patch defined fields
+    const patch: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(fields)) {
+      if (value !== undefined) patch[key] = value;
+    }
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(id, patch);
+    }
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
 // GET BY ID — Single intake
 // ═══════════════════════════════════════════════════════════════
 export const getById = query({

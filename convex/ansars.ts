@@ -133,6 +133,53 @@ export const updateStatus = mutation({
 });
 
 // ═══════════════════════════════════════════════════════════════
+// UPDATE — Edit ansar profile fields
+// ═══════════════════════════════════════════════════════════════
+export const update = mutation({
+  args: {
+    id: v.id("ansars"),
+    fullName: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    gender: v.optional(v.union(v.literal("male"), v.literal("female"))),
+    dateOfBirth: v.optional(v.string()),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    stateRegion: v.optional(v.string()),
+    isConvert: v.optional(v.boolean()),
+    practiceLevel: v.optional(v.union(
+      v.literal("consistent"),
+      v.literal("steady"),
+      v.literal("reconnecting")
+    )),
+    knowledgeBackground: v.optional(v.array(v.string())),
+    studyDetails: v.optional(v.string()),
+    experience: v.optional(v.array(v.string())),
+    supportAreas: v.optional(v.array(v.string())),
+    checkInFrequency: v.optional(v.union(
+      v.literal("weekly"),
+      v.literal("biweekly"),
+      v.literal("monthly")
+    )),
+    motivation: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...fields } = args;
+    const ansar = await ctx.db.get(id);
+    if (!ansar) throw new Error("Ansar not found.");
+
+    const patch: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(fields)) {
+      if (value !== undefined) patch[key] = value;
+    }
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(id, patch);
+    }
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
 // QUERIES
 // ═══════════════════════════════════════════════════════════════
 

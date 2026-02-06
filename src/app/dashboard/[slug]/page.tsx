@@ -1,38 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import Link from "next/link";
 import { useParams, notFound } from "next/navigation";
 import {
-  ArrowLeft,
-  CheckCircle2,
-  Users,
-  Heart,
-  Phone,
-  Mail,
-  MapPin,
-  Building2,
-  Loader2,
-  Link2,
-  X,
-  UserPlus,
-  Trash2,
-  Unlink
+  ArrowLeft, Heart, Users, Building2, Link2, MessageSquare,
+  LayoutDashboard, Loader2, Trash2, Eye, Check,
+  UserPlus, Unlink, Send, Phone, Mail, MapPin, Clock,
+  X as XIcon,
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
+import {
+  TabNav, DataTable, SearchBar, StatusBadge,
+  StatsRow, DetailPanel, DetailField, EditableField,
+} from "@/components/crm";
+import type { Tab, Column, StatItem } from "@/components/crm";
+import { AnimatePresence, motion } from "framer-motion";
 
 /**
- * PARTNER LEAD DASHBOARD — Organization-Scoped View
- * 
- * Partner Leads see only data for their organization:
- * - Seekers assigned to their org
- * - Ansars in their community
- * - Pairings they've created
- * 
- * Key action: Create pairings between Seekers and Ansars.
+ * PARTNER LEAD DASHBOARD — CRM-Style Organization View
  */
 
 export default function PartnerDashboardPage() {
@@ -40,10 +29,7 @@ export default function PartnerDashboardPage() {
   const slug = params.slug as string;
   const { user, isLoaded } = useUser();
 
-  // Get organization by slug
   const organization = useQuery(api.organizations.getBySlug, { slug });
-
-  // Sync user to Convex
   const upsertUser = useMutation(api.users.upsertFromClerk);
   const currentUser = useQuery(
     api.users.getByClerkId,
@@ -60,7 +46,6 @@ export default function PartnerDashboardPage() {
     }
   }, [user, isLoaded, upsertUser]);
 
-  // Loading states
   if (!isLoaded || organization === undefined) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
@@ -75,9 +60,7 @@ export default function PartnerDashboardPage() {
         <div className="text-center">
           <h1 className="font-heading text-2xl text-ansar-charcoal mb-4">Partner Dashboard</h1>
           <p className="font-body text-ansar-gray mb-6">Please sign in to access the dashboard.</p>
-          <a href="/sign-in" className="btn-primary inline-block">
-            Sign In
-          </a>
+          <a href="/sign-in" className="btn-primary inline-block">Sign In</a>
         </div>
       </main>
     );
@@ -87,7 +70,6 @@ export default function PartnerDashboardPage() {
     notFound();
   }
 
-  // Authorization check: Partner Leads can only access their own organization
   if (currentUser && currentUser.role === "partner_lead") {
     if (currentUser.organizationId !== organization._id) {
       return (
@@ -97,9 +79,7 @@ export default function PartnerDashboardPage() {
             <p className="font-body text-ansar-gray mb-6">
               You don&apos;t have permission to access this organization&apos;s dashboard.
             </p>
-            <a href="/dashboard" className="btn-primary inline-block">
-              Go to Your Dashboard
-            </a>
+            <a href="/dashboard" className="btn-primary inline-block">Go to Your Dashboard</a>
           </div>
         </main>
       );
@@ -108,6 +88,10 @@ export default function PartnerDashboardPage() {
 
   return <PartnerDashboard organization={organization} currentUser={currentUser} />;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════
 
 interface Organization {
   _id: Id<"organizations">;
@@ -118,113 +102,129 @@ interface Organization {
   hubLevel: number;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// MAIN CRM DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+
 function PartnerDashboard({
   organization,
-  currentUser
+  currentUser,
 }: {
   organization: Organization;
   currentUser: { _id: Id<"users">; role: string; name: string } | null | undefined;
 }) {
-  const [showPairingModal, setShowPairingModal] = useState(false);
-  const [selectedSeeker, setSelectedSeeker] = useState<Id<"intakes"> | null>(null);
-  const [viewAnsar, setViewAnsar] = useState<Id<"ansars"> | null>(null);
-  const [viewSeeker, setViewSeeker] = useState<Id<"intakes"> | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
-  // Organization-scoped queries
-  const seekers = useQuery(api.intakes.listByOrganization, { organizationId: organization._id });
-  const ansars = useQuery(api.ansars.listByOrganization, { organizationId: organization._id });
-  const pairings = useQuery(api.pairings.listByOrganization, { organizationId: organization._id });
+  // Organization-scoped data
+  const seekers = useQuery(api.intakes.listByOrganization, { organizationId: organization._id }) ?? [];
+  const ansars = useQuery(api.ansars.listByOrganization, { organizationId: organization._id }) ?? [];
+  const pairings = useQuery(api.pairings.listByOrganization, { organizationId: organization._id }) ?? [];
   const pairingStats = useQuery(api.pairings.getOrgStats, { organizationId: organization._id });
-
-  // Available for pairing
-  const readyToPair = useQuery(api.intakes.listReadyForPairing, { organizationId: organization._id });
-  const availableAnsars = useQuery(api.ansars.listAvailableForPairing, { organizationId: organization._id });
+  const readyToPair = useQuery(api.intakes.listReadyForPairing, { organizationId: organization._id }) ?? [];
+  const availableAnsars = useQuery(api.ansars.listAvailableForPairing, { organizationId: organization._id }) ?? [];
+  const messages = useQuery(api.messages.listAll) ?? []; // Will filter client-side
 
   // Mutations
   const createPairing = useMutation(api.pairings.create);
   const markIntroSent = useMutation(api.pairings.markIntroSent);
-  const assignSeeker = useMutation(api.intakes.assignToOrganization);
-  const assignAnsar = useMutation(api.ansars.assignToOrganization);
+  const unpairMutation = useMutation(api.pairings.unpair);
   const deleteIntake = useMutation(api.intakes.deleteIntake);
-  const updateStatus = useMutation(api.ansars.updateStatus);
-  const unpair = useMutation(api.pairings.unpair);
+  const updateAnsarStatus = useMutation(api.ansars.updateStatus);
+  const updateIntake = useMutation(api.intakes.update);
+  const updateAnsar = useMutation(api.ansars.update);
 
-  // Stats
-  const triagedSeekers = seekers?.filter((s) => s.status === "triaged") ?? [];
-  const connectedSeekers = seekers?.filter((s) => s.status === "connected" || s.status === "active") ?? [];
-  const pendingAnsars = ansars?.filter((a) => a.status === "pending") ?? [];
-  const approvedAnsars = ansars?.filter((a) => a.status === "approved") ?? [];
-  const activeAnsars = ansars?.filter((a) => a.status === "active") ?? [];
-  const activePairings = pairings?.filter((p) => p.status === "active" || p.status === "pending_intro") ?? [];
+  // Org-scoped messages: filter messages where recipientId matches any seeker/ansar in this org
+  const orgRecipientIds = useMemo(() => {
+    const ids = new Set<string>();
+    seekers.forEach((s) => ids.add(s._id));
+    ansars.forEach((a) => ids.add(a._id));
+    return ids;
+  }, [seekers, ansars]);
 
-  const handleCreatePairing = async (ansarId: Id<"ansars">) => {
-    if (!selectedSeeker || !currentUser) return;
+  const orgMessages = useMemo(
+    () => messages.filter((m) => orgRecipientIds.has(m.recipientId)),
+    [messages, orgRecipientIds]
+  );
 
+  // Counts
+  const pendingCount = readyToPair.length + ansars.filter((a) => a.status === "pending").length;
+
+  const tabs: Tab[] = [
+    { id: "overview", label: "Overview", icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: "seekers", label: "Seekers", icon: <Heart className="w-4 h-4" />, count: seekers.length },
+    { id: "ansars", label: "Ansars", icon: <Users className="w-4 h-4" />, count: ansars.length },
+    { id: "pairings", label: "Pairings", icon: <Link2 className="w-4 h-4" />, count: pairings.length },
+    { id: "messages", label: "Messages", icon: <MessageSquare className="w-4 h-4" />, count: orgMessages.length },
+  ];
+
+  // Handlers
+  const handleCreatePairing = useCallback(async (seekerId: Id<"intakes">, ansarId: Id<"ansars">) => {
+    if (!currentUser) return;
     try {
       await createPairing({
-        seekerId: selectedSeeker,
+        seekerId,
         ansarId,
         organizationId: organization._id,
         pairedByUserId: currentUser._id,
       });
-      setShowPairingModal(false);
-      setSelectedSeeker(null);
     } catch (error) {
       console.error("Failed to create pairing:", error);
       alert("Failed to create pairing. Please try again.");
     }
-  };
+  }, [createPairing, organization._id, currentUser]);
 
-  const handleMarkIntroSent = async (pairingId: Id<"pairings">) => {
-    await markIntroSent({ id: pairingId });
-  };
+  const handleMarkIntroSent = useCallback(async (id: Id<"pairings">) => {
+    await markIntroSent({ id });
+  }, [markIntroSent]);
 
-  const handleUnpair = async (pairingId: Id<"pairings">) => {
-    if (confirm("Are you sure you want to unpair them? Both will become available again.")) {
-      await unpair({ id: pairingId });
+  const handleUnpair = useCallback(async (id: Id<"pairings">) => {
+    if (confirm("Unpair them? Both will become available again.")) {
+      await unpairMutation({ id });
     }
-  };
+  }, [unpairMutation]);
 
-  const handleDeleteSeeker = async (id: Id<"intakes">) => {
-    if (confirm("Are you sure you want to remove this seeker? This cannot be undone.")) {
+  const handleDeleteSeeker = useCallback(async (id: Id<"intakes">) => {
+    if (confirm("Remove this seeker? This cannot be undone.")) {
       await deleteIntake({ id });
     }
-  };
+  }, [deleteIntake]);
 
-  const handleUpdateAnsarStatus = async (id: Id<"ansars">, status: "approved" | "inactive") => {
-    try {
-      await updateStatus({ id, status });
-    } catch (error) {
-      console.error("Failed to update status:", error);
-      alert("Failed to update status. Please try again.");
-    }
-  };
+  const handleApproveAnsar = useCallback(async (id: Id<"ansars">) => {
+    await updateAnsarStatus({ id, status: "approved" });
+  }, [updateAnsarStatus]);
 
-  const openPairingModal = (seekerId: Id<"intakes">) => {
-    setSelectedSeeker(seekerId);
-    setShowPairingModal(true);
+  const orgTypeLabel: Record<string, string> = {
+    masjid: "Masjid", msa: "MSA", nonprofit: "Nonprofit",
+    informal_circle: "Community Circle", other: "Community",
   };
 
   return (
     <main className="min-h-screen bg-ansar-cream">
       {/* Header */}
-      <header className="px-6 md:px-12 py-6 border-b border-ansar-sage-100 bg-white">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href={`/${organization.slug}`} className="text-ansar-gray hover:text-ansar-charcoal transition-colors">
-              <ArrowLeft className="w-5 h-5" />
+      <header className="px-6 md:px-8 py-4 border-b border-[rgba(61,61,61,0.08)] bg-white">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-ansar-muted hover:text-ansar-charcoal transition-colors">
+              <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-ansar-sage-600" />
-              <h1 className="font-heading text-xl text-ansar-charcoal">{organization.name}</h1>
-              <span className="bg-ansar-sage-100 text-ansar-sage-700 text-xs px-2 py-0.5 rounded font-body">
-                Level {organization.hubLevel}
-              </span>
+            <Building2 className="w-4 h-4 text-ansar-sage-600" />
+            <div>
+              <h1 className="font-heading text-lg text-ansar-charcoal leading-tight">{organization.name}</h1>
+              <p className="font-body text-[11px] text-ansar-muted">
+                {orgTypeLabel[organization.type] || organization.type} &middot; {organization.city} &middot; Level {organization.hubLevel}
+              </p>
             </div>
+            {pendingCount > 0 && (
+              <span className="bg-ansar-terracotta-100 text-ansar-terracotta-700 text-[10px] font-body font-medium px-2 py-0.5 rounded-full">
+                {pendingCount} pending
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {currentUser && (
-              <span className="font-body text-sm text-ansar-gray">
+              <span className="font-body text-xs text-ansar-muted hidden sm:inline">
                 {currentUser.name}
               </span>
             )}
@@ -233,757 +233,755 @@ function PartnerDashboard({
         </div>
       </header>
 
-      {/* Stats Bar */}
-      <div className="px-6 md:px-12 py-4 bg-white border-b border-ansar-sage-100">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-4 gap-4">
-            <StatCard
-              icon={<Heart className="w-5 h-5 text-ansar-terracotta" />}
-              label="Seekers"
-              value={seekers?.length ?? 0}
-              highlight={triagedSeekers.length}
-              highlightLabel="ready to pair"
-            />
-            <StatCard
-              icon={<Users className="w-5 h-5 text-ansar-sage-600" />}
-              label="Ansars"
-              value={ansars?.length ?? 0}
-              highlight={approvedAnsars.length}
-              highlightLabel="available"
-            />
-            <StatCard
-              icon={<Link2 className="w-5 h-5 text-ansar-ochre" />}
-              label="Active Pairings"
-              value={activePairings.length}
-            />
-            <StatCard
-              icon={<CheckCircle2 className="w-5 h-5 text-ansar-success" />}
-              label="Completed"
-              value={pairingStats?.completed ?? 0}
-            />
-          </div>
-        </div>
-      </div>
+      {/* Tabs */}
+      <TabNav tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Content */}
-      <div className="px-6 md:px-12 py-8">
-        <div className="max-w-6xl mx-auto space-y-12">
-          {/* Ready to Pair Section */}
-          <section>
-            <h2 className="font-heading text-xl mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 bg-ansar-terracotta rounded-full" />
-              Ready to Pair
-              <span className="bg-ansar-sage-100 text-ansar-sage-700 text-sm px-2 py-0.5 rounded font-body">
-                {triagedSeekers.length}
-              </span>
-              <span className="font-body text-xs text-ansar-gray ml-2">
-                Seekers waiting to be matched with an Ansar
-              </span>
-            </h2>
-
-            {triagedSeekers.length === 0 ? (
-              <div className="card p-8 text-center">
-                <CheckCircle2 className="w-12 h-12 text-ansar-success mx-auto mb-4" />
-                <p className="font-heading text-lg text-ansar-charcoal">
-                  All seekers have been paired!
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {triagedSeekers.map((seeker) => (
-                  <SeekerCard
-                    key={seeker._id}
-                    seeker={seeker}
-                    onView={() => setViewSeeker(seeker._id)}
-                    action={
-                      availableAnsars && availableAnsars.length > 0 ? (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openPairingModal(seeker._id);
-                          }}
-                          className="btn-primary text-sm py-2 px-4 flex items-center gap-2"
-                        >
-                          <UserPlus className="w-4 h-4" />
-                          Pair
-                        </button>
-                      ) : (
-                        <span className="font-body text-sm text-ansar-gray">
-                          No Ansars
-                        </span>
-                      )
-                    }
-                    onDelete={() => handleDeleteSeeker(seeker._id)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Pending Intro Section */}
-          {activePairings.filter(p => p.status === "pending_intro").length > 0 && (
-            <section>
-              <h2 className="font-heading text-xl mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 bg-ansar-ochre rounded-full" />
-                Awaiting 3-Way Intro
-                <span className="bg-ansar-sage-100 text-ansar-sage-700 text-sm px-2 py-0.5 rounded font-body">
-                  {activePairings.filter(p => p.status === "pending_intro").length}
-                </span>
-              </h2>
-              <div className="grid gap-4">
-                {activePairings.filter(p => p.status === "pending_intro").map((pairing) => (
-                  <PairingCard
-                    key={pairing._id}
-                    pairing={pairing}
-                    seekers={seekers ?? []}
-                    ansars={ansars ?? []}
-                    onMarkIntroSent={() => handleMarkIntroSent(pairing._id)}
-                    onUnpair={() => handleUnpair(pairing._id)}
-                  />
-                ))}
-              </div>
-            </section>
+      <div className="px-6 md:px-8 py-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {activeTab === "overview" && (
+            <PartnerOverviewTab
+              seekers={seekers}
+              ansars={ansars}
+              pairings={pairings}
+              pairingStats={pairingStats}
+              readyToPair={readyToPair}
+              orgMessages={orgMessages}
+            />
           )}
-
-          {/* Active Pairings Section */}
-          {activePairings.filter(p => p.status === "active").length > 0 && (
-            <section>
-              <h2 className="font-heading text-xl mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 bg-ansar-success rounded-full" />
-                Active Pairings
-                <span className="bg-ansar-sage-100 text-ansar-sage-700 text-sm px-2 py-0.5 rounded font-body">
-                  {activePairings.filter(p => p.status === "active").length}
-                </span>
-              </h2>
-              <div className="grid gap-4">
-                {activePairings.filter(p => p.status === "active").map((pairing) => (
-                  <PairingCard
-                    key={pairing._id}
-                    pairing={pairing}
-                    seekers={seekers ?? []}
-                    ansars={ansars ?? []}
-                    onUnpair={() => handleUnpair(pairing._id)}
-                  />
-                ))}
-              </div>
-            </section>
+          {activeTab === "seekers" && (
+            <PartnerSeekersTab
+              seekers={seekers}
+              availableAnsars={availableAnsars}
+              search={search}
+              setSearch={setSearch}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              onPair={handleCreatePairing}
+              onDelete={handleDeleteSeeker}
+              onUpdate={updateIntake}
+            />
           )}
-
-          {/* Pending Review Section */}
-          <section>
-            <h2 className="font-heading text-xl mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 bg-ansar-ochre rounded-full" />
-              Pending Applications
-              <span className="bg-ansar-sage-100 text-ansar-sage-700 text-sm px-2 py-0.5 rounded font-body">
-                {pendingAnsars.length}
-              </span>
-              <span className="font-body text-xs text-ansar-gray ml-2">
-                New volunteers waiting for approval
-              </span>
-            </h2>
-
-            {pendingAnsars.length === 0 ? (
-              <div className="card p-6 text-center border-dashed border-2 border-ansar-sage-100 bg-transparent shadow-none">
-                <p className="font-body text-sm text-ansar-gray">
-                  No new applications to review.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {pendingAnsars.map((ansar) => (
-                  <AnsarCard
-                    key={ansar._id}
-                    ansar={ansar}
-                    isPending
-                    onView={() => setViewAnsar(ansar._id)}
-                    onApprove={() => handleUpdateAnsarStatus(ansar._id, "approved")}
-                    onReject={() => handleUpdateAnsarStatus(ansar._id, "inactive")}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Available Ansars Section */}
-          <section>
-            <h2 className="font-heading text-xl mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 bg-ansar-sage-600 rounded-full" />
-              Available Ansars
-              <span className="bg-ansar-sage-100 text-ansar-sage-700 text-sm px-2 py-0.5 rounded font-body">
-                {approvedAnsars.length}
-              </span>
-              <span className="font-body text-xs text-ansar-gray ml-2">
-                Approved and ready for pairing
-              </span>
-            </h2>
-
-            {approvedAnsars.length === 0 ? (
-              <div className="card p-8 text-center">
-                <Users className="w-12 h-12 text-ansar-gray-light mx-auto mb-4" />
-                <p className="font-heading text-lg text-ansar-charcoal mb-2">
-                  No Ansars available
-                </p>
-                <p className="font-body text-sm text-ansar-gray">
-                  Recruit volunteers at{" "}
-                  <Link href={`/${organization.slug}/volunteer`} className="text-ansar-sage-600 underline">
-                    /{organization.slug}/volunteer
-                  </Link>
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {approvedAnsars.map((ansar) => (
-                  <AnsarCard
-                    key={ansar._id}
-                    ansar={ansar}
-                    onView={() => setViewAnsar(ansar._id)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
+          {activeTab === "ansars" && (
+            <PartnerAnsarsTab
+              ansars={ansars}
+              search={search}
+              setSearch={setSearch}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              onApprove={handleApproveAnsar}
+              onUpdate={updateAnsar}
+            />
+          )}
+          {activeTab === "pairings" && (
+            <PartnerPairingsTab
+              pairings={pairings}
+              seekers={seekers}
+              ansars={ansars}
+              search={search}
+              setSearch={setSearch}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              onMarkIntroSent={handleMarkIntroSent}
+              onUnpair={handleUnpair}
+            />
+          )}
+          {activeTab === "messages" && (
+            <PartnerMessagesTab
+              messages={orgMessages}
+              search={search}
+              setSearch={setSearch}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+            />
+          )}
         </div>
       </div>
-
-      {/* Pairing Modal */}
-      {showPairingModal && selectedSeeker && (
-        <PairingModal
-          seeker={seekers?.find(s => s._id === selectedSeeker)}
-          availableAnsars={availableAnsars ?? []}
-          onSelect={handleCreatePairing}
-          onClose={() => {
-            setShowPairingModal(false);
-            setSelectedSeeker(null);
-          }}
-        />
-      )}
-
-      {/* Ansar Details Modal */}
-      {viewAnsar && (
-        <AnsarDetailsModal
-          ansar={ansars?.find(a => a._id === viewAnsar)}
-          onClose={() => setViewAnsar(null)}
-          onApprove={handleUpdateAnsarStatus}
-        />
-      )}
-
-      {/* Seeker Details Modal */}
-      {viewSeeker && (
-        <SeekerDetailsModal
-          seeker={seekers?.find(s => s._id === viewSeeker)}
-          onClose={() => setViewSeeker(null)}
-        />
-      )}
     </main>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════
-// COMPONENTS
+// OVERVIEW TAB
 // ═══════════════════════════════════════════════════════════════
 
-function StatCard({
-  icon,
-  label,
-  value,
-  highlight,
-  highlightLabel
+function PartnerOverviewTab({
+  seekers, ansars, pairings, pairingStats, readyToPair, orgMessages,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  highlight?: number;
-  highlightLabel?: string;
+  seekers: any[]; ansars: any[]; pairings: any[];
+  pairingStats: any; readyToPair: any[]; orgMessages: any[];
 }) {
-  return (
-    <div className="flex items-center gap-4">
-      <div className="w-10 h-10 bg-ansar-sage-50 rounded-full flex items-center justify-center">
-        {icon}
-      </div>
-      <div>
-        <p className="font-body text-xs uppercase tracking-wider text-ansar-gray">{label}</p>
-        <p className="font-heading text-lg text-ansar-charcoal">
-          {value}
-          {highlight !== undefined && highlightLabel && (
-            <span className="font-body text-sm text-ansar-sage-600 ml-2">
-              ({highlight} {highlightLabel})
-            </span>
-          )}
-        </p>
-      </div>
-    </div>
-  );
-}
+  const stats: StatItem[] = [
+    { label: "Seekers", value: seekers.length, icon: <Heart className="w-4 h-4" />, accent: "terracotta" },
+    { label: "Ansars", value: ansars.length, icon: <Users className="w-4 h-4" />, accent: "sage" },
+    { label: "Active Pairings", value: pairingStats?.active || 0, icon: <Link2 className="w-4 h-4" />, accent: "success" },
+    { label: "Ready to Pair", value: readyToPair.length, icon: <UserPlus className="w-4 h-4" />, accent: "ochre" },
+    { label: "Pending Intro", value: pairingStats?.pendingIntro || 0, icon: <Clock className="w-4 h-4" />, accent: "terracotta" },
+    { label: "Messages", value: orgMessages.length, icon: <MessageSquare className="w-4 h-4" />, accent: "muted" },
+  ];
 
-function SeekerCard({
-  seeker,
-  action,
-  onView,
-  onDelete
-}: {
-  seeker: {
-    _id: Id<"intakes">;
-    fullName: string;
-    email: string;
-    phone: string;
-    city: string;
-    journeyType: string;
-    supportAreas: string[];
-    notes?: string;
-    gender?: string;
-  };
-  action?: React.ReactNode;
-  onView: () => void;
-  onDelete?: () => void;
-}) {
-  const journeyLabels: Record<string, string> = {
-    new_muslim: "New Muslim",
-    reconnecting: "Reconnecting",
-    seeker: "Seeker",
-  };
+  const recentSeekers = seekers.slice(0, 5);
+  const recentPairings = pairings.slice(0, 5);
 
   return (
-    <div
-      className="card p-6 hover:border-ansar-sage-400 transition-colors cursor-pointer group"
-      onClick={onView}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="font-heading text-lg text-ansar-charcoal group-hover:text-ansar-sage-600 transition-colors">{seeker.fullName}</h3>
-            <span className="bg-ansar-terracotta-light/20 text-ansar-terracotta text-xs px-2 py-0.5 rounded font-body">
-              {journeyLabels[seeker.journeyType] || seeker.journeyType}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-4 text-sm text-ansar-gray font-body mb-3">
-            <span className="flex items-center gap-1">
-              <Phone className="w-4 h-4" />
-              {seeker.phone}
-            </span>
-            <span className="flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
-              {seeker.city}
-            </span>
-          </div>
-          {seeker.supportAreas.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {seeker.supportAreas.slice(0, 3).map((area) => (
-                <span
-                  key={area}
-                  className="bg-ansar-sage-50 text-ansar-sage-700 text-xs px-2 py-1 rounded font-body"
-                >
-                  {area.split(":")[0]}
+    <div className="space-y-8">
+      <StatsRow stats={stats} />
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Ready to Pair */}
+        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] overflow-hidden">
+          <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.06)]">
+            <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
+              <span className="w-2 h-2 bg-ansar-terracotta-600 rounded-full" />
+              Ready to Pair
+              {readyToPair.length > 0 && (
+                <span className="bg-ansar-terracotta-100 text-ansar-terracotta-700 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full">
+                  {readyToPair.length}
                 </span>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="ml-4 flex items-center gap-2">
-          {action}
-          {onDelete && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className="p-2 text-ansar-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="Remove Seeker"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AnsarCard({
-  ansar,
-  isPending,
-  onView,
-  onApprove,
-  onReject
-}: {
-  ansar: {
-    _id: Id<"ansars">;
-    fullName: string;
-    phone: string;
-    city: string;
-    practiceLevel: string;
-    supportAreas: string[];
-    gender: string;
-    motivation?: string;
-    email?: string;
-    isConvert?: boolean;
-    checkInFrequency?: string;
-    knowledgeBackground?: string[];
-    studyDetails?: string;
-    status?: string;
-  };
-  isPending?: boolean;
-  onView?: () => void;
-  onApprove?: () => void;
-  onReject?: () => void;
-}) {
-  return (
-    <div
-      className="card p-6 hover:border-ansar-sage-400 transition-colors cursor-pointer group"
-      onClick={onView}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="font-heading text-lg text-ansar-charcoal group-hover:text-ansar-sage-600 transition-colors">{ansar.fullName}</h3>
-            <span className="bg-ansar-sage-100 text-ansar-sage-700 text-xs px-2 py-0.5 rounded font-body capitalize">
-              {ansar.gender === "male" ? "Brother" : "Sister"}
-            </span>
-            {isPending && (
-              <span className="bg-ansar-ochre/20 text-ansar-ochre text-xs px-2 py-0.5 rounded font-body">
-                Pending Review
-              </span>
+              )}
+            </h3>
+          </div>
+          <div className="divide-y divide-[rgba(61,61,61,0.04)]">
+            {readyToPair.length === 0 ? (
+              <p className="px-5 py-6 text-center font-body text-sm text-ansar-muted">All seekers are paired.</p>
+            ) : (
+              readyToPair.slice(0, 5).map((s) => (
+                <div key={s._id} className="px-5 py-3 flex items-center justify-between hover:bg-ansar-sage-50/30 transition-colors">
+                  <div>
+                    <p className="font-body text-sm text-ansar-charcoal font-medium">{s.fullName}</p>
+                    <p className="font-body text-xs text-ansar-muted">{s.city} &middot; {s.journeyType?.replace("_", " ")}</p>
+                  </div>
+                  <StatusBadge status="triaged" />
+                </div>
+              ))
             )}
           </div>
-          <div className="flex flex-wrap gap-4 text-sm text-ansar-gray font-body mb-3">
-            <span className="flex items-center gap-1">
-              <Phone className="w-4 h-4" />
-              {ansar.phone}
-            </span>
-            <span className="flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
-              {ansar.city}
-            </span>
-          </div>
-
-          {ansar.motivation && (
-            <div className="mb-3 bg-ansar-sage-50/50 p-2 rounded text-sm text-ansar-gray italic">
-              "{ansar.motivation.length > 80 ? ansar.motivation.substring(0, 80) + "..." : ansar.motivation}"
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-2">
-            {ansar.supportAreas.map((area) => (
-              <span
-                key={area}
-                className="bg-ansar-sage-50 text-ansar-sage-700 text-xs px-2 py-1 rounded font-body capitalize"
-              >
-                {area}
-              </span>
-            ))}
-          </div>
         </div>
 
-        {isPending && (
-          <div className="flex items-center gap-2 ml-4">
-            <button onClick={(e) => {
-              e.stopPropagation();
-              if (onApprove) onApprove();
-            }} className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1 bg-ansar-success hover:bg-ansar-success/90 border-transparent">
-              <CheckCircle2 className="w-4 h-4" />
-              Approve
+        {/* Recent Pairings */}
+        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] overflow-hidden">
+          <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.06)]">
+            <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
+              <span className="w-2 h-2 bg-ansar-sage-600 rounded-full" />
+              Recent Pairings
+            </h3>
+          </div>
+          <div className="divide-y divide-[rgba(61,61,61,0.04)]">
+            {recentPairings.length === 0 ? (
+              <p className="px-5 py-6 text-center font-body text-sm text-ansar-muted">No pairings yet.</p>
+            ) : (
+              recentPairings.map((p) => (
+                <div key={p._id} className="px-5 py-3 flex items-center justify-between hover:bg-ansar-sage-50/30 transition-colors">
+                  <div>
+                    <p className="font-body text-xs text-ansar-muted">
+                      {new Date(p.pairedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <StatusBadge status={p.status} />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEEKERS TAB (with Pairing Modal)
+// ═══════════════════════════════════════════════════════════════
+
+function PartnerSeekersTab({
+  seekers, availableAnsars, search, setSearch, statusFilter, setStatusFilter,
+  onPair, onDelete, onUpdate,
+}: {
+  seekers: any[]; availableAnsars: any[];
+  search: string; setSearch: (v: string) => void;
+  statusFilter: string; setStatusFilter: (v: string) => void;
+  onPair: (seekerId: Id<"intakes">, ansarId: Id<"ansars">) => void;
+  onDelete: (id: Id<"intakes">) => void;
+  onUpdate: (args: any) => Promise<any>;
+}) {
+  const [selectedSeeker, setSelectedSeeker] = useState<any>(null);
+  const [pairingSeeker, setPairingSeeker] = useState<Id<"intakes"> | null>(null);
+
+  const filtered = useMemo(() => {
+    let result = seekers;
+    if (statusFilter) result = result.filter((s) => s.status === statusFilter);
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter((s) =>
+        s.fullName.toLowerCase().includes(q) ||
+        s.email?.toLowerCase().includes(q) ||
+        s.city?.toLowerCase().includes(q) ||
+        s.phone?.includes(q)
+      );
+    }
+    return result;
+  }, [seekers, search, statusFilter]);
+
+  const stats: StatItem[] = [
+    { label: "Total", value: seekers.length, accent: "sage" },
+    { label: "Disconnected", value: seekers.filter((s) => s.status === "disconnected").length, accent: "terracotta" },
+    { label: "Triaged", value: seekers.filter((s) => s.status === "triaged").length, accent: "ochre" },
+    { label: "Connected", value: seekers.filter((s) => s.status === "connected" || s.status === "active").length, accent: "success" },
+  ];
+
+  const columns: Column<any>[] = [
+    { key: "fullName", label: "Name", sortable: true, render: (r) => <span className="font-medium">{r.fullName}</span> },
+    { key: "phone", label: "Phone", render: (r) => <span className="text-ansar-gray text-xs">{r.phone}</span> },
+    { key: "city", label: "City", sortable: true, render: (r) => r.city },
+    { key: "journeyType", label: "Journey", render: (r) => <StatusBadge status={r.journeyType} /> },
+    { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <StatsRow stats={stats} />
+      <SearchBar
+        placeholder="Search seekers..."
+        value={search}
+        onChange={setSearch}
+        filters={[{
+          id: "status", label: "All Statuses", value: statusFilter,
+          options: [
+            { value: "disconnected", label: "Disconnected" },
+            { value: "triaged", label: "Triaged" },
+            { value: "connected", label: "Connected" },
+          ],
+        }]}
+        onFilterChange={(_, v) => setStatusFilter(v)}
+      />
+      <DataTable
+        columns={columns}
+        data={filtered}
+        keyField="_id"
+        onRowClick={(row) => setSelectedSeeker(row)}
+        emptyMessage="No seekers in your community."
+        emptyIcon={<Heart className="w-12 h-12" />}
+        actions={(row) => (
+          <div className="flex items-center gap-1">
+            {row.status === "triaged" && availableAnsars.length > 0 && (
+              <button onClick={() => setPairingSeeker(row._id)} className="p-1.5 text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Pair with Ansar">
+                <UserPlus className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <button onClick={() => setSelectedSeeker(row)} className="p-1.5 text-ansar-muted hover:text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="View">
+              <Eye className="w-3.5 h-3.5" />
             </button>
-            <button onClick={(e) => {
-              e.stopPropagation();
-              if (onReject) onReject();
-            }} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1 text-ansar-terracotta hover:bg-ansar-terracotta/10 border-ansar-terracotta/20">
-              <X className="w-4 h-4" />
-              Reject
+            <button onClick={() => onDelete(row._id)} className="p-1.5 text-ansar-muted hover:text-ansar-error hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
-      </div>
+      />
+
+      {/* Detail Panel */}
+      <DetailPanel
+        isOpen={!!selectedSeeker}
+        onClose={() => setSelectedSeeker(null)}
+        title={selectedSeeker?.fullName}
+        subtitle={selectedSeeker ? `${selectedSeeker.city} • ${selectedSeeker.journeyType?.replace("_", " ")}` : ""}
+      >
+        {selectedSeeker && (
+          <dl className="space-y-0">
+            <DetailField label="Status"><StatusBadge status={selectedSeeker.status} size="md" /></DetailField>
+            <EditableField
+              label="Full Name"
+              value={selectedSeeker.fullName}
+              onSave={(v) => onUpdate({ id: selectedSeeker._id, fullName: v })}
+            />
+            <EditableField
+              label="Email"
+              type="email"
+              value={selectedSeeker.email}
+              onSave={(v) => onUpdate({ id: selectedSeeker._id, email: v })}
+            />
+            <EditableField
+              label="Phone"
+              type="tel"
+              value={selectedSeeker.phone}
+              onSave={(v) => onUpdate({ id: selectedSeeker._id, phone: v })}
+            />
+            <EditableField
+              label="City"
+              value={selectedSeeker.city}
+              onSave={(v) => onUpdate({ id: selectedSeeker._id, city: v })}
+            />
+            <EditableField
+              label="Gender"
+              type="select"
+              value={selectedSeeker.gender}
+              options={[{ value: "male", label: "Male" }, { value: "female", label: "Female" }]}
+              onSave={(v) => onUpdate({ id: selectedSeeker._id, gender: v })}
+            />
+            <EditableField
+              label="Journey Type"
+              type="select"
+              value={selectedSeeker.journeyType}
+              options={[
+                { value: "new_muslim", label: "New Muslim" },
+                { value: "reconnecting", label: "Reconnecting" },
+                { value: "seeker", label: "Seeker" },
+              ]}
+              onSave={(v) => onUpdate({ id: selectedSeeker._id, journeyType: v })}
+            />
+            {selectedSeeker.supportAreas?.length > 0 && (
+              <DetailField label="Support Areas">
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {selectedSeeker.supportAreas.map((area: string) => (
+                    <span key={area} className="bg-ansar-sage-50 text-ansar-sage-700 text-xs px-2 py-0.5 rounded-full font-body">{area}</span>
+                  ))}
+                </div>
+              </DetailField>
+            )}
+            <EditableField
+              label="Notes"
+              type="textarea"
+              value={selectedSeeker.notes || ""}
+              onSave={(v) => onUpdate({ id: selectedSeeker._id, notes: v })}
+            />
+          </dl>
+        )}
+      </DetailPanel>
+
+      {/* Pairing Modal */}
+      <PairingModal
+        isOpen={!!pairingSeeker}
+        onClose={() => setPairingSeeker(null)}
+        availableAnsars={availableAnsars}
+        onSelect={(ansarId) => {
+          if (pairingSeeker) {
+            onPair(pairingSeeker, ansarId);
+            setPairingSeeker(null);
+          }
+        }}
+      />
     </div>
   );
 }
 
-function PairingCard({
-  pairing,
-  seekers,
-  ansars,
-  onMarkIntroSent,
-  onUnpair
-}: {
-  pairing: {
-    _id: Id<"pairings">;
-    seekerId: Id<"intakes">;
-    ansarId: Id<"ansars">;
-    status: string;
-    pairedAt: number;
-  };
-  seekers: { _id: Id<"intakes">; fullName: string; phone: string }[];
-  ansars: { _id: Id<"ansars">; fullName: string; phone: string }[];
-  onMarkIntroSent?: () => void;
-  onUnpair?: () => void;
-}) {
-  const seeker = seekers.find(s => s._id === pairing.seekerId);
-  const ansar = ansars.find(a => a._id === pairing.ansarId);
-  const pairedDate = new Date(pairing.pairedAt).toLocaleDateString();
-
-  return (
-    <div className="card p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <div className="text-center">
-            <p className="font-body text-xs text-ansar-gray uppercase mb-1">Seeker</p>
-            <p className="font-heading text-lg text-ansar-charcoal">{seeker?.fullName}</p>
-            <p className="font-body text-sm text-ansar-gray">{seeker?.phone}</p>
-          </div>
-          <div className="flex items-center gap-2 text-ansar-sage-600">
-            <div className="w-8 h-px bg-ansar-sage-300" />
-            <Link2 className="w-5 h-5" />
-            <div className="w-8 h-px bg-ansar-sage-300" />
-          </div>
-          <div className="text-center">
-            <p className="font-body text-xs text-ansar-gray uppercase mb-1">Ansar</p>
-            <p className="font-heading text-lg text-ansar-charcoal">{ansar?.fullName}</p>
-            <p className="font-body text-sm text-ansar-gray">{ansar?.phone}</p>
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="font-body text-xs text-ansar-gray mb-2">Paired {pairedDate}</p>
-          {pairing.status === "pending_intro" && onMarkIntroSent && (
-            <button
-              onClick={onMarkIntroSent}
-              className="btn-primary text-sm py-2 px-4"
-            >
-              Mark Intro Sent
-            </button>
-          )}
-          {pairing.status === "active" && (
-            <span className="bg-ansar-success/10 text-ansar-success text-xs px-3 py-1 rounded-full font-body">
-              Active
-            </span>
-          )}
-          {onUnpair && (
-            <button
-              onClick={onUnpair}
-              className="ml-3 p-2 text-ansar-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="Unpair / Cancel"
-            >
-              <Unlink className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+// ═══════════════════════════════════════════════════════════════
+// PAIRING MODAL
+// ═══════════════════════════════════════════════════════════════
 
 function PairingModal({
-  seeker,
-  availableAnsars,
-  onSelect,
-  onClose
+  isOpen, onClose, availableAnsars, onSelect,
 }: {
-  seeker?: {
-    _id: Id<"intakes">;
-    fullName: string;
-    gender: string;
-    supportAreas: string[];
-  };
-  availableAnsars: {
-    _id: Id<"ansars">;
-    fullName: string;
-    gender: string;
-    supportAreas: string[];
-    phone: string;
-  }[];
+  isOpen: boolean;
+  onClose: () => void;
+  availableAnsars: any[];
   onSelect: (ansarId: Id<"ansars">) => void;
-  onClose: () => void;
 }) {
-  if (!seeker) return null;
-
-  // Filter ansars by gender match
-  const genderMatchedAnsars = availableAnsars.filter(
-    a => a.gender === seeker.gender
-  );
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
-      <div className="bg-white rounded-lg max-w-lg w-full max-h-[80vh] overflow-hidden">
-        <div className="p-6 border-b border-ansar-sage-100 flex items-center justify-between">
-          <div>
-            <h2 className="font-heading text-xl text-ansar-charcoal">
-              Pair {seeker.fullName}
-            </h2>
-            <p className="font-body text-sm text-ansar-gray">
-              Select an Ansar to match with this seeker
-            </p>
-          </div>
-          <button onClick={onClose} className="text-ansar-gray hover:text-ansar-charcoal">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-6 overflow-y-auto max-h-[60vh]">
-          {genderMatchedAnsars.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="w-12 h-12 text-ansar-gray-light mx-auto mb-4" />
-              <p className="font-body text-ansar-gray">
-                No {seeker.gender === "male" ? "brothers" : "sisters"} available for pairing.
-              </p>
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[440px] md:max-h-[80vh] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+          >
+            <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
+              <h3 className="font-heading text-lg text-ansar-charcoal">Select an Ansar</h3>
+              <button onClick={onClose} className="p-1 text-ansar-muted hover:text-ansar-charcoal rounded-lg transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {genderMatchedAnsars.map((ansar) => (
-                <button
-                  key={ansar._id}
-                  onClick={() => onSelect(ansar._id)}
-                  className="w-full card p-4 text-left hover:border-ansar-sage-400 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-heading text-lg text-ansar-charcoal">{ansar.fullName}</h3>
-                      <p className="font-body text-sm text-ansar-gray">{ansar.phone}</p>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {ansar.supportAreas.map((area) => (
-                          <span
-                            key={area}
-                            className="bg-ansar-sage-50 text-ansar-sage-700 text-xs px-2 py-0.5 rounded font-body capitalize"
-                          >
-                            {area}
-                          </span>
-                        ))}
+            <div className="flex-1 overflow-y-auto p-3">
+              {availableAnsars.length === 0 ? (
+                <p className="text-center py-8 font-body text-sm text-ansar-muted">No ansars available for pairing.</p>
+              ) : (
+                <div className="space-y-2">
+                  {availableAnsars.map((ansar) => (
+                    <button
+                      key={ansar._id}
+                      onClick={() => onSelect(ansar._id)}
+                      className="w-full text-left p-4 rounded-xl border border-[rgba(61,61,61,0.08)] hover:border-ansar-sage-300 hover:bg-ansar-sage-50/50 transition-all group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-body text-sm text-ansar-charcoal font-medium">{ansar.fullName}</p>
+                          <p className="font-body text-xs text-ansar-muted mt-0.5">
+                            {ansar.city} &middot; {ansar.practiceLevel}
+                          </p>
+                        </div>
+                        <UserPlus className="w-4 h-4 text-ansar-sage-400 group-hover:text-ansar-sage-600 transition-colors" />
                       </div>
-                    </div>
-                    <UserPlus className="w-5 h-5 text-ansar-sage-600" />
-                  </div>
-                </button>
-              ))}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
-    </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 
-function AnsarDetailsModal({
-  ansar,
-  onClose,
-  onApprove
+// ═══════════════════════════════════════════════════════════════
+// ANSARS TAB
+// ═══════════════════════════════════════════════════════════════
+
+function PartnerAnsarsTab({
+  ansars, search, setSearch, statusFilter, setStatusFilter, onApprove, onUpdate,
 }: {
-  ansar: any;
-  onClose: () => void;
-  onApprove: (id: Id<"ansars">, status: "approved" | "inactive") => void;
+  ansars: any[];
+  search: string; setSearch: (v: string) => void;
+  statusFilter: string; setStatusFilter: (v: string) => void;
+  onApprove: (id: Id<"ansars">) => void;
+  onUpdate: (args: any) => Promise<any>;
 }) {
-  if (!ansar) return null;
+  const [selectedAnsar, setSelectedAnsar] = useState<any>(null);
+
+  const filtered = useMemo(() => {
+    let result = ansars;
+    if (statusFilter) result = result.filter((a) => a.status === statusFilter);
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter((a) =>
+        a.fullName.toLowerCase().includes(q) ||
+        a.email?.toLowerCase().includes(q) ||
+        a.city?.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [ansars, search, statusFilter]);
+
+  const stats: StatItem[] = [
+    { label: "Total", value: ansars.length, accent: "sage" },
+    { label: "Pending", value: ansars.filter((a) => a.status === "pending").length, accent: "terracotta" },
+    { label: "Approved", value: ansars.filter((a) => a.status === "approved").length, accent: "ochre" },
+    { label: "Active", value: ansars.filter((a) => a.status === "active").length, accent: "success" },
+  ];
+
+  const columns: Column<any>[] = [
+    { key: "fullName", label: "Name", sortable: true, render: (r) => <span className="font-medium">{r.fullName}</span> },
+    { key: "phone", label: "Phone", render: (r) => <span className="text-ansar-gray text-xs">{r.phone}</span> },
+    { key: "city", label: "City", sortable: true, render: (r) => r.city },
+    { key: "practiceLevel", label: "Practice", render: (r) => <StatusBadge status={r.practiceLevel} /> },
+    { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
+  ];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6" onClick={onClose}>
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="p-6 border-b border-ansar-sage-100 flex items-center justify-between sticky top-0 bg-white">
-          <div>
-            <h2 className="font-heading text-2xl text-ansar-charcoal">{ansar.fullName}</h2>
-            <p className="font-body text-ansar-sage-600">{ansar.email} • {ansar.phone}</p>
-          </div>
-          <button onClick={onClose}><X className="w-6 h-6 text-ansar-gray" /></button>
-        </div>
-
-        <div className="p-6 space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <DetailItem label="Status" value={ansar.status} capitalize />
-            <DetailItem label="Gender" value={ansar.gender === "male" ? "Brother" : "Sister"} />
-            <DetailItem label="City" value={ansar.city} />
-            <DetailItem label="Practice Level" value={ansar.practiceLevel} capitalize />
-            <DetailItem label="Convert?" value={ansar.isConvert ? "Yes" : "No"} />
-            <DetailItem label="Check-in Frequency" value={ansar.checkInFrequency} capitalize />
-          </div>
-
-          <div>
-            <h3 className="font-heading text-lg mb-2">Motivation</h3>
-            <p className="font-body text-ansar-charcoal bg-ansar-sage-50 p-4 rounded-lg italic">"{ansar.motivation}"</p>
-          </div>
-
-          <div>
-            <h3 className="font-heading text-lg mb-2">Knowledge & Background</h3>
-            <div className="flex flex-wrap gap-2">
-              {ansar.knowledgeBackground?.map((k: string) => (
-                <span key={k} className="badge bg-ansar-sage-100 text-ansar-sage-800">{k}</span>
-              ))}
-            </div>
-            <p className="mt-2 text-sm text-ansar-gray">{ansar.studyDetails}</p>
-          </div>
-
-          <div>
-            <h3 className="font-heading text-lg mb-2">Support Areas</h3>
-            <div className="flex flex-wrap gap-2">
-              {ansar.supportAreas?.map((k: string) => (
-                <span key={k} className="badge bg-ansar-terracotta-light/20 text-ansar-terracotta">{k}</span>
-              ))}
-            </div>
-          </div>
-
-          {ansar.status === "pending" && (
-            <div className="flex gap-4 pt-4 border-t border-ansar-sage-100">
-              <button
-                onClick={() => { onApprove(ansar._id, "approved"); onClose(); }}
-                className="btn-primary flex-1 flex justify-center gap-2"
-              >
-                <CheckCircle2 className="w-5 h-5" /> Approve Application
+    <div className="space-y-5">
+      <StatsRow stats={stats} />
+      <SearchBar
+        placeholder="Search ansars..."
+        value={search}
+        onChange={setSearch}
+        filters={[{
+          id: "status", label: "All Statuses", value: statusFilter,
+          options: [
+            { value: "pending", label: "Pending" },
+            { value: "approved", label: "Approved" },
+            { value: "active", label: "Active" },
+          ],
+        }]}
+        onFilterChange={(_, v) => setStatusFilter(v)}
+      />
+      <DataTable
+        columns={columns}
+        data={filtered}
+        keyField="_id"
+        onRowClick={(row) => setSelectedAnsar(row)}
+        emptyMessage="No ansars in your community."
+        emptyIcon={<Users className="w-12 h-12" />}
+        actions={(row) => (
+          <div className="flex items-center gap-1">
+            {row.status === "pending" && (
+              <button onClick={() => onApprove(row._id)} className="p-1.5 text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Approve">
+                <Check className="w-3.5 h-3.5" />
               </button>
-              <button
-                onClick={() => { onApprove(ansar._id, "inactive"); onClose(); }}
-                className="btn-secondary flex-1 flex justify-center gap-2 text-red-600 border-red-200"
-              >
-                <X className="w-5 h-5" /> Reject
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+            )}
+            <button onClick={() => setSelectedAnsar(row)} className="p-1.5 text-ansar-muted hover:text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="View">
+              <Eye className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+      />
+
+      <DetailPanel
+        isOpen={!!selectedAnsar}
+        onClose={() => setSelectedAnsar(null)}
+        title={selectedAnsar?.fullName}
+        subtitle={selectedAnsar ? `${selectedAnsar.city} • ${selectedAnsar.practiceLevel}` : ""}
+        actions={
+          selectedAnsar?.status === "pending" ? (
+            <button onClick={() => { onApprove(selectedAnsar._id); setSelectedAnsar(null); }} className="btn-primary text-sm py-2 px-5">
+              Approve
+            </button>
+          ) : undefined
+        }
+      >
+        {selectedAnsar && (
+          <dl className="space-y-0">
+            <DetailField label="Status"><StatusBadge status={selectedAnsar.status} size="md" /></DetailField>
+            <EditableField
+              label="Full Name"
+              value={selectedAnsar.fullName}
+              onSave={(v) => onUpdate({ id: selectedAnsar._id, fullName: v })}
+            />
+            <EditableField
+              label="Email"
+              type="email"
+              value={selectedAnsar.email}
+              onSave={(v) => onUpdate({ id: selectedAnsar._id, email: v })}
+            />
+            <EditableField
+              label="Phone"
+              type="tel"
+              value={selectedAnsar.phone}
+              onSave={(v) => onUpdate({ id: selectedAnsar._id, phone: v })}
+            />
+            <EditableField
+              label="City"
+              value={selectedAnsar.city}
+              onSave={(v) => onUpdate({ id: selectedAnsar._id, city: v })}
+            />
+            <EditableField
+              label="Gender"
+              type="select"
+              value={selectedAnsar.gender}
+              options={[{ value: "male", label: "Male" }, { value: "female", label: "Female" }]}
+              onSave={(v) => onUpdate({ id: selectedAnsar._id, gender: v })}
+            />
+            <EditableField
+              label="Practice Level"
+              type="select"
+              value={selectedAnsar.practiceLevel}
+              options={[
+                { value: "consistent", label: "Consistent" },
+                { value: "steady", label: "Steady" },
+                { value: "reconnecting", label: "Reconnecting" },
+              ]}
+              onSave={(v) => onUpdate({ id: selectedAnsar._id, practiceLevel: v })}
+            />
+            <EditableField
+              label="Check-In Frequency"
+              type="select"
+              value={selectedAnsar.checkInFrequency}
+              options={[
+                { value: "weekly", label: "Weekly" },
+                { value: "biweekly", label: "Biweekly" },
+                { value: "monthly", label: "Monthly" },
+              ]}
+              onSave={(v) => onUpdate({ id: selectedAnsar._id, checkInFrequency: v })}
+            />
+            {selectedAnsar.supportAreas?.length > 0 && (
+              <DetailField label="Support Areas">
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {selectedAnsar.supportAreas.map((area: string) => (
+                    <span key={area} className="bg-ansar-sage-50 text-ansar-sage-700 text-xs px-2 py-0.5 rounded-full font-body capitalize">{area}</span>
+                  ))}
+                </div>
+              </DetailField>
+            )}
+            <EditableField
+              label="Motivation"
+              type="textarea"
+              value={selectedAnsar.motivation || ""}
+              onSave={(v) => onUpdate({ id: selectedAnsar._id, motivation: v })}
+            />
+            <EditableField
+              label="Notes"
+              type="textarea"
+              value={selectedAnsar.notes || ""}
+              onSave={(v) => onUpdate({ id: selectedAnsar._id, notes: v })}
+            />
+          </dl>
+        )}
+      </DetailPanel>
     </div>
   );
 }
 
-function SeekerDetailsModal({ seeker, onClose }: { seeker: any; onClose: () => void }) {
-  if (!seeker) return null;
+// ═══════════════════════════════════════════════════════════════
+// PAIRINGS TAB
+// ═══════════════════════════════════════════════════════════════
+
+function PartnerPairingsTab({
+  pairings, seekers, ansars, search, setSearch, statusFilter, setStatusFilter,
+  onMarkIntroSent, onUnpair,
+}: {
+  pairings: any[]; seekers: any[]; ansars: any[];
+  search: string; setSearch: (v: string) => void;
+  statusFilter: string; setStatusFilter: (v: string) => void;
+  onMarkIntroSent: (id: Id<"pairings">) => void;
+  onUnpair: (id: Id<"pairings">) => void;
+}) {
+  const seekerMap = useMemo(() => {
+    const m: Record<string, any> = {};
+    seekers.forEach((s) => { m[s._id] = s; });
+    return m;
+  }, [seekers]);
+
+  const ansarMap = useMemo(() => {
+    const m: Record<string, any> = {};
+    ansars.forEach((a) => { m[a._id] = a; });
+    return m;
+  }, [ansars]);
+
+  const enriched = useMemo(() =>
+    pairings.map((p) => ({
+      ...p,
+      seekerName: seekerMap[p.seekerId]?.fullName || "Unknown",
+      ansarName: ansarMap[p.ansarId]?.fullName || "Unknown",
+    })),
+    [pairings, seekerMap, ansarMap]
+  );
+
+  const filtered = useMemo(() => {
+    let result = enriched;
+    if (statusFilter) result = result.filter((p) => p.status === statusFilter);
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter((p) =>
+        p.seekerName.toLowerCase().includes(q) ||
+        p.ansarName.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [enriched, search, statusFilter]);
+
+  const stats: StatItem[] = [
+    { label: "Total", value: pairings.length, accent: "sage" },
+    { label: "Pending Intro", value: pairings.filter((p) => p.status === "pending_intro").length, accent: "ochre" },
+    { label: "Active", value: pairings.filter((p) => p.status === "active").length, accent: "success" },
+    { label: "Completed", value: pairings.filter((p) => p.status === "completed").length, accent: "muted" },
+  ];
+
+  const columns: Column<any>[] = [
+    { key: "seekerName", label: "Seeker", sortable: true, render: (r) => <span className="font-medium">{r.seekerName}</span> },
+    { key: "ansarName", label: "Ansar", sortable: true, render: (r) => <span className="font-medium">{r.ansarName}</span> },
+    { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
+    { key: "pairedAt", label: "Paired", sortable: true, render: (r) => (
+      <span className="text-ansar-gray text-xs">{new Date(r.pairedAt).toLocaleDateString()}</span>
+    )},
+  ];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6" onClick={onClose}>
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="p-6 border-b border-ansar-sage-100 flex items-center justify-between sticky top-0 bg-white">
-          <div>
-            <span className="font-body text-xs uppercase tracking-wider text-ansar-gray">{seeker.journeyType?.replace("_", " ")}</span>
-            <h2 className="font-heading text-2xl text-ansar-charcoal">{seeker.fullName}</h2>
-            <p className="font-body text-ansar-sage-600">{seeker.email} • {seeker.phone}</p>
+    <div className="space-y-5">
+      <StatsRow stats={stats} />
+      <SearchBar
+        placeholder="Search by seeker or ansar name..."
+        value={search}
+        onChange={setSearch}
+        filters={[{
+          id: "status", label: "All Statuses", value: statusFilter,
+          options: [
+            { value: "pending_intro", label: "Pending Intro" },
+            { value: "active", label: "Active" },
+            { value: "completed", label: "Completed" },
+            { value: "ended", label: "Ended" },
+          ],
+        }]}
+        onFilterChange={(_, v) => setStatusFilter(v)}
+      />
+      <DataTable
+        columns={columns}
+        data={filtered}
+        keyField="_id"
+        emptyMessage="No pairings yet."
+        emptyIcon={<Link2 className="w-12 h-12" />}
+        actions={(row) => (
+          <div className="flex items-center gap-1">
+            {row.status === "pending_intro" && (
+              <button onClick={() => onMarkIntroSent(row._id)} className="p-1.5 text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Mark Intro Sent">
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {(row.status === "active" || row.status === "pending_intro") && (
+              <button onClick={() => onUnpair(row._id)} className="p-1.5 text-ansar-muted hover:text-ansar-error hover:bg-red-50 rounded-lg transition-colors" title="Unpair">
+                <Unlink className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
-          <button onClick={onClose}><X className="w-6 h-6 text-ansar-gray" /></button>
-        </div>
-
-        <div className="p-6 space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <DetailItem label="Status" value={seeker.status} capitalize />
-            <DetailItem label="City" value={seeker.city} />
-            <DetailItem label="Gender Preference" value={seeker.gender || "Any"} capitalize />
-          </div>
-
-          {seeker.notes && (
-            <div>
-              <h3 className="font-heading text-lg mb-2">Notes</h3>
-              <p className="font-body text-ansar-charcoal bg-ansar-sage-50 p-4 rounded-lg">{seeker.notes}</p>
-            </div>
-          )}
-
-          <div>
-            <h3 className="font-heading text-lg mb-2">Requested Support</h3>
-            <div className="flex flex-wrap gap-2">
-              {seeker.supportAreas?.map((k: string) => (
-                <span key={k} className="badge bg-ansar-terracotta-light/20 text-ansar-terracotta">{k}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+        )}
+      />
     </div>
   );
 }
 
-function DetailItem({ label, value, capitalize }: { label: string; value: string; capitalize?: boolean }) {
+// ═══════════════════════════════════════════════════════════════
+// MESSAGES TAB
+// ═══════════════════════════════════════════════════════════════
+
+function PartnerMessagesTab({
+  messages, search, setSearch, statusFilter, setStatusFilter,
+}: {
+  messages: any[];
+  search: string; setSearch: (v: string) => void;
+  statusFilter: string; setStatusFilter: (v: string) => void;
+}) {
+  const filtered = useMemo(() => {
+    let result = messages;
+    if (statusFilter) result = result.filter((m) => m.status === statusFilter);
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter((m) =>
+        (m.recipientEmail?.toLowerCase().includes(q)) ||
+        (m.recipientPhone?.includes(q)) ||
+        m.template.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [messages, search, statusFilter]);
+
+  const stats: StatItem[] = [
+    { label: "Total", value: messages.length, accent: "sage" },
+    { label: "Sent", value: messages.filter((m) => m.status === "sent").length, accent: "success" },
+    { label: "Failed", value: messages.filter((m) => m.status === "failed").length, accent: "terracotta" },
+  ];
+
+  const columns: Column<any>[] = [
+    { key: "type", label: "Type", render: (r) => <StatusBadge status={r.type} /> },
+    { key: "recipient", label: "Recipient", render: (r) => (
+      <span className="text-ansar-gray text-xs">{r.recipientEmail || r.recipientPhone || "---"}</span>
+    )},
+    { key: "template", label: "Template", sortable: true, render: (r) => (
+      <span className="font-body text-xs text-ansar-charcoal capitalize">{r.template.replace(/_/g, " ")}</span>
+    )},
+    { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
+    { key: "sentAt", label: "Sent", sortable: true, render: (r) => (
+      <span className="text-ansar-gray text-xs">{new Date(r.sentAt).toLocaleString()}</span>
+    )},
+  ];
+
   return (
-    <div>
-      <p className="font-body text-xs text-ansar-gray uppercase mb-1">{label}</p>
-      <p className={`font-body text-ansar-charcoal ${capitalize ? "capitalize" : ""}`}>{value || "—"}</p>
+    <div className="space-y-5">
+      <StatsRow stats={stats} />
+      <SearchBar
+        placeholder="Search messages..."
+        value={search}
+        onChange={setSearch}
+        filters={[{
+          id: "status", label: "All Statuses", value: statusFilter,
+          options: [
+            { value: "sent", label: "Sent" },
+            { value: "failed", label: "Failed" },
+          ],
+        }]}
+        onFilterChange={(_, v) => setStatusFilter(v)}
+      />
+      <DataTable
+        columns={columns}
+        data={filtered}
+        keyField="_id"
+        emptyMessage="No messages yet."
+        emptyIcon={<MessageSquare className="w-12 h-12" />}
+      />
     </div>
   );
 }

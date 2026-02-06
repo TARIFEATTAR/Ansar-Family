@@ -12,6 +12,7 @@ import { v } from "convex/values";
  * - partners: Community Hub applications
  * - organizations: Active Partner Hubs
  * - pairings: Seeker ↔ Ansar connections
+ * - messages: Notification audit log (SMS & Email)
  */
 
 export default defineSchema({
@@ -255,4 +256,39 @@ export default defineSchema({
   })
     .index("by_slug", ["slug"])
     .index("by_city", ["city"]),
+
+  // ═══════════════════════════════════════════════════════════════
+  // MESSAGES — Notification audit log (SMS & Email)
+  // ═══════════════════════════════════════════════════════════════
+  messages: defineTable({
+    // What type of message
+    type: v.union(v.literal("sms"), v.literal("email")),
+    
+    // Who received it
+    recipientId: v.string(), // Can be intake, ansar, or partner ID
+    recipientPhone: v.optional(v.string()),
+    recipientEmail: v.optional(v.string()),
+    
+    // What was sent
+    template: v.string(), // e.g., "welcome_seeker", "welcome_ansar", "pairing"
+    subject: v.optional(v.string()), // For emails
+    
+    // Status
+    status: v.union(
+      v.literal("pending"),
+      v.literal("sent"),
+      v.literal("failed")
+    ),
+    errorMessage: v.optional(v.string()),
+    
+    // External IDs for debugging
+    externalId: v.optional(v.string()), // Twilio SID or Resend ID
+    
+    // Timestamps
+    sentAt: v.number(),
+  })
+    .index("by_recipient", ["recipientId"])
+    .index("by_type", ["type"])
+    .index("by_status", ["status"])
+    .index("by_template", ["template"]),
 });

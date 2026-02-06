@@ -1,14 +1,31 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 /**
  * PARTNERS — Convex API Functions
  * Manages Partner Hub applications and community registrations.
+ * 
+ * Updated to trigger welcome SMS and Email on submission.
  */
 
 // ═══════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════
+
+function getFirstName(fullName: string): string {
+  return fullName.split(" ")[0] || fullName;
+}
+
+/**
+ * Generates URL slug from organization name
+ */
+function generateSlug(orgName: string): string {
+  return orgName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 /**
  * Calculates Hub Level (1-5) based on infrastructure responses.
@@ -124,6 +141,33 @@ export const create = mutation({
       status: "pending",
     });
 
+    // ═══════════════════════════════════════════════════════════
+    // TRIGGER WELCOME NOTIFICATIONS
+    // ═══════════════════════════════════════════════════════════
+    
+    const firstName = getFirstName(args.leadName);
+    const slug = generateSlug(args.orgName);
+    
+    // Send Welcome SMS
+    await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeSMS, {
+      recipientId: partnerId.toString(),
+      phone: args.leadPhone,
+      firstName,
+      template: "welcome_partner" as const,
+      orgName: args.orgName,
+    });
+    
+    // Send Welcome Email
+    await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
+      recipientId: partnerId.toString(),
+      email: args.leadEmail.toLowerCase(),
+      firstName,
+      fullName: args.leadName,
+      template: "welcome_partner" as const,
+      orgName: args.orgName,
+      slug,
+    });
+
     return partnerId;
   },
 });
@@ -165,10 +209,7 @@ export const approveAndCreateOrg = mutation({
     }
 
     // Generate slug from org name
-    const slug = partner.orgName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+    const slug = generateSlug(partner.orgName);
 
     // Create organization
     const orgId = await ctx.db.insert("organizations", {

@@ -1,10 +1,20 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 /**
  * INTAKES — Seeker submission operations
  * Handles New Muslim, Reconnecting, and Seeker intake forms.
+ * 
+ * Updated to trigger welcome SMS and Email on submission.
  */
+
+// ═══════════════════════════════════════════════════════════════
+// HELPER — Extract first name from full name
+// ═══════════════════════════════════════════════════════════════
+function getFirstName(fullName: string): string {
+  return fullName.split(" ")[0] || fullName;
+}
 
 // ═══════════════════════════════════════════════════════════════
 // CREATE INTAKE — Public form submission
@@ -32,15 +42,7 @@ export const create = mutation({
     partnerId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Determine status and organizationId based on source
-    let status = "disconnected";
-    let organizationId = undefined;
-
-    if (args.partnerId && args.source === "partner_specific") {
-      status = "triaged"; // Auto-triage for partner-specific intakes
-      organizationId = args.partnerId as any; // Cast to Id<"organizations">
-    }
-
+    // Insert the intake
     const intakeId = await ctx.db.insert("intakes", {
       fullName: args.fullName,
       phone: args.phone,
@@ -55,11 +57,36 @@ export const create = mutation({
       supportAreas: args.supportAreas,
       otherDetails: args.otherDetails,
       consentGiven: args.consentGiven,
-      status: status as any,
+      status: "disconnected",
       source: args.source ?? "general",
       partnerId: args.partnerId,
-      organizationId: organizationId,
     });
+    
+    // ═══════════════════════════════════════════════════════════
+    // TRIGGER WELCOME NOTIFICATIONS
+    // Schedule immediately (0ms delay) to run after this mutation
+    // ═══════════════════════════════════════════════════════════
+    
+    const firstName = getFirstName(args.fullName);
+    
+    // Send Welcome SMS
+    await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeSMS, {
+      recipientId: intakeId.toString(),
+      phone: args.phone,
+      firstName,
+      template: "welcome_seeker" as const,
+    });
+    
+    // Send Welcome Email
+    await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
+      recipientId: intakeId.toString(),
+      email: args.email,
+      firstName,
+      fullName: args.fullName,
+      template: "welcome_seeker" as const,
+      journeyType: args.journeyType,
+    });
+    
     return intakeId;
   },
 });
@@ -121,7 +148,7 @@ export const getById = query({
 });
 
 // ═══════════════════════════════════════════════════════════════
-// DELETE — Remove an intake (Supad Admin / Cleanup)
+// DELETE — Remove an intake (Super Admin / Cleanup)
 // ═══════════════════════════════════════════════════════════════
 export const deleteIntake = mutation({
   args: { id: v.id("intakes") },
@@ -158,14 +185,28 @@ export const listUnassigned = query({
     return await ctx.db
       .query("intakes")
       .withIndex("by_status", (q) => q.eq("status", "disconnected"))
-      .filter((q) => q.eq(q.field("organizationId"), undefined))
+      .filter((q) => q.eq(q.field("source"), "general"))
       .order("desc")
       .collect();
   },
 });
 
 /**
- * Assigns a seeker to an organization.
+ * Lists seekers ready for pairing within an organization.
+ */
+export const listReadyForPairing = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("intakes")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .filter((q) => q.eq(q.field("status"), "triaged"))
+      .collect();
+  },
+});
+
+/**
+ * Assigns a seeker to an organization (for Partner Leads to claim floaters).
  */
 export const assignToOrganization = mutation({
   args: {
@@ -177,19 +218,5 @@ export const assignToOrganization = mutation({
       organizationId: args.organizationId,
       status: "triaged",
     });
-  },
-});
-
-/**
- * Lists seekers ready to be paired (triaged but not connected).
- */
-export const listReadyForPairing = query({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("intakes")
-      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
-      .filter((q) => q.eq(q.field("status"), "triaged"))
-      .collect();
   },
 });

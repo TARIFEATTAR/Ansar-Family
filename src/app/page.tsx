@@ -397,13 +397,13 @@ export default function Home() {
               </h4>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/privacy" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors">
+                  <Link href="/privacy-policy" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors">
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors">
-                    Terms of Service
+                  <Link href="/terms-and-conditions" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors">
+                    Terms & Conditions
                   </Link>
                 </li>
                 <li>

@@ -1,10 +1,20 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 /**
  * ANSARS — Convex API Functions
  * Manages Ansar volunteer applications and data.
+ * 
+ * Updated to trigger welcome SMS and Email on submission.
  */
+
+// ═══════════════════════════════════════════════════════════════
+// HELPER — Extract first name from full name
+// ═══════════════════════════════════════════════════════════════
+function getFirstName(fullName: string): string {
+  return fullName.split(" ")[0] || fullName;
+}
 
 // ═══════════════════════════════════════════════════════════════
 // MUTATIONS
@@ -69,6 +79,30 @@ export const create = mutation({
       organizationId: args.organizationId,
       status: "pending",
     });
+    
+    // ═══════════════════════════════════════════════════════════
+    // TRIGGER WELCOME NOTIFICATIONS
+    // ═══════════════════════════════════════════════════════════
+    
+    const firstName = getFirstName(args.fullName);
+    
+    // Send Welcome SMS
+    await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeSMS, {
+      recipientId: ansarId.toString(),
+      phone: args.phone,
+      firstName,
+      template: "welcome_ansar" as const,
+    });
+    
+    // Send Welcome Email
+    await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
+      recipientId: ansarId.toString(),
+      email: args.email,
+      firstName,
+      fullName: args.fullName,
+      template: "welcome_ansar" as const,
+    });
+    
     return ansarId;
   },
 });

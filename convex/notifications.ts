@@ -272,6 +272,69 @@ function getWelcomeAnsarEmail(firstName: string): { subject: string; html: strin
 }
 
 /**
+ * Welcome Email — Contact Added
+ */
+function getWelcomeContactEmail(
+  firstName: string,
+  role: string,
+  communityName?: string
+): { subject: string; html: string } {
+  
+  const roleGreetings: Record<string, string> = {
+    imam: "Thank you for your leadership and guidance in the community. We're honored to have you as part of the Ansar Family network.",
+    donor: "Your generosity helps us support new Muslims in their journey. Thank you for being part of the Ansar Family.",
+    scholar: "Your knowledge and wisdom are invaluable to our community. Thank you for being part of the Ansar Family.",
+    volunteer: "Thank you for your willingness to serve. Your support helps us build stronger communities for new Muslims.",
+    community_member: "Welcome to the Ansar Family community! We're glad to have you connected with us.",
+    family_member: "Thank you for being part of our extended family. Your support means everything to those on their journey.",
+    other: "Thank you for being part of the Ansar Family community. We're glad to have you connected with us.",
+  };
+
+  const greeting = roleGreetings[role] || roleGreetings.other;
+  const communityInfo = communityName ? `<p style="font-size: 16px; line-height: 1.7; color: #5A5A5A; margin: 0 0 16px 0;">You've been added to the <strong style="color: #3D3D3D;">${communityName}</strong> community network.</p>` : "";
+
+  const content = `
+      <h2 style="font-family: Georgia, 'Times New Roman', serif; color: #3D3D3D; font-size: 24px; font-weight: 500; margin: 0 0 20px 0;">
+        Assalamu Alaikum, ${firstName} 🤝
+      </h2>
+      
+      ${communityInfo}
+      
+      <p style="font-size: 16px; line-height: 1.7; color: #5A5A5A; margin: 0 0 24px 0;">
+        ${greeting}
+      </p>
+      
+      <!-- Mission Box -->
+      <div style="background: #E8ECE4; border-radius: 8px; padding: 24px; margin: 0 0 24px 0;">
+        <h3 style="font-family: Georgia, 'Times New Roman', serif; color: #6B7D5C; font-size: 18px; font-weight: 500; margin: 0 0 12px 0;">Our Mission</h3>
+        <p style="font-size: 15px; line-height: 1.6; color: #5A5A5A; margin: 0;">
+          Ansar Family connects new Muslims with local communities so no one walks this path alone. We're building a network of support across the country.
+        </p>
+      </div>
+      
+      <!-- Quote Block -->
+      <div style="border-left: 3px solid #7D8B6A; padding-left: 16px; margin: 24px 0;">
+        <p style="font-size: 14px; color: #5A5A5A; margin: 0; font-style: italic; line-height: 1.6;">
+          "The believers are like a structure, each supporting the other." — Prophet Muhammad ﷺ
+        </p>
+      </div>
+      
+      <!-- Stay Connected -->
+      <div style="background: #F5F0E4; border-radius: 8px; padding: 16px 20px; margin-top: 24px;">
+        <p style="margin: 0; font-size: 14px; color: #5A5A5A;">
+          <strong style="color: #3D3D3D;">Stay Connected:</strong><br>
+          Visit <a href="https://ansar.family" style="color: #7D8B6A; text-decoration: none; font-weight: 600;">ansar.family</a> to learn more about our work.
+        </p>
+      </div>
+  `;
+
+  return {
+    subject: `Welcome to Ansar Family, ${firstName} 🤝`,
+    html: emailWrapper(content),
+  };
+}
+
+/**
  * Welcome Email — Partner Application
  */
 function getWelcomePartnerEmail(
@@ -410,6 +473,20 @@ function getWelcomeAnsarSMS(firstName: string): string {
 
 function getWelcomePartnerSMS(orgName: string): string {
   return `Assalamu Alaikum! ${orgName}'s Partner application is received 🏛️ We'll be in touch within 3-5 days to schedule an intro call. - Ansar Family`;
+}
+
+function getWelcomeContactSMS(firstName: string, role: string): string {
+  const roleLabels: Record<string, string> = {
+    imam: "Imam",
+    donor: "Donor",
+    scholar: "Scholar",
+    volunteer: "Volunteer",
+    community_member: "Community Member",
+    family_member: "Family Member",
+    other: "Community Contact",
+  };
+  const roleLabel = roleLabels[role] || "Community Contact";
+  return `Assalamu Alaikum ${firstName}! You've been added to Ansar Family as a ${roleLabel} 🤝 We're honored to have you in our network. - Ansar Family\n\nReply STOP to opt out.`;
 }
 
 function getPairingSMS(firstName: string, ansarName: string, communityName: string): string {
@@ -976,6 +1053,53 @@ export const sendWelcomePartner = internalAction({
       });
     } catch (error) {
       console.error("Failed to send welcome email to partner:", error);
+    }
+  },
+});
+
+/**
+ * Sends welcome notifications to a Contact (SMS + Email)
+ */
+export const sendWelcomeContact = internalAction({
+  args: {
+    contactId: v.id("contacts"),
+    fullName: v.string(),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    role: v.string(),
+    organizationName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const firstName = getFirstName(args.fullName);
+    const recipientId = args.contactId.toString();
+
+    // Send SMS (only if phone provided)
+    if (args.phone) {
+      try {
+        await ctx.runAction(internal.notifications.sendWelcomeContactSMS, {
+          recipientId,
+          phone: args.phone,
+          firstName,
+          role: args.role,
+        });
+      } catch (error) {
+        console.error("Failed to send welcome SMS to contact:", error);
+      }
+    }
+
+    // Send Email (only if email provided)
+    if (args.email) {
+      try {
+        await ctx.runAction(internal.notifications.sendWelcomeContactEmail, {
+          recipientId,
+          email: args.email,
+          firstName,
+          role: args.role,
+          communityName: args.organizationName,
+        });
+      } catch (error) {
+        console.error("Failed to send welcome email to contact:", error);
+      }
     }
   },
 });

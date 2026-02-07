@@ -13,6 +13,7 @@ import { v } from "convex/values";
  * - organizations: Active Partner Hubs
  * - pairings: Seeker ↔ Ansar connections
  * - messages: Notification audit log (SMS & Email)
+ * - contacts: CRM contacts for community members
  */
 
 export default defineSchema({
@@ -291,4 +292,49 @@ export default defineSchema({
     .index("by_type", ["type"])
     .index("by_status", ["status"])
     .index("by_template", ["template"]),
+
+  // ═══════════════════════════════════════════════════════════════
+  // CONTACTS — CRM contacts for community members
+  // ═══════════════════════════════════════════════════════════════
+  contacts: defineTable({
+    // Personal Details
+    fullName: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    gender: v.optional(v.union(v.literal("male"), v.literal("female"))),
+
+    // Role/Type
+    role: v.union(
+      v.literal("imam"),
+      v.literal("donor"),
+      v.literal("community_member"),
+      v.literal("family_member"),
+      v.literal("scholar"),
+      v.literal("volunteer"),
+      v.literal("other")
+    ),
+    roleOther: v.optional(v.string()), // For when role is "other"
+
+    // Location
+    city: v.optional(v.string()),
+    stateRegion: v.optional(v.string()),
+    address: v.optional(v.string()),
+
+    // Organization Scoping
+    organizationId: v.optional(v.id("organizations")), // Which org owns this contact
+
+    // Additional Info
+    tags: v.array(v.string()), // Freeform labels like "speaks Arabic", "available weekends"
+    notes: v.optional(v.string()),
+
+    // System Fields
+    status: v.union(
+      v.literal("active"),
+      v.literal("inactive")
+    ),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_status", ["status"])
+    .index("by_role", ["role"])
+    .index("by_email", ["email"]),
 });

@@ -7,7 +7,7 @@ import Link from "next/link";
 import {
   ArrowLeft, Heart, Users, Building2, Link2, MessageSquare,
   LayoutDashboard, Shield, Loader2, Trash2, CheckCircle2,
-  Phone, Mail, MapPin, Clock, Eye, Check, X as XIcon,
+  Phone, Mail, MapPin, Clock, Eye, Check, X as XIcon, BookUser,
 } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
 import { useEffect, useMemo, useState, useCallback } from "react";
@@ -16,6 +16,7 @@ import {
   StatsRow, DetailPanel, DetailField, EditableField,
 } from "@/components/crm";
 import type { Tab, Column, StatItem } from "@/components/crm";
+import { AnimatePresence, motion } from "framer-motion";
 
 /**
  * SUPER ADMIN DASHBOARD — CRM-Style Central Command
@@ -85,6 +86,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
   // Data
   const intakes = useQuery(api.intakes.listAll) ?? [];
   const ansars = useQuery(api.ansars.listAll) ?? [];
+  const contacts = useQuery(api.contacts.listAll) ?? [];
   const partners = useQuery(api.partners.listAll) ?? [];
   const pairings = useQuery(api.pairings.listAll) ?? [];
   const messages = useQuery(api.messages.listAll) ?? [];
@@ -101,6 +103,9 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
   const deletePartner = useMutation(api.partners.deletePartner);
   const rejectPartner = useMutation(api.partners.rejectPartner);
   const clearAllData = useMutation(api.admin.clearAllData);
+  const createContact = useMutation(api.contacts.create);
+  const updateContact = useMutation(api.contacts.update);
+  const deleteContact = useMutation(api.contacts.deleteContact);
 
   // Counts
   const pendingCount =
@@ -113,6 +118,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
     { id: "overview", label: "Overview", icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: "seekers", label: "Seekers", icon: <Heart className="w-4 h-4" />, count: intakes.length },
     { id: "ansars", label: "Ansars", icon: <Users className="w-4 h-4" />, count: ansars.length },
+    { id: "contacts", label: "Contacts", icon: <BookUser className="w-4 h-4" />, count: contacts.length },
     { id: "partners", label: "Partners", icon: <Building2 className="w-4 h-4" />, count: partners.length },
     { id: "pairings", label: "Pairings", icon: <Link2 className="w-4 h-4" />, count: pairings.length },
     { id: "messages", label: "Messages", icon: <MessageSquare className="w-4 h-4" />, count: messages.length },
@@ -146,6 +152,10 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
   const handleTriageSeeker = useCallback(async (id: Id<"intakes">) => {
     await updateIntakeStatus({ id, status: "triaged" });
   }, [updateIntakeStatus]);
+
+  const handleDeleteContact = useCallback(async (id: Id<"contacts">) => {
+    if (confirm("Delete this contact? This cannot be undone.")) await deleteContact({ id });
+  }, [deleteContact]);
 
   const handleClearAllData = useCallback(async () => {
     const confirmation = prompt("WARNING: This will delete ALL data. Type 'DELETE ALL' to confirm:");
@@ -199,6 +209,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
             <OverviewTab
               intakes={intakes}
               ansars={ansars}
+              contacts={contacts}
               partners={partners}
               pairings={pairings}
               messages={messages}
@@ -226,6 +237,18 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
               onApprove={handleApproveAnsar}
               onDelete={handleDeleteAnsar}
               onUpdate={updateAnsar}
+            />
+          )}
+          {activeTab === "contacts" && (
+            <ContactsTab
+              contacts={contacts}
+              search={search}
+              setSearch={setSearch}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              onCreate={createContact}
+              onUpdate={updateContact}
+              onDelete={handleDeleteContact}
             />
           )}
           {activeTab === "partners" && (
@@ -272,13 +295,14 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
 // ═══════════════════════════════════════════════════════════════
 
 function OverviewTab({
-  intakes, ansars, partners, pairings, messages,
+  intakes, ansars, contacts, partners, pairings, messages,
 }: {
-  intakes: any[]; ansars: any[]; partners: any[]; pairings: any[]; messages: any[];
+  intakes: any[]; ansars: any[]; contacts: any[]; partners: any[]; pairings: any[]; messages: any[];
 }) {
   const stats: StatItem[] = [
     { label: "Seekers", value: intakes.length, icon: <Heart className="w-4 h-4" />, accent: "terracotta" },
     { label: "Ansars", value: ansars.length, icon: <Users className="w-4 h-4" />, accent: "sage" },
+    { label: "Contacts", value: contacts.length, icon: <BookUser className="w-4 h-4" />, accent: "ochre" },
     { label: "Partners", value: partners.length, icon: <Building2 className="w-4 h-4" />, accent: "ochre" },
     { label: "Active Pairings", value: pairings.filter((p) => p.status === "active" || p.status === "pending_intro").length, icon: <Link2 className="w-4 h-4" />, accent: "success" },
     { label: "Pending", value: intakes.filter((i) => i.status === "disconnected").length + ansars.filter((a) => a.status === "pending").length + partners.filter((p) => p.status === "pending").length, icon: <Clock className="w-4 h-4" />, accent: "terracotta" },
@@ -1093,5 +1117,407 @@ function MessagesTab({
         emptyIcon={<MessageSquare className="w-12 h-12" />}
       />
     </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONTACTS TAB
+// ═══════════════════════════════════════════════════════════════
+
+function ContactsTab({
+  contacts, search, setSearch, statusFilter, setStatusFilter, onCreate, onUpdate, onDelete,
+}: {
+  contacts: any[];
+  search: string; setSearch: (v: string) => void;
+  statusFilter: string; setStatusFilter: (v: string) => void;
+  onCreate: (args: any) => Promise<any>;
+  onUpdate: (args: any) => Promise<any>;
+  onDelete: (id: Id<"contacts">) => void;
+}) {
+  const [selectedContact, setSelectedContact] = useState<any>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const filtered = useMemo(() => {
+    let result = contacts;
+    if (statusFilter) result = result.filter((c) => c.status === statusFilter);
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter((c) =>
+        c.fullName.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        c.phone?.includes(q) ||
+        c.city?.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [contacts, search, statusFilter]);
+
+  const stats: StatItem[] = [
+    { label: "Total", value: contacts.length, accent: "sage" },
+    { label: "Active", value: contacts.filter((c) => c.status === "active").length, accent: "success" },
+    { label: "Imams", value: contacts.filter((c) => c.role === "imam").length, accent: "ochre" },
+    { label: "Donors", value: contacts.filter((c) => c.role === "donor").length, accent: "terracotta" },
+  ];
+
+  const roleLabels: Record<string, string> = {
+    imam: "Imam",
+    donor: "Donor",
+    community_member: "Community Member",
+    family_member: "Family Member",
+    scholar: "Scholar",
+    volunteer: "Volunteer",
+    other: "Other",
+  };
+
+  const columns: Column<any>[] = [
+    { key: "fullName", label: "Name", sortable: true, render: (r) => <span className="font-medium">{r.fullName}</span> },
+    { key: "phone", label: "Phone", render: (r) => <span className="text-ansar-gray text-xs">{r.phone || "—"}</span> },
+    { key: "role", label: "Role", sortable: true, render: (r) => <StatusBadge status={r.role} /> },
+    { key: "city", label: "City", sortable: true, render: (r) => r.city || "—" },
+    { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <StatsRow stats={stats} />
+      <div className="flex items-center justify-between gap-4">
+        <SearchBar
+          placeholder="Search contacts..."
+          value={search}
+          onChange={setSearch}
+          filters={[{
+            id: "status", label: "All Statuses", value: statusFilter,
+            options: [
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+            ],
+          }]}
+          onFilterChange={(_, v) => setStatusFilter(v)}
+        />
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="btn-primary text-sm py-2 px-4 whitespace-nowrap"
+        >
+          + Add Contact
+        </button>
+      </div>
+      <DataTable
+        columns={columns}
+        data={filtered}
+        keyField="_id"
+        onRowClick={(row) => setSelectedContact(row)}
+        emptyMessage="No contacts found."
+        emptyIcon={<BookUser className="w-12 h-12" />}
+        actions={(row) => (
+          <div className="flex items-center gap-1">
+            <button onClick={() => setSelectedContact(row)} className="p-1.5 text-ansar-muted hover:text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="View">
+              <Eye className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => onDelete(row._id)} className="p-1.5 text-ansar-muted hover:text-ansar-error hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+      />
+
+      {/* Add Contact Modal */}
+      <AdminAddContactModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onCreate={onCreate}
+      />
+
+      {/* Detail Panel */}
+      <DetailPanel
+        isOpen={!!selectedContact}
+        onClose={() => setSelectedContact(null)}
+        title={selectedContact?.fullName}
+        subtitle={selectedContact ? `${roleLabels[selectedContact.role] || selectedContact.role}${selectedContact.city ? ` • ${selectedContact.city}` : ""}` : ""}
+      >
+        {selectedContact && (
+          <dl className="space-y-0">
+            <DetailField label="Status"><StatusBadge status={selectedContact.status} size="md" /></DetailField>
+            <EditableField
+              label="Full Name"
+              value={selectedContact.fullName}
+              onSave={(v) => onUpdate({ id: selectedContact._id, fullName: v })}
+            />
+            <EditableField
+              label="Email"
+              type="email"
+              value={selectedContact.email || ""}
+              onSave={(v) => onUpdate({ id: selectedContact._id, email: v })}
+            />
+            <EditableField
+              label="Phone"
+              type="tel"
+              value={selectedContact.phone || ""}
+              onSave={(v) => onUpdate({ id: selectedContact._id, phone: v })}
+            />
+            <EditableField
+              label="Role"
+              type="select"
+              value={selectedContact.role}
+              options={[
+                { value: "imam", label: "Imam" },
+                { value: "donor", label: "Donor" },
+                { value: "community_member", label: "Community Member" },
+                { value: "family_member", label: "Family Member" },
+                { value: "scholar", label: "Scholar" },
+                { value: "volunteer", label: "Volunteer" },
+                { value: "other", label: "Other" },
+              ]}
+              onSave={(v) => onUpdate({ id: selectedContact._id, role: v })}
+            />
+            {selectedContact.role === "other" && (
+              <EditableField
+                label="Role (Other)"
+                value={selectedContact.roleOther || ""}
+                onSave={(v) => onUpdate({ id: selectedContact._id, roleOther: v })}
+              />
+            )}
+            <EditableField
+              label="Gender"
+              type="select"
+              value={selectedContact.gender || ""}
+              options={[
+                { value: "", label: "Not specified" },
+                { value: "male", label: "Male" },
+                { value: "female", label: "Female" },
+              ]}
+              onSave={(v) => onUpdate({ id: selectedContact._id, gender: v || undefined })}
+            />
+            <EditableField
+              label="City"
+              value={selectedContact.city || ""}
+              onSave={(v) => onUpdate({ id: selectedContact._id, city: v })}
+            />
+            <EditableField
+              label="State/Region"
+              value={selectedContact.stateRegion || ""}
+              onSave={(v) => onUpdate({ id: selectedContact._id, stateRegion: v })}
+            />
+            <EditableField
+              label="Address"
+              value={selectedContact.address || ""}
+              onSave={(v) => onUpdate({ id: selectedContact._id, address: v })}
+            />
+            {selectedContact.tags?.length > 0 && (
+              <DetailField label="Tags">
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {selectedContact.tags.map((tag: string) => (
+                    <span key={tag} className="bg-ansar-ochre-50 text-ansar-ochre-700 text-xs px-2 py-0.5 rounded-full font-body">{tag}</span>
+                  ))}
+                </div>
+              </DetailField>
+            )}
+            <EditableField
+              label="Notes"
+              type="textarea"
+              value={selectedContact.notes || ""}
+              onSave={(v) => onUpdate({ id: selectedContact._id, notes: v })}
+            />
+          </dl>
+        )}
+      </DetailPanel>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADD CONTACT MODAL (Admin - no organization required)
+// ═══════════════════════════════════════════════════════════════
+
+function AdminAddContactModal({
+  isOpen, onClose, onCreate,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreate: (args: any) => Promise<any>;
+}) {
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    role: "community_member" as const,
+    roleOther: "",
+    city: "",
+    notes: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.fullName.trim()) {
+      alert("Please enter a name");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onCreate({
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim() || undefined,
+        phone: formData.phone.trim() || undefined,
+        role: formData.role,
+        roleOther: formData.role === "other" ? formData.roleOther.trim() : undefined,
+        city: formData.city.trim() || undefined,
+        notes: formData.notes.trim() || undefined,
+      });
+      setFormData({
+        fullName: "",
+        email: "",
+        phone: "",
+        role: "community_member",
+        roleOther: "",
+        city: "",
+        notes: "",
+      });
+      onClose();
+    } catch (error) {
+      console.error("Failed to create contact:", error);
+      alert("Failed to create contact. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[520px] md:max-h-[85vh] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+          >
+            <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
+              <h3 className="font-heading text-lg text-ansar-charcoal">Add Contact</h3>
+              <button onClick={onClose} className="p-1 text-ansar-muted hover:text-ansar-charcoal rounded-lg transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-body text-sm font-medium text-ansar-charcoal mb-1.5">
+                    Full Name <span className="text-ansar-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-400"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-body text-sm font-medium text-ansar-charcoal mb-1.5">
+                    Role
+                  </label>
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-400"
+                  >
+                    <option value="community_member">Community Member</option>
+                    <option value="imam">Imam</option>
+                    <option value="donor">Donor</option>
+                    <option value="family_member">Family Member</option>
+                    <option value="scholar">Scholar</option>
+                    <option value="volunteer">Volunteer</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                {formData.role === "other" && (
+                  <div>
+                    <label className="block font-body text-sm font-medium text-ansar-charcoal mb-1.5">
+                      Role (Other)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.roleOther}
+                      onChange={(e) => setFormData({ ...formData, roleOther: e.target.value })}
+                      className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-400"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="block font-body text-sm font-medium text-ansar-charcoal mb-1.5">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-400"
+                  />
+                </div>
+                <div>
+                  <label className="block font-body text-sm font-medium text-ansar-charcoal mb-1.5">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-400"
+                  />
+                </div>
+                <div>
+                  <label className="block font-body text-sm font-medium text-ansar-charcoal mb-1.5">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-400"
+                  />
+                </div>
+                <div>
+                  <label className="block font-body text-sm font-medium text-ansar-charcoal mb-1.5">
+                    Notes
+                  </label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-400 resize-none"
+                  />
+                </div>
+              </div>
+            </form>
+            <div className="px-6 py-4 border-t border-[rgba(61,61,61,0.08)] flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-outline text-sm py-2 px-4"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                className="btn-primary text-sm py-2 px-5"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Adding..." : "Add Contact"}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

@@ -10,6 +10,7 @@
 
 import type * as admin from "../admin.js";
 import type * as ansars from "../ansars.js";
+import type * as contacts from "../contacts.js";
 import type * as diagnose_email from "../diagnose_email.js";
 import type * as intakes from "../intakes.js";
 import type * as messages from "../messages.js";
@@ -29,6 +30,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   ansars: typeof ansars;
+  contacts: typeof contacts;
   diagnose_email: typeof diagnose_email;
   intakes: typeof intakes;
   messages: typeof messages;

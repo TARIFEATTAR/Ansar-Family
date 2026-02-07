@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -6,7 +6,10 @@ import { internal } from "./_generated/api";
  * PARTNERS — Convex API Functions
  * Manages Partner Hub applications and community registrations.
  * 
- * Updated to trigger welcome SMS and Email on submission.
+ * Updated to:
+ * - Auto-create user accounts for partner leads
+ * - Trigger welcome SMS and Email on submission
+ * - Link user accounts to partner applications
  */
 
 // ═══════════════════════════════════════════════════════════════
@@ -142,6 +145,17 @@ export const create = mutation({
     });
 
     // ═══════════════════════════════════════════════════════════
+    // TRIGGER USER ACCOUNT CREATION
+    // Create user account so partner lead can log in (pending approval)
+    // ═══════════════════════════════════════════════════════════
+    
+    await ctx.scheduler.runAfter(0, internal.partners.createPartnerAccount, {
+      partnerId,
+      leadName: args.leadName,
+      leadEmail: args.leadEmail.toLowerCase(),
+    });
+
+    // ═══════════════════════════════════════════════════════════
     // TRIGGER WELCOME NOTIFICATIONS
     // ═══════════════════════════════════════════════════════════
     
@@ -197,6 +211,7 @@ export const updateStatus = mutation({
 
 /**
  * Approves a Partner and creates an Organization.
+ * Also activates the partner lead's user account and grants access.
  */
 export const approveAndCreateOrg = mutation({
   args: {
@@ -228,6 +243,20 @@ export const approveAndCreateOrg = mutation({
       status: "approved",
       organizationId: orgId,
     });
+
+    // Activate the partner lead's user account
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", partner.leadEmail))
+      .first();
+
+    if (user) {
+      await ctx.db.patch(user._id, {
+        isActive: true,
+        organizationId: orgId,
+      });
+      console.log(`✅ Activated user account ${user._id} and linked to org ${orgId}`);
+    }
 
     return { partnerId: args.id, organizationId: orgId, slug };
   },
@@ -348,5 +377,47 @@ export const rejectPartner = mutation({
   args: { id: v.id("partners") },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { status: "rejected" as any });
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// INTERNAL MUTATIONS — Account Creation
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Creates a user account for a partner lead (internal only).
+ * This is triggered automatically after partner application submission.
+ * Account will have limited access until application is approved.
+ */
+export const createPartnerAccount = internalMutation({
+  args: {
+    partnerId: v.id("partners"),
+    leadName: v.string(),
+    leadEmail: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Check if user already exists
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.leadEmail))
+      .first();
+
+    if (existingUser) {
+      console.log(`✅ User ${existingUser._id} already exists for partner ${args.partnerId}`);
+      return existingUser._id;
+    }
+
+    // Create new user account with partner_lead role
+    // Note: Account is created but won't have organizationId until approved
+    const userId = await ctx.db.insert("users", {
+      clerkId: `pending_${args.leadEmail}`, // Temporary until Clerk webhook updates it
+      email: args.leadEmail,
+      name: args.leadName,
+      role: "partner_lead",
+      isActive: false, // Inactive until approved
+    });
+
+    console.log(`✅ Created user account ${userId} for partner lead ${args.leadName}`);
+    return userId;
   },
 });

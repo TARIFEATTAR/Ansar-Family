@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -6,7 +6,10 @@ import { internal } from "./_generated/api";
  * ANSARS — Convex API Functions
  * Manages Ansar volunteer applications and data.
  * 
- * Updated to trigger welcome SMS and Email on submission.
+ * Updated to:
+ * - Auto-create user accounts for ansars
+ * - Trigger welcome SMS and Email on submission
+ * - Link user accounts to ansar applications
  */
 
 // ═══════════════════════════════════════════════════════════════
@@ -81,6 +84,18 @@ export const create = mutation({
     });
     
     // ═══════════════════════════════════════════════════════════
+    // TRIGGER USER ACCOUNT CREATION
+    // Create user account so ansar can log in (pending approval)
+    // ═══════════════════════════════════════════════════════════
+    
+    await ctx.scheduler.runAfter(0, internal.ansars.createAnsarAccount, {
+      ansarId,
+      fullName: args.fullName,
+      email: args.email,
+      organizationId: args.organizationId,
+    });
+    
+    // ═══════════════════════════════════════════════════════════
     // TRIGGER WELCOME NOTIFICATIONS
     // ═══════════════════════════════════════════════════════════
     
@@ -109,6 +124,7 @@ export const create = mutation({
 
 /**
  * Updates the status of an Ansar application.
+ * When approved, activates the ansar's user account.
  */
 export const updateStatus = mutation({
   args: {
@@ -129,6 +145,21 @@ export const updateStatus = mutation({
     }
 
     await ctx.db.patch(id, { status });
+
+    // If approved, activate the ansar's user account
+    if (status === "approved" || status === "active") {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_email", (q) => q.eq("email", ansar.email))
+        .first();
+
+      if (user) {
+        await ctx.db.patch(user._id, {
+          isActive: true,
+        });
+        console.log(`✅ Activated user account ${user._id} for ansar ${ansar.fullName}`);
+      }
+    }
   },
 });
 
@@ -277,5 +308,49 @@ export const deleteAnsar = mutation({
   args: { id: v.id("ansars") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// INTERNAL MUTATIONS — Account Creation
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Creates a user account for an ansar (internal only).
+ * This is triggered automatically after ansar application submission.
+ * Account will have limited access until application is approved by Hub Admin.
+ */
+export const createAnsarAccount = internalMutation({
+  args: {
+    ansarId: v.id("ansars"),
+    fullName: v.string(),
+    email: v.string(),
+    organizationId: v.optional(v.id("organizations")),
+  },
+  handler: async (ctx, args) => {
+    // Check if user already exists
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+
+    if (existingUser) {
+      console.log(`✅ User ${existingUser._id} already exists for ansar ${args.ansarId}`);
+      return existingUser._id;
+    }
+
+    // Create new user account with ansar role
+    // Note: Account is created but inactive until approved
+    const userId = await ctx.db.insert("users", {
+      clerkId: `pending_${args.email}`, // Temporary until Clerk webhook updates it
+      email: args.email,
+      name: args.fullName,
+      role: "ansar",
+      organizationId: args.organizationId,
+      isActive: false, // Inactive until approved by Hub Admin
+    });
+
+    console.log(`✅ Created user account ${userId} for ansar ${args.fullName}`);
+    return userId;
   },
 });

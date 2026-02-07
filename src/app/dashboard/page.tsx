@@ -5,7 +5,7 @@ import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
-import { Loader2, AlertCircle, Building2 } from "lucide-react";
+import { Loader2, AlertCircle, Building2, Users } from "lucide-react";
 import Link from "next/link";
 
 /**
@@ -113,22 +113,61 @@ export default function DashboardGatewayPage() {
         );
     }
 
-    // Partner Lead without an organization (edge case - pending approval)
+    // Partner Lead without an organization (pending approval)
     if (currentUser?.role === "partner_lead" && !currentUser?.organizationId) {
         return (
             <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
                 <div className="text-center max-w-md mx-auto px-6">
                     <Building2 className="w-12 h-12 text-ansar-ochre mx-auto mb-4" />
                     <h1 className="font-heading text-2xl text-ansar-charcoal mb-4">
-                        Application Pending
+                        Application Under Review
                     </h1>
                     <p className="font-body text-ansar-gray mb-6">
-                        Your partner application is being reviewed. Once approved, you'll be
-                        able to access your organization's dashboard.
+                        Thank you for applying to become a Partner Hub! We'll review your application within 3-5 business days and reach out to schedule a brief intro call.
                     </p>
-                    <Link href="/" className="text-ansar-sage-600 font-body hover:underline">
-                        ← Return to Home
-                    </Link>
+                    <p className="font-body text-sm text-ansar-muted mb-6">
+                        Once approved, you'll receive an email and gain full access to your organization's dashboard.
+                    </p>
+                    <div className="space-y-3">
+                        <SignOutButton>
+                            <button className="btn-outline w-full">
+                                Sign Out
+                            </button>
+                        </SignOutButton>
+                        <Link href="/" className="text-ansar-sage-600 font-body hover:underline block text-sm">
+                            Return to Home
+                        </Link>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
+    // Ansar without active status (pending approval)
+    if (currentUser?.role === "ansar" && !currentUser?.isActive) {
+        return (
+            <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
+                <div className="text-center max-w-md mx-auto px-6">
+                    <Users className="w-12 h-12 text-ansar-sage-600 mx-auto mb-4" />
+                    <h1 className="font-heading text-2xl text-ansar-charcoal mb-4">
+                        Application Under Review
+                    </h1>
+                    <p className="font-body text-ansar-gray mb-6">
+                        Thank you for applying to become an Ansar! Your local community will review your application within 3-5 business days.
+                    </p>
+                    <p className="font-body text-sm text-ansar-muted mb-6">
+                        Once approved, you'll receive access to the 10-minute "Ansar Way" training and be connected with your local community.
+                    </p>
+                    <div className="space-y-3">
+                        <SignOutButton>
+                            <button className="btn-outline w-full">
+                                Sign Out
+                            </button>
+                        </SignOutButton>
+                        <Link href="/" className="text-ansar-sage-600 font-body hover:underline block text-sm">
+                            Return to Home
+                        </Link>
+                    </div>
                 </div>
             </main>
         );

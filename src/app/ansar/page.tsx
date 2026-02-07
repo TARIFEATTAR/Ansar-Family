@@ -8,7 +8,7 @@ import Link from "next/link";
 import {
   ArrowLeft, Heart, Users, Link2, LayoutDashboard, Loader2,
   CheckCircle2, Clock, MapPin, Phone, Mail, Calendar,
-  Sparkles, BookOpen, Eye, LogOut, Copy, CheckCheck, Share2,
+  Sparkles, BookOpen, Eye, LogOut, Copy, CheckCheck, Share2, ExternalLink,
 } from "lucide-react";
 import {
   TabNav, StatsRow, StatusBadge, DetailPanel, DetailField,
@@ -241,6 +241,14 @@ function AnsarDashboard({
                   </>
                 )}
               </button>
+              <Link
+                href={`/${organization!.slug}`}
+                target="_blank"
+                className="flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 hover:border-ansar-sage-300 transition-all shrink-0 bg-white"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">View Hub Page</span>
+              </Link>
             </div>
             <p className="font-body text-[10px] text-ansar-muted sm:hidden">
               Share this link with seekers to join your community.

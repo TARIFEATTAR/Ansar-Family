@@ -92,7 +92,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
   const pairings = useQuery(api.pairings.listAll) ?? [];
   const messages = useQuery(api.messages.listAll) ?? [];
   const users = useQuery(api.users.listAll) ?? [];
-  const organizations = useQuery(api.organizations.listAll) ?? [];
+  const organizations = useQuery(api.organizations.listActive) ?? [];
 
   // Mutations
   const updateIntakeStatus = useMutation(api.intakes.updateStatus);
@@ -1361,11 +1361,19 @@ function AdminAddContactModal({
   onClose: () => void;
   onCreate: (args: any) => Promise<any>;
 }) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    fullName: string;
+    email: string;
+    phone: string;
+    role: "imam" | "donor" | "community_member" | "family_member" | "scholar" | "volunteer" | "other";
+    roleOther: string;
+    city: string;
+    notes: string;
+  }>({
     fullName: "",
     email: "",
     phone: "",
-    role: "community_member" as const,
+    role: "community_member",
     roleOther: "",
     city: "",
     notes: "",
@@ -1746,11 +1754,17 @@ function AddUserModal({
   organizations: any[];
   onCreate: (args: any) => Promise<any>;
 }) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    clerkId: string;
+    name: string;
+    email: string;
+    role: "super_admin" | "partner_lead" | "ansar" | "seeker";
+    organizationId: string;
+  }>({
     clerkId: "",
     name: "",
     email: "",
-    role: "seeker" as const,
+    role: "seeker",
     organizationId: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);

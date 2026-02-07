@@ -1230,11 +1230,19 @@ function AddContactModal({
   organizationId: Id<"organizations">;
   onCreate: (args: any) => Promise<any>;
 }) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    fullName: string;
+    email: string;
+    phone: string;
+    role: "imam" | "donor" | "community_member" | "family_member" | "scholar" | "volunteer" | "other";
+    roleOther: string;
+    city: string;
+    notes: string;
+  }>({
     fullName: "",
     email: "",
     phone: "",
-    role: "community_member" as const,
+    role: "community_member",
     roleOther: "",
     city: "",
     notes: "",

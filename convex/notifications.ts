@@ -1058,6 +1058,192 @@ export const sendWelcomePartner = internalAction({
 });
 
 /**
+ * Sends welcome SMS to a Contact
+ */
+export const sendWelcomeContactSMS = internalAction({
+  args: {
+    recipientId: v.string(),
+    phone: v.string(),
+    firstName: v.string(),
+    role: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { recipientId, phone, firstName, role } = args;
+
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+
+    if (!accountSid || !authToken || !fromNumber) {
+      console.error("❌ Missing Twilio environment variables");
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "sms",
+        recipientId,
+        recipientPhone: phone,
+        template: "welcome_contact",
+        status: "failed",
+        errorMessage: "Missing Twilio configuration",
+      });
+      return { success: false, error: "Missing Twilio configuration" };
+    }
+
+    let normalizedPhone: string;
+    try {
+      normalizedPhone = normalizePhoneNumber(phone);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Invalid phone number format";
+      console.error(`❌ Invalid phone number format: ${phone}`, errorMessage);
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "sms",
+        recipientId,
+        recipientPhone: phone,
+        template: "welcome_contact",
+        status: "failed",
+        errorMessage: `Phone number normalization failed: ${errorMessage}`,
+      });
+      return { success: false, error: errorMessage };
+    }
+
+    const message = getWelcomeContactSMS(firstName, role);
+
+    try {
+      const response = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64"),
+          },
+          body: new URLSearchParams({
+            To: normalizedPhone,
+            From: fromNumber,
+            Body: message,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Twilio API error");
+      }
+
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "sms",
+        recipientId,
+        recipientPhone: normalizedPhone,
+        template: "welcome_contact",
+        status: "sent",
+        externalId: data.sid,
+      });
+
+      console.log(`✅ Contact SMS sent to ${normalizedPhone}, SID: ${data.sid}`);
+      return { success: true, sid: data.sid };
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error(`❌ Contact SMS failed to ${normalizedPhone}:`, errorMessage);
+
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "sms",
+        recipientId,
+        recipientPhone: normalizedPhone,
+        template: "welcome_contact",
+        status: "failed",
+        errorMessage,
+      });
+
+      return { success: false, error: errorMessage };
+    }
+  },
+});
+
+/**
+ * Sends welcome Email to a Contact
+ */
+export const sendWelcomeContactEmail = internalAction({
+  args: {
+    recipientId: v.string(),
+    email: v.string(),
+    firstName: v.string(),
+    role: v.string(),
+    communityName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { recipientId, email, firstName, role, communityName } = args;
+
+    const apiKey = process.env.RESEND_API_KEY;
+
+    if (!apiKey) {
+      console.error("❌ Missing Resend API key");
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "email",
+        recipientId,
+        recipientEmail: email,
+        template: "welcome_contact",
+        status: "failed",
+        errorMessage: "Missing Resend configuration",
+      });
+      return { success: false, error: "Missing Resend configuration" };
+    }
+
+    const emailContent = getWelcomeContactEmail(firstName, role, communityName);
+
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          from: "Ansar Family <welcome@ansar.family>",
+          to: [email],
+          subject: emailContent.subject,
+          html: emailContent.html,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Resend API error");
+      }
+
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "email",
+        recipientId,
+        recipientEmail: email,
+        template: "welcome_contact",
+        subject: emailContent.subject,
+        status: "sent",
+        externalId: data.id,
+      });
+
+      console.log(`✅ Contact email sent to ${email}, ID: ${data.id}`);
+      return { success: true, id: data.id };
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error(`❌ Contact email failed to ${email}:`, errorMessage);
+
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "email",
+        recipientId,
+        recipientEmail: email,
+        template: "welcome_contact",
+        subject: emailContent.subject,
+        status: "failed",
+        errorMessage,
+      });
+
+      return { success: false, error: errorMessage };
+    }
+  },
+});
+
+/**
  * Sends welcome notifications to a Contact (SMS + Email)
  */
 export const sendWelcomeContact = internalAction({

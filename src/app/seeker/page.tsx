@@ -163,16 +163,16 @@ export default function SeekerPortalPage() {
                 </p>
                 <div className="space-y-3">
                   <a 
-                    href="https://www.youtube.com/watch?v=ifllgTA2pmY"
+                    href="https://www.youtube.com/watch?v=l6XQbQsNq04"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
                   >
-                    <span>What is Islam? (5 min)</span>
+                    <span>What is Islam?</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
                   <a 
-                    href="https://www.youtube.com/watch?v=POJdu4HV-Ng"
+                    href="https://www.youtube.com/watch?v=fCkcr0kcWOE"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
@@ -181,7 +181,7 @@ export default function SeekerPortalPage() {
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
                   <a 
-                    href="https://www.youtube.com/watch?v=XWuudIFfV_I"
+                    href="https://www.youtube.com/watch?v=hzM3KN6j7kQ"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
@@ -209,12 +209,12 @@ export default function SeekerPortalPage() {
                 </p>
                 <div className="space-y-3">
                   <a 
-                    href="https://www.whyislam.org/on-faith/new-muslim-guide/"
+                    href="https://www.whyislam.org/intelligence-creation/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
                   >
-                    <span>New Muslim Guide (WhyIslam)</span>
+                    <span>The Intelligence of Allah&apos;s Creations (WhyIslam)</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
                   <a 

@@ -70,11 +70,12 @@ export default defineSchema({
 
     // System Fields
     status: v.union(
-      v.literal("disconnected"), // Not yet assigned to a community
-      v.literal("triaged"),      // Assigned to a partner
-      v.literal("connected"),    // Paired with an Ansar
-      v.literal("active")        // Engaged in the program
+      v.literal("awaiting_outreach"), // Submitted, awaiting initial contact
+      v.literal("triaged"),           // Assigned to a partner
+      v.literal("connected"),         // Paired with an Ansar
+      v.literal("active")             // Engaged in the program
     ),
+    userId: v.optional(v.id("users")), // Link to user account
     organizationId: v.optional(v.id("organizations")), // Which org owns this seeker
     source: v.union(v.literal("general"), v.literal("partner_specific")),
     partnerId: v.optional(v.string()),

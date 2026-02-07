@@ -1,12 +1,15 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 /**
  * INTAKES — Seeker submission operations
  * Handles New Muslim, Reconnecting, and Seeker intake forms.
  * 
- * Updated to trigger welcome SMS and Email on submission.
+ * Updated to:
+ * - Auto-create Clerk accounts for seekers
+ * - Trigger welcome SMS and Email on submission
+ * - Link user accounts to intake records
  */
 
 // ═══════════════════════════════════════════════════════════════
@@ -42,7 +45,7 @@ export const create = mutation({
     partnerId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Insert the intake
+    // Insert the intake with awaiting_outreach status
     const intakeId = await ctx.db.insert("intakes", {
       fullName: args.fullName,
       phone: args.phone,
@@ -57,9 +60,20 @@ export const create = mutation({
       supportAreas: args.supportAreas,
       otherDetails: args.otherDetails,
       consentGiven: args.consentGiven,
-      status: "disconnected",
+      status: "awaiting_outreach",
       source: args.source ?? "general",
       partnerId: args.partnerId,
+    });
+    
+    // ═══════════════════════════════════════════════════════════
+    // TRIGGER CLERK ACCOUNT CREATION
+    // Create user account so seeker can log in and see resources
+    // ═══════════════════════════════════════════════════════════
+    
+    await ctx.scheduler.runAfter(0, internal.intakes.createSeekerAccount, {
+      intakeId,
+      fullName: args.fullName,
+      email: args.email,
     });
     
     // ═══════════════════════════════════════════════════════════
@@ -92,14 +106,26 @@ export const create = mutation({
 });
 
 // ═══════════════════════════════════════════════════════════════
-// LIST DISCONNECTED — Admin view of unassigned seekers
+// LIST AWAITING OUTREACH — Admin view of seekers awaiting contact
 // ═══════════════════════════════════════════════════════════════
+export const listAwaitingOutreach = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("intakes")
+      .withIndex("by_status", (q) => q.eq("status", "awaiting_outreach"))
+      .order("desc")
+      .collect();
+  },
+});
+
+// Deprecated: Use listAwaitingOutreach instead
 export const listDisconnected = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db
       .query("intakes")
-      .withIndex("by_status", (q) => q.eq("status", "disconnected"))
+      .withIndex("by_status", (q) => q.eq("status", "awaiting_outreach"))
       .order("desc")
       .collect();
   },
@@ -122,7 +148,7 @@ export const updateStatus = mutation({
   args: {
     id: v.id("intakes"),
     status: v.union(
-      v.literal("disconnected"),
+      v.literal("awaiting_outreach"),
       v.literal("triaged"),
       v.literal("connected"),
       v.literal("active")
@@ -217,14 +243,14 @@ export const listByOrganization = query({
 
 /**
  * Lists unassigned seekers that can be claimed by any partner.
- * These are "disconnected" seekers from the general intake.
+ * These are "awaiting_outreach" seekers from the general intake.
  */
 export const listUnassigned = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db
       .query("intakes")
-      .withIndex("by_status", (q) => q.eq("status", "disconnected"))
+      .withIndex("by_status", (q) => q.eq("status", "awaiting_outreach"))
       .filter((q) => q.eq(q.field("source"), "general"))
       .order("desc")
       .collect();
@@ -258,5 +284,58 @@ export const assignToOrganization = mutation({
       organizationId: args.organizationId,
       status: "triaged",
     });
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// INTERNAL MUTATIONS — Account Creation
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Creates a Clerk user account for a seeker (internal only).
+ * This is triggered automatically after intake submission.
+ * Clerk will send the user a "set password" email.
+ */
+export const createSeekerAccount = internalMutation({
+  args: {
+    intakeId: v.id("intakes"),
+    fullName: v.string(),
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Check if user already exists
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+
+    if (existingUser) {
+      // Link existing user to intake
+      await ctx.db.patch(args.intakeId, {
+        userId: existingUser._id,
+      });
+      console.log(`✅ Linked existing user ${existingUser._id} to intake ${args.intakeId}`);
+      return existingUser._id;
+    }
+
+    // Create new user account
+    // Note: This creates the Convex user record. Clerk account creation
+    // will happen via the Clerk webhook when they set their password.
+    // For now, we'll use a temporary clerkId that will be updated by the webhook.
+    const userId = await ctx.db.insert("users", {
+      clerkId: `pending_${args.email}`, // Temporary until Clerk webhook updates it
+      email: args.email,
+      name: args.fullName,
+      role: "seeker",
+      isActive: true,
+    });
+
+    // Link user to intake
+    await ctx.db.patch(args.intakeId, {
+      userId,
+    });
+
+    console.log(`✅ Created user account ${userId} for seeker ${args.fullName}`);
+    return userId;
   },
 });

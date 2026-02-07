@@ -115,7 +115,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
 
   // Counts
   const pendingCount =
-    intakes.filter((i) => i.status === "disconnected").length +
+    intakes.filter((i) => i.status === "awaiting_outreach").length +
     ansars.filter((a) => a.status === "pending").length +
     partners.filter((p) => p.status === "pending").length;
 
@@ -331,7 +331,7 @@ function OverviewTab({
     { label: "Partners", value: partners.length, icon: <Building2 className="w-4 h-4" />, accent: "ochre" },
     { label: "Users", value: users.length, icon: <UserCog className="w-4 h-4" />, accent: "sage" },
     { label: "Active Pairings", value: pairings.filter((p) => p.status === "active" || p.status === "pending_intro").length, icon: <Link2 className="w-4 h-4" />, accent: "success" },
-    { label: "Pending", value: intakes.filter((i) => i.status === "disconnected").length + ansars.filter((a) => a.status === "pending").length + partners.filter((p) => p.status === "pending").length, icon: <Clock className="w-4 h-4" />, accent: "terracotta" },
+    { label: "Pending", value: intakes.filter((i) => i.status === "awaiting_outreach").length + ansars.filter((a) => a.status === "pending").length + partners.filter((p) => p.status === "pending").length, icon: <Clock className="w-4 h-4" />, accent: "terracotta" },
     { label: "Messages Sent", value: messages.filter((m) => m.status === "sent").length, icon: <MessageSquare className="w-4 h-4" />, accent: "muted" },
   ];
 
@@ -429,7 +429,7 @@ function SeekersTab({
 
   const stats: StatItem[] = [
     { label: "Total", value: intakes.length, accent: "sage" },
-    { label: "Disconnected", value: intakes.filter((i) => i.status === "disconnected").length, accent: "terracotta" },
+    { label: "Awaiting Outreach", value: intakes.filter((i) => i.status === "awaiting_outreach").length, accent: "terracotta" },
     { label: "Triaged", value: intakes.filter((i) => i.status === "triaged").length, accent: "ochre" },
     { label: "Connected", value: intakes.filter((i) => i.status === "connected" || i.status === "active").length, accent: "success" },
   ];
@@ -453,7 +453,7 @@ function SeekersTab({
         filters={[{
           id: "status", label: "All Statuses", value: statusFilter,
           options: [
-            { value: "disconnected", label: "Disconnected" },
+            { value: "awaiting_outreach", label: "Awaiting Outreach" },
             { value: "triaged", label: "Triaged" },
             { value: "connected", label: "Connected" },
             { value: "active", label: "Active" },
@@ -470,7 +470,7 @@ function SeekersTab({
         emptyIcon={<Heart className="w-12 h-12" />}
         actions={(row) => (
           <div className="flex items-center gap-1">
-            {row.status === "disconnected" && (
+            {row.status === "awaiting_outreach" && (
               <button onClick={() => onTriage(row._id)} className="p-1.5 text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Triage">
                 <Check className="w-3.5 h-3.5" />
               </button>

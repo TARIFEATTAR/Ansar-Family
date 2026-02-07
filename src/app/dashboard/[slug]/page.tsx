@@ -449,7 +449,7 @@ function PartnerSeekersTab({
 
   const stats: StatItem[] = [
     { label: "Total", value: seekers.length, accent: "sage" },
-    { label: "Disconnected", value: seekers.filter((s) => s.status === "disconnected").length, accent: "terracotta" },
+    { label: "Awaiting Outreach", value: seekers.filter((s) => s.status === "awaiting_outreach").length, accent: "terracotta" },
     { label: "Triaged", value: seekers.filter((s) => s.status === "triaged").length, accent: "ochre" },
     { label: "Connected", value: seekers.filter((s) => s.status === "connected" || s.status === "active").length, accent: "success" },
   ];
@@ -472,7 +472,7 @@ function PartnerSeekersTab({
         filters={[{
           id: "status", label: "All Statuses", value: statusFilter,
           options: [
-            { value: "disconnected", label: "Disconnected" },
+            { value: "awaiting_outreach", label: "Awaiting Outreach" },
             { value: "triaged", label: "Triaged" },
             { value: "connected", label: "Connected" },
           ],

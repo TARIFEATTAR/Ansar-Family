@@ -61,6 +61,12 @@ export default function DashboardGatewayPage() {
             router.replace(`/dashboard/${organization.slug}`);
             return;
         }
+
+        // Handle Seeker
+        if (currentUser?.role === "seeker") {
+            router.replace("/seeker");
+            return;
+        }
     }, [isLoaded, currentUser, organization, router]);
 
     // Loading state
@@ -128,7 +134,7 @@ export default function DashboardGatewayPage() {
         );
     }
 
-    // User exists but doesn't have dashboard access (seeker/ansar)
+    // User exists but doesn't have dashboard access (ansar or unknown role)
     return (
         <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
             <div className="text-center max-w-md mx-auto px-6">
@@ -138,7 +144,7 @@ export default function DashboardGatewayPage() {
                 </h1>
                 <p className="font-body text-ansar-gray mb-6">
                     The account <strong>{user.primaryEmailAddress?.emailAddress}</strong> doesn&apos;t have
-                    access to a partner dashboard.
+                    access to a dashboard yet.
                 </p>
                 <div className="space-y-3">
                     <SignOutButton>

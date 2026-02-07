@@ -10,7 +10,7 @@ import {
   ArrowLeft, Heart, Users, Building2, Link2, MessageSquare,
   LayoutDashboard, Loader2, Trash2, Eye, Check,
   UserPlus, Unlink, Send, Phone, Mail, MapPin, Clock,
-  X as XIcon, BookUser, LogOut,
+  X as XIcon, BookUser, LogOut, Copy, CheckCheck, Share2,
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import {
@@ -116,6 +116,17 @@ function PartnerDashboard({
   const [activeTab, setActiveTab] = useState("overview");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const hubUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/${organization.slug}`
+    : `https://ansar.family/${organization.slug}`;
+
+  const copyHubLink = useCallback(() => {
+    navigator.clipboard.writeText(hubUrl);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }, [hubUrl]);
 
   // Organization-scoped data
   const seekers = useQuery(api.intakes.listByOrganization, { organizationId: organization._id }) ?? [];
@@ -248,6 +259,44 @@ function PartnerDashboard({
           </div>
         </div>
       </header>
+
+      {/* Shareable Hub Link */}
+      <div className="px-6 md:px-8 py-3 bg-ansar-sage-50/60 border-b border-[rgba(61,61,61,0.06)]">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 text-ansar-sage-700">
+            <Share2 className="w-3.5 h-3.5" />
+            <span className="font-body text-xs font-medium">Your Hub Link</span>
+          </div>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <code className="font-body text-xs text-ansar-charcoal bg-white px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.08)] truncate flex-1 min-w-0">
+              {hubUrl}
+            </code>
+            <button
+              onClick={copyHubLink}
+              className={`flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border transition-all shrink-0 ${
+                linkCopied
+                  ? "bg-ansar-sage-100 border-ansar-sage-300 text-ansar-sage-700"
+                  : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 hover:border-ansar-sage-300"
+              }`}
+            >
+              {linkCopied ? (
+                <>
+                  <CheckCheck className="w-3.5 h-3.5" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy Link
+                </>
+              )}
+            </button>
+          </div>
+          <p className="font-body text-[10px] text-ansar-muted sm:hidden">
+            Share this link with seekers to join through your hub.
+          </p>
+        </div>
+      </div>
 
       {/* Tabs */}
       <TabNav tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />

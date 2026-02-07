@@ -284,6 +284,19 @@ export const getById = query({
   },
 });
 
+/**
+ * Gets an Ansar record by email (for Ansar dashboard lookup).
+ */
+export const getByEmail = query({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("ansars")
+      .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
+      .first();
+  },
+});
+
 // ═══════════════════════════════════════════════════════════════
 // ORGANIZATION-SCOPED QUERIES (Partner Lead Access)
 // ═══════════════════════════════════════════════════════════════

@@ -62,6 +62,12 @@ export default function DashboardGatewayPage() {
             return;
         }
 
+        // Handle Ansar (approved / active)
+        if (currentUser?.role === "ansar" && currentUser?.isActive) {
+            router.replace("/ansar");
+            return;
+        }
+
         // Handle Seeker
         if (currentUser?.role === "seeker") {
             router.replace("/seeker");

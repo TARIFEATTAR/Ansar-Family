@@ -193,6 +193,20 @@ export const listAll = query({
 });
 
 /**
+ * Lists pairings for a specific Ansar (Ansar dashboard view).
+ */
+export const listByAnsar = query({
+  args: { ansarId: v.id("ansars") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("pairings")
+      .withIndex("by_ansar", (q) => q.eq("ansarId", args.ansarId))
+      .order("desc")
+      .collect();
+  },
+});
+
+/**
  * Lists pairings for an organization (Partner Lead).
  */
 export const listByOrganization = query({

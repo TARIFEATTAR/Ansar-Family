@@ -116,7 +116,8 @@ function emailWrapper(content: string): string {
  */
 function getWelcomeSeekerEmail(
   firstName: string,
-  journeyType: JourneyType
+  journeyType: JourneyType,
+  baseUrl: string = "https://ansar.family"
 ): { subject: string; html: string } {
   
   const greetings: Record<JourneyType, string> = {
@@ -177,10 +178,10 @@ function getWelcomeSeekerEmail(
         <p style="font-size: 14px; color: #8A8A85; margin: 0 0 16px 0;">
           In the meantime, we've prepared a Digital Starter Kit just for you:
         </p>
-        <a href="https://ansar.family/resources/new-muslim" 
+        <a href="${baseUrl}/sign-in" 
            style="display: inline-block; background: #7D8B6A; color: white; padding: 14px 32px; 
                   border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
-          View Your Starter Kit →
+          Sign In to Your Portal →
         </a>
       </div>
       
@@ -463,8 +464,8 @@ function getPairingSeekerEmail(
 // SMS TEMPLATES
 // ═══════════════════════════════════════════════════════════════
 
-function getWelcomeSeekerSMS(firstName: string): string {
-  return `Assalamu Alaikum ${firstName}! Welcome to Ansar Family 🌱 We'll connect you to your local community within 48hrs. Your starter kit: ansar.family/resources/new-muslim\n\nReply STOP to opt out.`;
+function getWelcomeSeekerSMS(firstName: string, baseUrl: string = "https://ansar.family"): string {
+  return `Assalamu Alaikum ${firstName}! Welcome to Ansar Family 🌱 We'll connect you to your local community within 48hrs. Sign in to your portal: ${baseUrl}/sign-in\n\nReply STOP to opt out.`;
 }
 
 function getWelcomeAnsarSMS(firstName: string): string {
@@ -547,11 +548,14 @@ export const sendWelcomeSMS = internalAction({
       return { success: false, error: errorMessage };
     }
     
+    // Resolve base URL for links
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://ansar.family";
+
     // Select message based on template
     let message: string;
     switch (template) {
       case "welcome_seeker":
-        message = getWelcomeSeekerSMS(firstName);
+        message = getWelcomeSeekerSMS(firstName, baseUrl);
         break;
       case "welcome_ansar":
         message = getWelcomeAnsarSMS(firstName);
@@ -560,7 +564,7 @@ export const sendWelcomeSMS = internalAction({
         message = getWelcomePartnerSMS(orgName || firstName);
         break;
       default:
-        message = getWelcomeSeekerSMS(firstName);
+        message = getWelcomeSeekerSMS(firstName, baseUrl);
     }
     
     try {
@@ -758,11 +762,14 @@ export const sendWelcomeEmail = internalAction({
       return { success: false, error: "Missing Resend configuration" };
     }
     
+    // Resolve base URL for links
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://ansar.family";
+
     // Select email content based on template
     let emailContent: { subject: string; html: string };
     switch (template) {
       case "welcome_seeker":
-        emailContent = getWelcomeSeekerEmail(firstName, journeyType || "seeker");
+        emailContent = getWelcomeSeekerEmail(firstName, journeyType || "seeker", baseUrl);
         break;
       case "welcome_ansar":
         emailContent = getWelcomeAnsarEmail(firstName);
@@ -771,7 +778,7 @@ export const sendWelcomeEmail = internalAction({
         emailContent = getWelcomePartnerEmail(firstName, orgName || fullName, slug || "partner");
         break;
       default:
-        emailContent = getWelcomeSeekerEmail(firstName, "seeker");
+        emailContent = getWelcomeSeekerEmail(firstName, "seeker", baseUrl);
     }
     
     try {

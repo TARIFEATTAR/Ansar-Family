@@ -44,6 +44,10 @@ interface FormData {
   leadEmail: string;
   leadIsConvert: boolean | null;
 
+  // Account
+  password: string;
+  confirmPassword: string;
+
   // Organization
   orgName: string;
   orgType: OrgType | "";
@@ -71,6 +75,8 @@ const initialFormData: FormData = {
   leadPhone: "",
   leadEmail: "",
   leadIsConvert: null,
+  password: "",
+  confirmPassword: "",
   orgName: "",
   orgType: "",
   orgTypeOther: "",
@@ -201,7 +207,7 @@ export default function PartnerPage() {
   const canProceed = () => {
     switch (step) {
       case 1:
-        return formData.leadName && formData.leadPhone && formData.leadEmail && formData.leadIsConvert !== null;
+        return formData.leadName && formData.leadPhone && formData.leadEmail && formData.password.length >= 8 && formData.password === formData.confirmPassword && formData.leadIsConvert !== null;
       case 2:
         return formData.orgName && formData.orgType && formData.address && formData.city && formData.genderFocus;
       case 3:
@@ -218,8 +224,40 @@ export default function PartnerPage() {
   const handleSubmit = async () => {
     if (!formData.orgType || !formData.genderFocus || formData.leadIsConvert === null || !allAgreementsAccepted) return;
 
+    // Validate password
+    if (formData.password.length < 8) {
+      alert("Password must be at least 8 characters.");
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      // Step 1: Create Clerk account
+      const nameParts = formData.leadName.trim().split(" ");
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(" ") || undefined;
+
+      const authRes = await fetch("/api/auth/create-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.leadEmail,
+          password: formData.password,
+          firstName,
+          lastName,
+        }),
+      });
+      const authData = await authRes.json();
+      if (!authRes.ok) {
+        alert(authData.error || "Failed to create account.");
+        return;
+      }
+
+      // Step 2: Create partner application with real clerkId
       await createPartner({
         leadName: formData.leadName,
         leadPhone: formData.leadPhone,
@@ -242,6 +280,7 @@ export default function PartnerPage() {
           secondEmail: formData.coreTrio.secondEmail || undefined,
         },
         agreementsAccepted: allAgreementsAccepted,
+        clerkId: authData.clerkUserId,
       });
       setIsSubmitted(true);
     } catch (error) {
@@ -323,6 +362,33 @@ export default function PartnerPage() {
                     onChange={(e) => updateField("leadEmail", e.target.value)}
                     placeholder="you@example.com"
                   />
+                </div>
+                <div>
+                  <label className="form-label">Create Password *</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={formData.password}
+                    onChange={(e) => updateField("password", e.target.value)}
+                    placeholder="Minimum 8 characters"
+                    minLength={8}
+                  />
+                  {formData.password && formData.password.length < 8 && (
+                    <p className="text-xs text-ansar-terracotta mt-1 font-body">Must be at least 8 characters</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Confirm Password *</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={formData.confirmPassword}
+                    onChange={(e) => updateField("confirmPassword", e.target.value)}
+                    placeholder="Re-enter your password"
+                  />
+                  {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                    <p className="text-xs text-ansar-terracotta mt-1 font-body">Passwords do not match</p>
+                  )}
                 </div>
                 <div>
                   <label className="form-label">Are you a convert yourself? *</label>

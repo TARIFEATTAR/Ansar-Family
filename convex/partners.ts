@@ -117,6 +117,9 @@ export const create = mutation({
     }),
 
     agreementsAccepted: v.boolean(),
+
+    // Clerk user ID — provided by the API route after Clerk account creation
+    clerkId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (!args.agreementsAccepted) {
@@ -124,11 +127,12 @@ export const create = mutation({
     }
 
     const hubLevel = calculateHubLevel(args.infrastructure);
+    const email = args.leadEmail.toLowerCase();
 
     const partnerId = await ctx.db.insert("partners", {
       leadName: args.leadName,
       leadPhone: args.leadPhone,
-      leadEmail: args.leadEmail.toLowerCase(),
+      leadEmail: email,
       leadIsConvert: args.leadIsConvert,
       orgName: args.orgName,
       orgType: args.orgType,
@@ -145,15 +149,31 @@ export const create = mutation({
     });
 
     // ═══════════════════════════════════════════════════════════
-    // TRIGGER USER ACCOUNT CREATION
-    // Create user account so partner lead can log in (pending approval)
+    // CREATE USER ACCOUNT (inline)
+    // Uses real Clerk ID if provided, falls back to pending_ for backward compat
     // ═══════════════════════════════════════════════════════════
-    
-    await ctx.scheduler.runAfter(0, internal.partners.createPartnerAccount, {
-      partnerId,
-      leadName: args.leadName,
-      leadEmail: args.leadEmail.toLowerCase(),
-    });
+
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+
+    if (existingUser) {
+      // If user exists and we have a real clerkId, update it
+      if (args.clerkId && existingUser.clerkId.startsWith("pending_")) {
+        await ctx.db.patch(existingUser._id, { clerkId: args.clerkId });
+      }
+      console.log(`✅ User ${existingUser._id} already exists for partner ${partnerId}`);
+    } else {
+      const userId = await ctx.db.insert("users", {
+        clerkId: args.clerkId || `pending_${email}`,
+        email,
+        name: args.leadName,
+        role: "partner_lead",
+        isActive: false, // Inactive until approved by Super Admin
+      });
+      console.log(`✅ Created user account ${userId} for partner lead ${args.leadName}`);
+    }
 
     // ═══════════════════════════════════════════════════════════
     // TRIGGER WELCOME NOTIFICATIONS
@@ -174,7 +194,7 @@ export const create = mutation({
     // Send Welcome Email
     await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
       recipientId: partnerId.toString(),
-      email: args.leadEmail.toLowerCase(),
+      email,
       firstName,
       fullName: args.leadName,
       template: "welcome_partner" as const,
@@ -257,6 +277,16 @@ export const approveAndCreateOrg = mutation({
       });
       console.log(`✅ Activated user account ${user._id} and linked to org ${orgId}`);
     }
+
+    // Send approval notification email + SMS
+    const firstName = getFirstName(partner.leadName);
+    await ctx.scheduler.runAfter(0, internal.notifications.sendApprovalNotification, {
+      recipientId: args.id.toString(),
+      email: partner.leadEmail,
+      phone: partner.leadPhone,
+      firstName,
+      role: "partner" as const,
+    });
 
     return { partnerId: args.id, organizationId: orgId, slug };
   },

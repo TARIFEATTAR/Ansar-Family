@@ -24,6 +24,8 @@ interface FormData {
   fullName: string;
   phone: string;
   email: string;
+  password: string;
+  confirmPassword: string;
   gender: Gender | "";
   dateOfBirth: string;
   countryOfOrigin: string;
@@ -40,6 +42,8 @@ const initialFormData: FormData = {
   fullName: "",
   phone: "",
   email: "",
+  password: "",
+  confirmPassword: "",
   gender: "",
   dateOfBirth: "",
   countryOfOrigin: "",
@@ -124,7 +128,7 @@ export default function PartnerJoinPage() {
   const canProceed = () => {
     switch (step) {
       case 1:
-        return formData.fullName && formData.phone && formData.email && formData.gender && formData.dateOfBirth && formData.countryOfOrigin;
+        return formData.fullName && formData.phone && formData.email && formData.password.length >= 8 && formData.password === formData.confirmPassword && formData.gender && formData.dateOfBirth && formData.countryOfOrigin;
       case 2:
         return formData.journeyType;
       case 3:
@@ -141,8 +145,40 @@ export default function PartnerJoinPage() {
   const handleSubmit = async () => {
     if (!formData.consentGiven || !formData.gender || !formData.journeyType) return;
 
+    // Validate password
+    if (formData.password.length < 8) {
+      alert("Password must be at least 8 characters.");
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      // Step 1: Create Clerk account
+      const nameParts = formData.fullName.trim().split(" ");
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(" ") || undefined;
+
+      const authRes = await fetch("/api/auth/create-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName,
+          lastName,
+        }),
+      });
+      const authData = await authRes.json();
+      if (!authRes.ok) {
+        alert(authData.error || "Failed to create account.");
+        return;
+      }
+
+      // Step 2: Create intake with real clerkId
       await createIntake({
         fullName: formData.fullName,
         phone: formData.phone,
@@ -159,6 +195,7 @@ export default function PartnerJoinPage() {
         consentGiven: formData.consentGiven,
         source: "partner_specific",
         partnerId: organization._id,
+        clerkId: authData.clerkUserId,
       });
       setIsSubmitted(true);
     } catch (error) {
@@ -249,6 +286,33 @@ export default function PartnerJoinPage() {
                     onChange={(e) => updateField("email", e.target.value)}
                     placeholder="you@example.com"
                   />
+                </div>
+                <div>
+                  <label className="form-label">Create Password *</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={formData.password}
+                    onChange={(e) => updateField("password", e.target.value)}
+                    placeholder="Minimum 8 characters"
+                    minLength={8}
+                  />
+                  {formData.password && formData.password.length < 8 && (
+                    <p className="text-xs text-ansar-terracotta mt-1 font-body">Must be at least 8 characters</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Confirm Password *</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={formData.confirmPassword}
+                    onChange={(e) => updateField("confirmPassword", e.target.value)}
+                    placeholder="Re-enter your password"
+                  />
+                  {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                    <p className="text-xs text-ansar-terracotta mt-1 font-body">Passwords do not match</p>
+                  )}
                 </div>
                 <div>
                   <label className="form-label">Gender *</label>

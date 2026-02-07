@@ -11,7 +11,11 @@ import { v } from "convex/values";
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Creates or updates a user from Clerk webhook/sync.
+ * Creates or updates a user from Clerk sync (called on dashboard load).
+ * 
+ * This now handles ALL user types: super_admin, partner_lead, ansar, seeker.
+ * It first checks if a "pending_" user exists for this email (created during
+ * form submission) and upgrades it with the real Clerk ID.
  */
 export const upsertFromClerk = mutation({
   args: {
@@ -20,65 +24,97 @@ export const upsertFromClerk = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    // 1. Check for Super Admin emails (TODO: Move to env/config)
-    const superAdminEmails = ["jordan@tarifeattar.com"];
-    let newRole: "super_admin" | "partner_lead" | "ansar" | "seeker" | undefined = undefined;
-    let newOrganizationId = undefined;
+    const email = args.email.toLowerCase();
 
-    if (superAdminEmails.includes(args.email.toLowerCase())) {
-      newRole = "super_admin";
-    } else {
-      // 2. Check if this email is associated with an approved Partner Application
-      const partnerApp = await ctx.db
-        .query("partners")
-        .withIndex("by_email", (q) => q.eq("leadEmail", args.email.toLowerCase()))
-        .filter((q) => q.neq(q.field("status"), "pending"))
-        .first();
-
-      if (partnerApp && partnerApp.organizationId) {
-        newRole = "partner_lead";
-        newOrganizationId = partnerApp.organizationId;
-      }
-    }
-
-    // 3. Check if user already exists
-    const existing = await ctx.db
+    // 1. Check if user already exists by real Clerk ID
+    const existingByClerkId = await ctx.db
       .query("users")
       .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
       .first();
 
-    if (existing) {
-      // Prepare updates
-      const updates: any = {
-        email: args.email,
+    if (existingByClerkId) {
+      // Update name/email in case they changed
+      await ctx.db.patch(existingByClerkId._id, {
+        email,
         name: args.name,
-      };
+      });
 
-      // FORCE Super Admin if email matches (Overrides everything else)
-      if (newRole === "super_admin") {
-        updates.role = "super_admin";
-        updates.organizationId = null; // Remove user from any organization
-      }
-      // Otherwise, handle partner promotion only if not already a super admin
-      else if (newRole === "partner_lead" && existing.role !== "super_admin") {
-        updates.role = "partner_lead";
-        updates.organizationId = newOrganizationId;
+      // Force super admin if email matches
+      const superAdminEmails = ["jordan@tarifeattar.com"];
+      if (superAdminEmails.includes(email) && existingByClerkId.role !== "super_admin") {
+        await ctx.db.patch(existingByClerkId._id, {
+          role: "super_admin",
+          isActive: true,
+        });
       }
 
-      await ctx.db.patch(existing._id, updates);
-      return existing._id;
+      return existingByClerkId._id;
     }
 
-    // 4. Create new user if not exists
-    const role = newRole || "seeker"; // Default to seeker if no partner app found
+    // 2. Check if a pending user exists for this email (created during form submission)
+    const pendingUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+
+    if (pendingUser && pendingUser.clerkId.startsWith("pending_")) {
+      // Upgrade the pending user with the real Clerk ID
+      await ctx.db.patch(pendingUser._id, {
+        clerkId: args.clerkId,
+        name: args.name,
+      });
+      console.log(`✅ Upgraded pending user ${pendingUser._id} (${pendingUser.role}) with real Clerk ID`);
+      return pendingUser._id;
+    }
+
+    if (pendingUser) {
+      // User exists with a different clerkId — this shouldn't happen normally.
+      // Just return their ID without overwriting clerkId.
+      return pendingUser._id;
+    }
+
+    // 3. No existing user — determine role from applications
+    const superAdminEmails = ["jordan@tarifeattar.com"];
+    let role: "super_admin" | "partner_lead" | "ansar" | "seeker" = "seeker";
+    let organizationId = undefined;
+    let isActive = true;
+
+    if (superAdminEmails.includes(email)) {
+      role = "super_admin";
+    } else {
+      // Check partner applications
+      const partnerApp = await ctx.db
+        .query("partners")
+        .withIndex("by_email", (q) => q.eq("leadEmail", email))
+        .first();
+
+      if (partnerApp) {
+        role = "partner_lead";
+        organizationId = partnerApp.organizationId ?? undefined;
+        isActive = partnerApp.status === "approved" || partnerApp.status === "active";
+      } else {
+        // Check ansar applications
+        const ansarApp = await ctx.db
+          .query("ansars")
+          .withIndex("by_email", (q) => q.eq("email", email))
+          .first();
+
+        if (ansarApp) {
+          role = "ansar";
+          organizationId = ansarApp.organizationId ?? undefined;
+          isActive = ansarApp.status === "approved" || ansarApp.status === "active";
+        }
+        // Default: seeker (isActive: true)
+      }
+    }
 
     const userId = await ctx.db.insert("users", {
       clerkId: args.clerkId,
-      email: args.email,
+      email,
       name: args.name,
       role,
-      organizationId: newOrganizationId,
-      isActive: true,
+      organizationId,
+      isActive,
     });
 
     return userId;

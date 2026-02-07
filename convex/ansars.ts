@@ -54,6 +54,9 @@ export const create = mutation({
     motivation: v.string(),
     agreementsAccepted: v.boolean(),
     organizationId: v.optional(v.id("organizations")),
+
+    // Clerk user ID — provided by the API route after Clerk account creation
+    clerkId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Validate agreements
@@ -61,12 +64,14 @@ export const create = mutation({
       throw new Error("All agreements must be accepted to submit an Ansar application.");
     }
 
+    const email = args.email.toLowerCase();
+
     const ansarId = await ctx.db.insert("ansars", {
       fullName: args.fullName,
       gender: args.gender,
       dateOfBirth: args.dateOfBirth ?? "",
       phone: args.phone,
-      email: args.email,
+      email,
       address: args.address,
       city: args.city,
       stateRegion: args.stateRegion,
@@ -82,18 +87,33 @@ export const create = mutation({
       organizationId: args.organizationId,
       status: "pending",
     });
-    
+
     // ═══════════════════════════════════════════════════════════
-    // TRIGGER USER ACCOUNT CREATION
-    // Create user account so ansar can log in (pending approval)
+    // CREATE USER ACCOUNT (inline)
+    // Uses real Clerk ID if provided, falls back to pending_ for backward compat
     // ═══════════════════════════════════════════════════════════
-    
-    await ctx.scheduler.runAfter(0, internal.ansars.createAnsarAccount, {
-      ansarId,
-      fullName: args.fullName,
-      email: args.email,
-      organizationId: args.organizationId,
-    });
+
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+
+    if (existingUser) {
+      if (args.clerkId && existingUser.clerkId.startsWith("pending_")) {
+        await ctx.db.patch(existingUser._id, { clerkId: args.clerkId });
+      }
+      console.log(`✅ User ${existingUser._id} already exists for ansar ${ansarId}`);
+    } else {
+      const userId = await ctx.db.insert("users", {
+        clerkId: args.clerkId || `pending_${email}`,
+        email,
+        name: args.fullName,
+        role: "ansar",
+        organizationId: args.organizationId,
+        isActive: false, // Inactive until approved by Hub Admin
+      });
+      console.log(`✅ Created user account ${userId} for ansar ${args.fullName}`);
+    }
     
     // ═══════════════════════════════════════════════════════════
     // TRIGGER WELCOME NOTIFICATIONS
@@ -112,7 +132,7 @@ export const create = mutation({
     // Send Welcome Email
     await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
       recipientId: ansarId.toString(),
-      email: args.email,
+      email,
       firstName,
       fullName: args.fullName,
       template: "welcome_ansar" as const,
@@ -146,7 +166,7 @@ export const updateStatus = mutation({
 
     await ctx.db.patch(id, { status });
 
-    // If approved, activate the ansar's user account
+    // If approved, activate the ansar's user account and send notification
     if (status === "approved" || status === "active") {
       const user = await ctx.db
         .query("users")
@@ -159,6 +179,16 @@ export const updateStatus = mutation({
         });
         console.log(`✅ Activated user account ${user._id} for ansar ${ansar.fullName}`);
       }
+
+      // Send approval notification email + SMS
+      const firstName = getFirstName(ansar.fullName);
+      await ctx.scheduler.runAfter(0, internal.notifications.sendApprovalNotification, {
+        recipientId: args.id.toString(),
+        email: ansar.email,
+        phone: ansar.phone,
+        firstName,
+        role: "ansar" as const,
+      });
     }
   },
 });

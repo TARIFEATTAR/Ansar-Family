@@ -43,13 +43,18 @@ export const create = mutation({
     consentGiven: v.boolean(),
     source: v.optional(v.union(v.literal("general"), v.literal("partner_specific"))),
     partnerId: v.optional(v.string()),
+
+    // Clerk user ID — provided by the API route after Clerk account creation
+    clerkId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const email = args.email.toLowerCase();
+
     // Insert the intake with awaiting_outreach status
     const intakeId = await ctx.db.insert("intakes", {
       fullName: args.fullName,
       phone: args.phone,
-      email: args.email,
+      email,
       gender: args.gender,
       dateOfBirth: args.dateOfBirth ?? "",
       countryOfOrigin: args.countryOfOrigin ?? "",
@@ -64,21 +69,37 @@ export const create = mutation({
       source: args.source ?? "general",
       partnerId: args.partnerId,
     });
-    
+
     // ═══════════════════════════════════════════════════════════
-    // TRIGGER CLERK ACCOUNT CREATION
-    // Create user account so seeker can log in and see resources
+    // CREATE USER ACCOUNT (inline)
+    // Uses real Clerk ID if provided. Seekers are auto-approved (isActive: true).
     // ═══════════════════════════════════════════════════════════
-    
-    await ctx.scheduler.runAfter(0, internal.intakes.createSeekerAccount, {
-      intakeId,
-      fullName: args.fullName,
-      email: args.email,
-    });
+
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+
+    if (existingUser) {
+      if (args.clerkId && existingUser.clerkId.startsWith("pending_")) {
+        await ctx.db.patch(existingUser._id, { clerkId: args.clerkId });
+      }
+      await ctx.db.patch(intakeId, { userId: existingUser._id });
+      console.log(`✅ Linked existing user ${existingUser._id} to intake ${intakeId}`);
+    } else {
+      const userId = await ctx.db.insert("users", {
+        clerkId: args.clerkId || `pending_${email}`,
+        email,
+        name: args.fullName,
+        role: "seeker",
+        isActive: true, // Seekers are auto-approved
+      });
+      await ctx.db.patch(intakeId, { userId });
+      console.log(`✅ Created user account ${userId} for seeker ${args.fullName}`);
+    }
     
     // ═══════════════════════════════════════════════════════════
     // TRIGGER WELCOME NOTIFICATIONS
-    // Schedule immediately (0ms delay) to run after this mutation
     // ═══════════════════════════════════════════════════════════
     
     const firstName = getFirstName(args.fullName);
@@ -94,7 +115,7 @@ export const create = mutation({
     // Send Welcome Email
     await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
       recipientId: intakeId.toString(),
-      email: args.email,
+      email,
       firstName,
       fullName: args.fullName,
       template: "welcome_seeker" as const,

@@ -1200,3 +1200,156 @@ export const sendWelcomeContact = internalAction({
     }
   },
 });
+
+// ═══════════════════════════════════════════════════════════════
+// APPROVAL NOTIFICATIONS — Sent when admin approves Partner/Ansar
+// ═══════════════════════════════════════════════════════════════
+
+function getApprovalEmailHtml(
+  firstName: string,
+  role: "partner" | "ansar",
+  signInUrl: string,
+): { subject: string; html: string } {
+  const roleLabel = role === "partner" ? "Partner Hub" : "Ansar Volunteer";
+  const dashboardLabel = role === "partner" ? "your Hub Dashboard" : "the Ansar Portal";
+
+  return {
+    subject: `You're Approved! Welcome to the Ansar Family, ${firstName}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#F8F6F1;font-family:Georgia,'Times New Roman',serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F8F6F1;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background: linear-gradient(135deg, #7D8B6A 0%, #6B7A5A 100%);padding:40px 40px 30px;text-align:center;">
+          <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;font-family:Georgia,serif;">You're Approved!</h1>
+          <p style="color:rgba(255,255,255,0.9);font-size:16px;margin:0;">Your ${roleLabel} application has been accepted</p>
+        </td></tr>
+        <tr><td style="padding:40px;">
+          <p style="color:#3D3D3D;font-size:16px;line-height:1.6;margin:0 0 20px;">Assalamu Alaikum ${firstName},</p>
+          <p style="color:#3D3D3D;font-size:16px;line-height:1.6;margin:0 0 20px;">Great news — your application to join the Ansar Family as a <strong>${roleLabel}</strong> has been approved! You now have full access to ${dashboardLabel}.</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:30px 0;">
+            <tr><td align="center">
+              <a href="${signInUrl}" style="display:inline-block;background-color:#7D8B6A;color:#ffffff;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:600;">Sign In to Your Dashboard</a>
+            </td></tr>
+          </table>
+          <p style="color:#666;font-size:14px;line-height:1.6;margin:0 0 20px;">Use the email and password you created when you submitted your application.</p>
+          <p style="color:#3D3D3D;font-size:16px;line-height:1.6;margin:0;">We're excited to have you on board. Together, we're building something special.</p>
+          <p style="color:#3D3D3D;font-size:16px;line-height:1.6;margin:20px 0 0;">With warmth,<br/>The Ansar Family Team</p>
+        </td></tr>
+        <tr><td style="background-color:#F8F6F1;padding:24px 40px;text-align:center;border-top:1px solid #E8E4DD;">
+          <p style="color:#999;font-size:12px;margin:0;">Ansar Family — Every New Muslim Deserves a Friend</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+  };
+}
+
+/**
+ * Sends an approval notification via email + SMS.
+ * Triggered when admin approves a Partner Hub or Ansar volunteer.
+ */
+export const sendApprovalNotification = internalAction({
+  args: {
+    recipientId: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    firstName: v.string(),
+    role: v.union(v.literal("partner"), v.literal("ansar")),
+  },
+  handler: async (ctx, args) => {
+    const signInUrl = process.env.NEXT_PUBLIC_APP_URL
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`
+      : "https://ansar.family/sign-in";
+
+    // ── Send Approval Email ──────────────────────────
+    const apiKey = process.env.RESEND_API_KEY;
+    if (apiKey) {
+      try {
+        const emailContent = getApprovalEmailHtml(args.firstName, args.role, signInUrl);
+
+        const response = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            from: "Ansar Family <welcome@ansar.family>",
+            to: [args.email],
+            subject: emailContent.subject,
+            html: emailContent.html,
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Resend API error");
+
+        await ctx.runMutation(internal.messages.logMessage, {
+          type: "email",
+          recipientId: args.recipientId,
+          recipientEmail: args.email,
+          template: "approval_notification",
+          subject: emailContent.subject,
+          status: "sent",
+          externalId: data.id,
+        });
+        console.log(`✅ Approval email sent to ${args.email}, ID: ${data.id}`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error(`❌ Approval email failed:`, errorMessage);
+        await ctx.runMutation(internal.messages.logMessage, {
+          type: "email",
+          recipientId: args.recipientId,
+          recipientEmail: args.email,
+          template: "approval_notification",
+          subject: `You're Approved! Welcome to the Ansar Family, ${args.firstName}`,
+          status: "failed",
+          errorMessage,
+        });
+      }
+    }
+
+    // ── Send Approval SMS ────────────────────────────
+    if (args.phone) {
+      const accountSid = process.env.TWILIO_ACCOUNT_SID;
+      const authToken = process.env.TWILIO_AUTH_TOKEN;
+      const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+
+      if (accountSid && authToken && fromNumber) {
+        try {
+          const roleLabel = args.role === "partner" ? "Partner Hub" : "Ansar";
+          const message = `Assalamu Alaikum ${args.firstName}! 🎉 Your ${roleLabel} application has been approved. Sign in at ${signInUrl} to access your dashboard. — Ansar Family`;
+
+          const response = await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64"),
+              },
+              body: new URLSearchParams({
+                To: args.phone,
+                From: fromNumber,
+                Body: message,
+              }),
+            }
+          );
+
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Twilio API error");
+
+          console.log(`✅ Approval SMS sent to ${args.phone}, SID: ${data.sid}`);
+        } catch (error) {
+          console.error(`❌ Approval SMS failed:`, error instanceof Error ? error.message : error);
+        }
+      }
+    }
+  },
+});

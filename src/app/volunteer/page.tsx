@@ -24,6 +24,8 @@ interface FormData {
   fullName: string;
   phone: string;
   email: string;
+  password: string;
+  confirmPassword: string;
   gender: Gender | "";
   dateOfBirth: string;
   address: string;
@@ -48,6 +50,8 @@ const initialFormData: FormData = {
   fullName: "",
   phone: "",
   email: "",
+  password: "",
+  confirmPassword: "",
   gender: "",
   dateOfBirth: "",
   address: "",
@@ -147,6 +151,8 @@ export default function VolunteerPage() {
           formData.fullName &&
           formData.phone &&
           formData.email &&
+          formData.password.length >= 8 &&
+          formData.password === formData.confirmPassword &&
           formData.gender &&
           formData.dateOfBirth &&
           formData.address &&
@@ -167,8 +173,39 @@ export default function VolunteerPage() {
   const handleSubmit = async () => {
     if (!formData.gender || !formData.practiceLevel || !formData.checkInFrequency || formData.isConvert === null || !allAgreementsAccepted) return;
 
+    if (formData.password.length < 8) {
+      alert("Password must be at least 8 characters.");
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      // Step 1: Create Clerk account
+      const nameParts = formData.fullName.trim().split(" ");
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(" ") || undefined;
+
+      const authRes = await fetch("/api/auth/create-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName,
+          lastName,
+        }),
+      });
+      const authData = await authRes.json();
+      if (!authRes.ok) {
+        alert(authData.error || "Failed to create account.");
+        return;
+      }
+
+      // Step 2: Create ansar application with real clerkId
       await createAnsar({
         fullName: formData.fullName,
         phone: formData.phone,
@@ -187,6 +224,7 @@ export default function VolunteerPage() {
         checkInFrequency: formData.checkInFrequency,
         motivation: formData.motivation,
         agreementsAccepted: allAgreementsAccepted,
+        clerkId: authData.clerkUserId,
       });
       setIsSubmitted(true);
     } catch (error) {
@@ -305,6 +343,33 @@ export default function VolunteerPage() {
                     onChange={(e) => updateField("email", e.target.value)}
                     placeholder="you@example.com"
                   />
+                </div>
+                <div>
+                  <label className="form-label">Create Password *</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={formData.password}
+                    onChange={(e) => updateField("password", e.target.value)}
+                    placeholder="Minimum 8 characters"
+                    minLength={8}
+                  />
+                  {formData.password && formData.password.length < 8 && (
+                    <p className="text-xs text-ansar-terracotta mt-1 font-body">Must be at least 8 characters</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Confirm Password *</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={formData.confirmPassword}
+                    onChange={(e) => updateField("confirmPassword", e.target.value)}
+                    placeholder="Re-enter your password"
+                  />
+                  {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                    <p className="text-xs text-ansar-terracotta mt-1 font-body">Passwords do not match</p>
+                  )}
                 </div>
                 <div>
                   <label className="form-label">Full Address *</label>

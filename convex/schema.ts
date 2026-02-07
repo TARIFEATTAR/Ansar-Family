@@ -71,6 +71,7 @@ export default defineSchema({
     // System Fields
     status: v.union(
       v.literal("awaiting_outreach"), // Submitted, awaiting initial contact
+      v.literal("disconnected"),      // DEPRECATED: legacy status, will be migrated to awaiting_outreach
       v.literal("triaged"),           // Assigned to a partner
       v.literal("connected"),         // Paired with an Ansar
       v.literal("active")             // Engaged in the program

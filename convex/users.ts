@@ -86,6 +86,46 @@ export const upsertFromClerk = mutation({
 });
 
 /**
+ * Manually create a user (Super Admin only).
+ */
+export const createManual = mutation({
+  args: {
+    clerkId: v.string(),
+    email: v.string(),
+    name: v.string(),
+    role: v.union(
+      v.literal("super_admin"),
+      v.literal("partner_lead"),
+      v.literal("ansar"),
+      v.literal("seeker")
+    ),
+    organizationId: v.optional(v.id("organizations")),
+  },
+  handler: async (ctx, args) => {
+    // Check if user already exists
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (existing) {
+      throw new Error("User with this Clerk ID already exists.");
+    }
+
+    const userId = await ctx.db.insert("users", {
+      clerkId: args.clerkId,
+      email: args.email,
+      name: args.name,
+      role: args.role,
+      organizationId: args.organizationId,
+      isActive: true,
+    });
+
+    return userId;
+  },
+});
+
+/**
  * Manually set a user's role (Super Admin only).
  */
 export const setRole = mutation({
@@ -104,6 +144,48 @@ export const setRole = mutation({
       role: args.role,
       organizationId: args.organizationId,
     });
+  },
+});
+
+/**
+ * Update user details (Super Admin only).
+ */
+export const update = mutation({
+  args: {
+    id: v.id("users"),
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    role: v.optional(v.union(
+      v.literal("super_admin"),
+      v.literal("partner_lead"),
+      v.literal("ansar"),
+      v.literal("seeker")
+    )),
+    organizationId: v.optional(v.union(v.id("organizations"), v.null())),
+    isActive: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...fields } = args;
+    const user = await ctx.db.get(id);
+    if (!user) throw new Error("User not found.");
+
+    const patch: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(fields)) {
+      if (value !== undefined) patch[key] = value;
+    }
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(id, patch);
+    }
+  },
+});
+
+/**
+ * Delete a user (Super Admin only).
+ */
+export const deleteUser = mutation({
+  args: { id: v.id("users") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
   },
 });
 

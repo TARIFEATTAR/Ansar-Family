@@ -498,12 +498,19 @@ function SuccessScreen({ orgName, slug }: { orgName: string; slug: string }) {
           <Heart className="w-8 h-8 text-ansar-sage-600" />
         </div>
         <h1 className="font-heading text-3xl md:text-4xl text-ansar-charcoal mb-4">Thank You</h1>
-        <p className="font-body text-ansar-gray mb-4">Your application to volunteer with <strong>{orgName}</strong> has been received.</p>
-        <p className="font-body text-sm text-ansar-sage-600 mb-8">May Allah reward you for your intention.</p>
-        <Link href={`/${slug}`} className="btn-secondary inline-flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" />
-          Return to {orgName}
-        </Link>
+        <p className="font-body text-ansar-gray mb-4">Your application to volunteer with <strong>{orgName}</strong> has been received and your account has been created.</p>
+        <p className="font-body text-sm text-ansar-gray mb-4">You can sign in now to check your application status. Once approved by the Hub Admin, you'll have full access to the Ansar portal.</p>
+        <p className="font-body text-sm text-ansar-sage-600 mb-6">May Allah reward you for your intention.</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/sign-in" className="btn-primary inline-flex items-center justify-center gap-2">
+            Sign In to Your Dashboard
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link href={`/${slug}`} className="btn-secondary inline-flex items-center justify-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Return to {orgName}
+          </Link>
+        </div>
       </motion.div>
     </main>
   );

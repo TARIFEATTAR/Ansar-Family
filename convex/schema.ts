@@ -326,7 +326,7 @@ export default defineSchema({
     organizationId: v.optional(v.id("organizations")), // Which org owns this contact
 
     // Additional Info
-    tags: v.array(v.string()), // Freeform labels like "speaks Arabic", "available weekends"
+    tags: v.optional(v.array(v.string())), // Freeform labels like "speaks Arabic", "available weekends"
     notes: v.optional(v.string()),
 
     // System Fields

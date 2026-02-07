@@ -824,14 +824,20 @@ function SuccessScreen({ orgName, hubLevel }: { orgName: string; hubLevel: numbe
         <p className="font-body text-ansar-gray mb-4">
           <strong>{orgName}</strong> has been registered as a <strong>Level {hubLevel} Hub</strong>.
         </p>
-        <p className="font-body text-sm text-ansar-gray mb-8">
-          Our team will review your application and reach out within 48 hours to complete your onboarding.
-          We're excited to partner with you.
+        <p className="font-body text-sm text-ansar-gray mb-6">
+          Your account has been created and your application is under review.
+          You can sign in now to check your status — once approved, you'll have full access to your Hub Dashboard.
         </p>
-        <Link href="/" className="btn-secondary inline-flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" />
-          Return Home
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/sign-in" className="btn-primary inline-flex items-center justify-center gap-2">
+            Sign In to Your Dashboard
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link href="/" className="btn-secondary inline-flex items-center justify-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Return Home
+          </Link>
+        </div>
       </motion.div>
     </main>
   );

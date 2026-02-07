@@ -711,16 +711,25 @@ function SuccessScreen() {
           Thank You
         </h1>
         <p className="font-body text-ansar-gray mb-4">
-          Your application has been received. Someone from our team will review it 
-          and reach out within 48 hours.
+          Your application has been received and your account has been created.
         </p>
-        <p className="font-body text-sm text-ansar-sage-600 mb-8">
+        <p className="font-body text-sm text-ansar-gray mb-4">
+          You can sign in now to check your application status.
+          Once approved by your Hub Admin, you'll have full access to the Ansar portal.
+        </p>
+        <p className="font-body text-sm text-ansar-sage-600 mb-6">
           May Allah reward you for your intention.
         </p>
-        <Link href="/" className="btn-secondary inline-flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" />
-          Return Home
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/sign-in" className="btn-primary inline-flex items-center justify-center gap-2">
+            Sign In to Your Dashboard
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link href="/" className="btn-secondary inline-flex items-center justify-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Return Home
+          </Link>
+        </div>
       </motion.div>
     </main>
   );

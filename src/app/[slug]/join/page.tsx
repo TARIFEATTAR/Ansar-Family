@@ -582,14 +582,23 @@ function SuccessScreen({ orgName, slug }: { orgName: string; slug: string }) {
         <h1 className="font-heading text-3xl md:text-4xl text-ansar-charcoal mb-4">
           Welcome to the Family
         </h1>
-        <p className="font-body text-ansar-gray mb-8">
-          Your info has been sent directly to <strong>{orgName}</strong>. Someone from their team 
-          will reach out within 48 hours. Until then, you are not alone.
+        <p className="font-body text-ansar-gray mb-4">
+          Your info has been sent directly to <strong>{orgName}</strong>.
         </p>
-        <Link href={`/${slug}`} className="btn-secondary inline-flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" />
-          Return to {orgName}
-        </Link>
+        <p className="font-body text-sm text-ansar-gray mb-6">
+          Your account has been created. Sign in now to access helpful resources and track your journey.
+          Someone from the team will reach out within 48 hours. Until then, you are not alone.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/sign-in" className="btn-primary inline-flex items-center justify-center gap-2">
+            Sign In to Your Portal
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link href={`/${slug}`} className="btn-secondary inline-flex items-center justify-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Return to {orgName}
+          </Link>
+        </div>
       </motion.div>
     </main>
   );

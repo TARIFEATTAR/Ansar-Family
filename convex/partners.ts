@@ -159,8 +159,9 @@ export const create = mutation({
       .first();
 
     if (existingUser) {
-      // If user exists and we have a real clerkId, update it
-      if (args.clerkId && existingUser.clerkId.startsWith("pending_")) {
+      // Always update clerkId if we have a real one — handles both pending
+      // users and users who signed in via a different auth method (e.g. Google OAuth)
+      if (args.clerkId && args.clerkId !== existingUser.clerkId) {
         await ctx.db.patch(existingUser._id, { clerkId: args.clerkId });
       }
       console.log(`✅ User ${existingUser._id} already exists for partner ${partnerId}`);

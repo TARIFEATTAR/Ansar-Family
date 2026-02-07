@@ -81,7 +81,9 @@ export const create = mutation({
       .first();
 
     if (existingUser) {
-      if (args.clerkId && existingUser.clerkId.startsWith("pending_")) {
+      // Always update clerkId if we have a real one — handles both pending
+      // users and users who signed up via a different auth method
+      if (args.clerkId && args.clerkId !== existingUser.clerkId) {
         await ctx.db.patch(existingUser._id, { clerkId: args.clerkId });
       }
       await ctx.db.patch(intakeId, { userId: existingUser._id });

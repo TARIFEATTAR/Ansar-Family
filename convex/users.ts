@@ -51,26 +51,25 @@ export const upsertFromClerk = mutation({
       return existingByClerkId._id;
     }
 
-    // 2. Check if a pending user exists for this email (created during form submission)
-    const pendingUser = await ctx.db
+    // 2. Check if a user exists for this email (created during form submission)
+    // This handles two scenarios:
+    //   a) "pending_" user: account created during form but Clerk auth not yet linked
+    //   b) Existing user signing in via a different method (e.g., registered with
+    //      email+password, now signing in with Google OAuth — different Clerk ID)
+    const existingByEmail = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", email))
       .first();
 
-    if (pendingUser && pendingUser.clerkId.startsWith("pending_")) {
-      // Upgrade the pending user with the real Clerk ID
-      await ctx.db.patch(pendingUser._id, {
+    if (existingByEmail) {
+      // Always update clerkId to the current auth session so subsequent
+      // getByClerkId lookups work regardless of sign-in method
+      await ctx.db.patch(existingByEmail._id, {
         clerkId: args.clerkId,
         name: args.name,
       });
-      console.log(`✅ Upgraded pending user ${pendingUser._id} (${pendingUser.role}) with real Clerk ID`);
-      return pendingUser._id;
-    }
-
-    if (pendingUser) {
-      // User exists with a different clerkId — this shouldn't happen normally.
-      // Just return their ID without overwriting clerkId.
-      return pendingUser._id;
+      console.log(`✅ Linked user ${existingByEmail._id} (${existingByEmail.role}) to Clerk ID ${args.clerkId}`);
+      return existingByEmail._id;
     }
 
     // 3. No existing user — determine role from applications

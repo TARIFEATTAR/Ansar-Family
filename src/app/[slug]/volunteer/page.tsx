@@ -110,6 +110,7 @@ export default function PartnerVolunteerPage() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const createAnsar = useMutation(api.ansars.create);
 
@@ -164,12 +165,13 @@ export default function PartnerVolunteerPage() {
     if (!formData.gender || !formData.practiceLevel || !formData.checkInFrequency || formData.isConvert === null || !allAgreementsAccepted) return;
 
     // Validate password
+    setFormError(null);
     if (formData.password.length < 8) {
-      alert("Password must be at least 8 characters.");
+      setFormError("Password must be at least 8 characters.");
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match.");
+      setFormError("Passwords do not match.");
       return;
     }
 
@@ -192,8 +194,7 @@ export default function PartnerVolunteerPage() {
       });
       const authData = await authRes.json();
       if (!authRes.ok) {
-        setIsSubmitting(false);
-        alert(authData.error || "Failed to create account.");
+        setFormError(authData.error || "Failed to create account.");
         return;
       }
 
@@ -222,7 +223,7 @@ export default function PartnerVolunteerPage() {
       setIsSubmitted(true);
     } catch (error) {
       console.error("Failed to submit:", error);
-      alert("Something went wrong. Please try again.");
+      setFormError("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -308,10 +309,13 @@ export default function PartnerVolunteerPage() {
                     type="password"
                     className="form-input"
                     value={formData.password}
-                    onChange={(e) => updateField("password", e.target.value)}
+                    onChange={(e) => { updateField("password", e.target.value); setFormError(null); }}
                     placeholder="Minimum 8 characters"
                     minLength={8}
                   />
+                  <p className="text-[11px] text-ansar-muted mt-1.5 font-body">
+                    Use 8+ characters with a mix of letters, numbers &amp; symbols. Avoid common passwords.
+                  </p>
                   {formData.password && formData.password.length < 8 && (
                     <p className="text-xs text-ansar-terracotta mt-1 font-body">Must be at least 8 characters</p>
                   )}
@@ -453,6 +457,25 @@ export default function PartnerVolunteerPage() {
                 </div>
               </div>
             </FormStep>
+          )}
+
+          {/* Inline Error Banner */}
+          {formError && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-start gap-3"
+            >
+              <span className="text-ansar-error mt-0.5 shrink-0">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="currentColor" fillOpacity="0.15"/><path d="M8 4.5v4M8 10.5h.007" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </span>
+              <div className="flex-1">
+                <p className="font-body text-sm text-ansar-error">{formError}</p>
+              </div>
+              <button onClick={() => setFormError(null)} className="text-ansar-error/60 hover:text-ansar-error transition-colors shrink-0">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </button>
+            </motion.div>
           )}
 
           {/* Navigation */}

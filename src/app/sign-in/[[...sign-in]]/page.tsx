@@ -1,12 +1,33 @@
 "use client";
 
-import { SignIn } from "@clerk/nextjs";
+import { SignIn, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 /**
  * SIGN IN PAGE — Clerk Authentication
+ * Redirects to /dashboard if the user is already signed in.
  */
 
 export default function SignInPage() {
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace("/dashboard");
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  // Don't render <SignIn /> if already signed in — avoids Clerk warning
+  if (!isLoaded || isSignedIn) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
+        <div className="w-6 h-6 border-2 border-ansar-sage-600 border-t-transparent rounded-full animate-spin" />
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-ansar-cream px-6">
       <div className="w-full max-w-md">

@@ -1,10 +1,10 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { Search, X, SlidersHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 /**
- * SearchBar — Search input with optional filter dropdowns
+ * SearchBar — Clean search input with filter dropdowns
  */
 
 interface FilterOption {
@@ -49,22 +49,24 @@ export function SearchBar({
     }, 300);
   };
 
+  const hasActiveFilter = filters?.some((f) => f.value !== "");
+
   return (
     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
       {/* Search Input */}
       <div className="relative flex-1 min-w-0">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ansar-muted pointer-events-none" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ansar-muted pointer-events-none" />
         <input
           type="text"
           value={localValue}
           onChange={(e) => handleChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-9 pr-8 py-2.5 bg-white border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted focus:outline-none focus:border-ansar-sage-500 focus:ring-2 focus:ring-ansar-sage-100 transition-all"
+          className="w-full pl-10 pr-9 py-2.5 bg-white border border-[rgba(61,61,61,0.10)] rounded-xl font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/60 focus:outline-none focus:border-ansar-sage-400 focus:ring-2 focus:ring-ansar-sage-100 transition-all"
         />
         {localValue && (
           <button
             onClick={() => handleChange("")}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-ansar-muted hover:text-ansar-gray rounded transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-ansar-muted hover:text-ansar-gray rounded transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -75,19 +77,25 @@ export function SearchBar({
       {filters && filters.length > 0 && (
         <div className="flex items-center gap-2">
           {filters.map((filter) => (
-            <select
-              key={filter.id}
-              value={filter.value}
-              onChange={(e) => onFilterChange?.(filter.id, e.target.value)}
-              className="px-3 py-2.5 bg-white border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:border-ansar-sage-500 focus:ring-2 focus:ring-ansar-sage-100 transition-all appearance-none cursor-pointer"
-            >
-              <option value="">{filter.label}</option>
-              {filter.options.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            <div key={filter.id} className="relative">
+              <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ansar-muted pointer-events-none" />
+              <select
+                value={filter.value}
+                onChange={(e) => onFilterChange?.(filter.id, e.target.value)}
+                className={`pl-8 pr-8 py-2.5 bg-white border rounded-xl font-body text-sm text-ansar-charcoal focus:outline-none focus:border-ansar-sage-400 focus:ring-2 focus:ring-ansar-sage-100 transition-all appearance-none cursor-pointer ${
+                  hasActiveFilter
+                    ? "border-ansar-sage-300 bg-ansar-sage-50/50"
+                    : "border-[rgba(61,61,61,0.10)]"
+                }`}
+              >
+                <option value="">{filter.label}</option>
+                {filter.options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           ))}
         </div>
       )}

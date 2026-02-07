@@ -55,10 +55,19 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Password too weak
-      if (firstError.code === "form_password_pwned" || firstError.code === "form_password_length_too_short") {
+      // Password too weak or compromised
+      if (
+        firstError.code === "form_password_pwned" ||
+        firstError.code === "form_password_length_too_short" ||
+        firstError.code === "form_password_not_strong_enough" ||
+        firstError.code === "form_password_size_in_bytes_exceeded"
+      ) {
+        const hint =
+          firstError.code === "form_password_pwned"
+            ? "This password has appeared in a data breach. Please choose a different one."
+            : "Password is too weak. Use 8+ characters with a mix of letters, numbers, and symbols.";
         return NextResponse.json(
-          { error: "Password is too weak. Please choose a stronger password." },
+          { error: hint },
           { status: 400 }
         );
       }

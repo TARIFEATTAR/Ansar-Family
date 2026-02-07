@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { useUser, UserButton, SignOutButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import {
   ArrowLeft, Heart, Users, Building2, Link2, MessageSquare,
   LayoutDashboard, Loader2, Trash2, Eye, Check,
   UserPlus, Unlink, Send, Phone, Mail, MapPin, Clock,
-  X as XIcon, BookUser,
+  X as XIcon, BookUser, LogOut,
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import {
@@ -239,7 +239,12 @@ function PartnerDashboard({
                 {currentUser.name}
               </span>
             )}
-            <UserButton afterSignOutUrl="/" />
+            <SignOutButton>
+              <button className="flex items-center gap-1.5 text-[12px] text-ansar-muted hover:text-ansar-charcoal border border-[rgba(61,61,61,0.10)] px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors font-body">
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
+            </SignOutButton>
           </div>
         </div>
       </header>

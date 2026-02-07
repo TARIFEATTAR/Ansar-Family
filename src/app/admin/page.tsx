@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser, UserButton } from "@clerk/nextjs";
+import { useUser, UserButton, SignOutButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
@@ -8,7 +8,7 @@ import {
   ArrowLeft, Heart, Users, Building2, Link2, MessageSquare,
   LayoutDashboard, Shield, Loader2, Trash2, CheckCircle2,
   Phone, Mail, MapPin, Clock, Eye, Check, X as XIcon, BookUser,
-  UserCog, Menu, ChevronRight, TrendingUp, Activity,
+  UserCog, Menu, ChevronRight, TrendingUp, Activity, LogOut,
 } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
 import { useEffect, useMemo, useState, useCallback } from "react";
@@ -294,6 +294,12 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
               </p>
             </div>
           </div>
+          <SignOutButton>
+            <button className="w-full flex items-center justify-center gap-2 text-[12px] text-ansar-muted hover:text-ansar-charcoal border border-[rgba(61,61,61,0.10)] px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors font-body">
+              <LogOut className="w-3.5 h-3.5" />
+              Sign Out
+            </button>
+          </SignOutButton>
         </div>
       </aside>
 
@@ -356,11 +362,17 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
                   );
                 })}
               </nav>
-              <div className="px-4 py-3 border-t border-[rgba(61,61,61,0.06)]">
+              <div className="px-4 py-3 border-t border-[rgba(61,61,61,0.06)] space-y-2">
                 <div className="flex items-center gap-3">
                   <UserButton afterSignOutUrl="/" />
                   <span className="font-body text-xs text-ansar-charcoal truncate">{currentUser?.name}</span>
                 </div>
+                <SignOutButton>
+                  <button className="w-full flex items-center justify-center gap-2 text-[12px] text-ansar-muted hover:text-ansar-charcoal border border-[rgba(61,61,61,0.10)] px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors font-body">
+                    <LogOut className="w-3.5 h-3.5" />
+                    Sign Out
+                  </button>
+                </SignOutButton>
               </div>
             </motion.aside>
           </>

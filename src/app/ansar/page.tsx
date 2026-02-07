@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
 import {
   ArrowLeft, Heart, Users, Link2, LayoutDashboard, Loader2,
   CheckCircle2, Clock, MapPin, Phone, Mail, Calendar,
-  Sparkles, BookOpen, Eye,
+  Sparkles, BookOpen, Eye, LogOut,
 } from "lucide-react";
 import {
   TabNav, StatsRow, StatusBadge, DetailPanel, DetailField,
@@ -184,7 +184,12 @@ function AnsarDashboard({
             <span className="font-body text-xs text-ansar-muted hidden sm:inline">
               {currentUser?.name}
             </span>
-            <UserButton afterSignOutUrl="/" />
+            <SignOutButton>
+              <button className="flex items-center gap-1.5 text-[12px] text-ansar-muted hover:text-ansar-charcoal border border-[rgba(61,61,61,0.10)] px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors font-body">
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
+            </SignOutButton>
           </div>
         </div>
       </header>

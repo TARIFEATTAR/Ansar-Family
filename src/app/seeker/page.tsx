@@ -64,14 +64,24 @@ export default function SeekerPortalPage() {
       {/* Header */}
       <header className="bg-white border-b border-[rgba(61,61,61,0.08)]">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="font-heading text-xl text-ansar-charcoal">
-            Ansar Family
-          </Link>
-          <SignOutButton>
-            <button className="text-sm font-body text-ansar-muted hover:text-ansar-charcoal">
-              Sign Out
-            </button>
-          </SignOutButton>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="font-heading text-xl text-ansar-charcoal">
+              Ansar Family
+            </Link>
+            <span className="text-[10px] font-body font-medium uppercase tracking-wider text-ansar-sage-600 bg-ansar-sage-50 px-2 py-0.5 rounded-full">
+              Seeker Portal
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="font-body text-xs text-ansar-muted hidden sm:inline">
+              {currentUser.email}
+            </span>
+            <SignOutButton>
+              <button className="text-sm font-body text-ansar-muted hover:text-ansar-charcoal">
+                Sign Out
+              </button>
+            </SignOutButton>
+          </div>
         </div>
       </header>
 
@@ -87,7 +97,7 @@ export default function SeekerPortalPage() {
                 Assalamu Alaikum, {firstName} 🌱
               </h1>
               <p className="font-body text-ansar-gray text-lg">
-                Welcome to your journey. We're so glad you're here.
+                Welcome to your New Muslim resource portal. We&apos;re so glad you&apos;re here.
               </p>
             </div>
           </div>

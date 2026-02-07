@@ -117,27 +117,36 @@ export const create = mutation({
     
     // ═══════════════════════════════════════════════════════════
     // TRIGGER WELCOME NOTIFICATIONS
+    // Wrapped in try-catch so notification failures never prevent
+    // the ansar record from being saved.
     // ═══════════════════════════════════════════════════════════
     
     const firstName = getFirstName(args.fullName);
     
-    // Send Welcome SMS
-    await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeSMS, {
-      recipientId: ansarId.toString(),
-      phone: args.phone,
-      firstName,
-      template: "welcome_ansar" as const,
-    });
+    try {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeSMS, {
+        recipientId: ansarId.toString(),
+        phone: args.phone,
+        firstName,
+        template: "welcome_ansar" as const,
+      });
+    } catch (e) {
+      console.error("⚠️ Failed to schedule welcome SMS:", e);
+    }
     
-    // Send Welcome Email
-    await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
-      recipientId: ansarId.toString(),
-      email,
-      firstName,
-      fullName: args.fullName,
-      template: "welcome_ansar" as const,
-    });
+    try {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
+        recipientId: ansarId.toString(),
+        email,
+        firstName,
+        fullName: args.fullName,
+        template: "welcome_ansar" as const,
+      });
+    } catch (e) {
+      console.error("⚠️ Failed to schedule welcome email:", e);
+    }
     
+    console.log(`✅ Ansar ${ansarId} created for ${args.fullName} (${email})`);
     return ansarId;
   },
 });
@@ -182,13 +191,17 @@ export const updateStatus = mutation({
 
       // Send approval notification email + SMS
       const firstName = getFirstName(ansar.fullName);
-      await ctx.scheduler.runAfter(0, internal.notifications.sendApprovalNotification, {
-        recipientId: args.id.toString(),
-        email: ansar.email,
-        phone: ansar.phone,
-        firstName,
-        role: "ansar" as const,
-      });
+      try {
+        await ctx.scheduler.runAfter(0, internal.notifications.sendApprovalNotification, {
+          recipientId: args.id.toString(),
+          email: ansar.email,
+          phone: ansar.phone,
+          firstName,
+          role: "ansar" as const,
+        });
+      } catch (e) {
+        console.error("⚠️ Failed to schedule approval notification:", e);
+      }
     }
   },
 });

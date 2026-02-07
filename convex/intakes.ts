@@ -100,28 +100,39 @@ export const create = mutation({
     
     // ═══════════════════════════════════════════════════════════
     // TRIGGER WELCOME NOTIFICATIONS
+    // Wrapped in try-catch so notification failures never prevent
+    // the intake record from being saved.
     // ═══════════════════════════════════════════════════════════
     
     const firstName = getFirstName(args.fullName);
     
-    // Send Welcome SMS
-    await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeSMS, {
-      recipientId: intakeId.toString(),
-      phone: args.phone,
-      firstName,
-      template: "welcome_seeker" as const,
-    });
+    try {
+      // Send Welcome SMS
+      await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeSMS, {
+        recipientId: intakeId.toString(),
+        phone: args.phone,
+        firstName,
+        template: "welcome_seeker" as const,
+      });
+    } catch (e) {
+      console.error("⚠️ Failed to schedule welcome SMS:", e);
+    }
     
-    // Send Welcome Email
-    await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
-      recipientId: intakeId.toString(),
-      email,
-      firstName,
-      fullName: args.fullName,
-      template: "welcome_seeker" as const,
-      journeyType: args.journeyType,
-    });
+    try {
+      // Send Welcome Email
+      await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
+        recipientId: intakeId.toString(),
+        email,
+        firstName,
+        fullName: args.fullName,
+        template: "welcome_seeker" as const,
+        journeyType: args.journeyType,
+      });
+    } catch (e) {
+      console.error("⚠️ Failed to schedule welcome email:", e);
+    }
     
+    console.log(`✅ Intake ${intakeId} created for ${args.fullName} (${email})`);
     return intakeId;
   },
 });
@@ -231,6 +242,19 @@ export const getById = query({
   args: { id: v.id("intakes") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// GET BY EMAIL — Find a seeker's intake by email (for seeker portal)
+// ═══════════════════════════════════════════════════════════════
+export const getByEmail = query({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("intakes")
+      .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
+      .first();
   },
 });
 

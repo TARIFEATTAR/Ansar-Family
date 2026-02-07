@@ -21,13 +21,13 @@ export default function SeekerPortalPage() {
     user?.id ? { clerkId: user.id } : "skip"
   );
 
-  // Get seeker's intake record
-  const intake = useQuery(
-    api.intakes.listAll,
-    currentUser ? {} : "skip"
+  // Get seeker's intake record by their email (efficient targeted query)
+  const seekerIntake = useQuery(
+    api.intakes.getByEmail,
+    user?.primaryEmailAddress?.emailAddress
+      ? { email: user.primaryEmailAddress.emailAddress }
+      : "skip"
   );
-
-  const seekerIntake = intake?.find((i) => i.email === user?.primaryEmailAddress?.emailAddress);
 
   // Loading state
   if (!isLoaded || currentUser === undefined) {
@@ -56,6 +56,7 @@ export default function SeekerPortalPage() {
   }
 
   const firstName = currentUser.name.split(" ")[0];
+  const intakeExists = seekerIntake !== null && seekerIntake !== undefined;
   const status = seekerIntake?.status || "awaiting_outreach";
 
   return (
@@ -92,7 +93,31 @@ export default function SeekerPortalPage() {
           </div>
 
           {/* Status */}
-          {status === "awaiting_outreach" && (
+          {!intakeExists && seekerIntake !== undefined && (
+            <div className="bg-ansar-terracotta-50 border border-ansar-terracotta-200 rounded-xl p-6">
+              <div className="flex items-start gap-3">
+                <Heart className="w-5 h-5 text-ansar-terracotta-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-body font-semibold text-ansar-charcoal mb-1">
+                    Complete Your Registration
+                  </h3>
+                  <p className="font-body text-sm text-ansar-gray leading-relaxed mb-3">
+                    We have your account, but it looks like your intake form wasn&apos;t submitted yet.
+                    Please fill it out so we can connect you with your local community.
+                  </p>
+                  <Link
+                    href="/join"
+                    className="inline-flex items-center gap-2 text-sm font-body font-medium text-ansar-sage-600 hover:text-ansar-sage-700"
+                  >
+                    Complete Intake Form
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {intakeExists && status === "awaiting_outreach" && (
             <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-6">
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0" />
@@ -109,7 +134,7 @@ export default function SeekerPortalPage() {
             </div>
           )}
 
-          {status === "triaged" && (
+          {intakeExists && status === "triaged" && (
             <div className="bg-ansar-ochre-50 border border-ansar-ochre-200 rounded-xl p-6">
               <div className="flex items-start gap-3">
                 <Users className="w-5 h-5 text-ansar-ochre-600 mt-0.5 flex-shrink-0" />
@@ -125,7 +150,7 @@ export default function SeekerPortalPage() {
             </div>
           )}
 
-          {status === "connected" && (
+          {intakeExists && (status === "connected" || status === "active") && (
             <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-6">
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0" />

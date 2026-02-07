@@ -181,7 +181,7 @@ export default function PartnerJoinPage() {
       }
 
       // Step 2: Create intake with real clerkId
-      await createIntake({
+      const intakeId = await createIntake({
         fullName: formData.fullName,
         phone: formData.phone,
         email: formData.email,
@@ -199,10 +199,17 @@ export default function PartnerJoinPage() {
         partnerId: organization._id,
         clerkId: authData.clerkUserId,
       });
+
+      if (!intakeId) {
+        setFormError("Your account was created but the intake submission failed. Please sign in and complete the intake form from your portal.");
+        return;
+      }
+
       setIsSubmitted(true);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to submit:", error);
-      setFormError("Something went wrong. Please try again.");
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      setFormError(`Something went wrong: ${msg}. Your account was created — you can sign in and try the intake form again from your portal.`);
     } finally {
       setIsSubmitting(false);
     }

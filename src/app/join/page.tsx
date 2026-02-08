@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useMutation } from "convex/react";
+import { useSignIn } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
@@ -90,6 +92,8 @@ export default function JoinPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const { signIn, setActive } = useSignIn();
+  const router = useRouter();
 
   const createIntake = useMutation(api.intakes.create);
 
@@ -182,6 +186,25 @@ export default function JoinPage() {
         return;
       }
 
+      // Step 3: Auto-sign-in and redirect to seeker portal
+      try {
+        if (signIn) {
+          const result = await signIn.create({
+            identifier: formData.email,
+            password: formData.password,
+          });
+          if (result.createdSessionId && setActive) {
+            await setActive({ session: result.createdSessionId });
+            router.push("/seeker");
+            return;
+          }
+        }
+      } catch (signInError) {
+        // Auto-sign-in failed — fall back to success screen
+        console.warn("Auto-sign-in failed, showing success screen:", signInError);
+      }
+
+      // Fallback: show success screen if auto-sign-in fails
       setIsSubmitted(true);
     } catch (error: unknown) {
       console.error("Failed to submit:", error);

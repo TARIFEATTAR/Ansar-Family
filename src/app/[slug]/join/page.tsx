@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
+import { useSignIn } from "@clerk/nextjs";
 import { api } from "../../../../convex/_generated/api";
 import Link from "next/link";
-import { useParams, notFound } from "next/navigation";
+import { useParams, useRouter, notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Loader2, Building2 } from "lucide-react";
 
 /**
@@ -90,6 +91,9 @@ export default function PartnerJoinPage() {
   const slug = params.slug as string;
 
   const organization = useQuery(api.organizations.getBySlug, { slug });
+
+  const { signIn, setActive } = useSignIn();
+  const router = useRouter();
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -206,6 +210,24 @@ export default function PartnerJoinPage() {
         return;
       }
 
+      // Step 3: Auto-sign-in and redirect to seeker portal
+      try {
+        if (signIn) {
+          const result = await signIn.create({
+            identifier: formData.email,
+            password: formData.password,
+          });
+          if (result.createdSessionId && setActive) {
+            await setActive({ session: result.createdSessionId });
+            router.push("/seeker");
+            return;
+          }
+        }
+      } catch (signInError) {
+        console.warn("Auto-sign-in failed, showing success screen:", signInError);
+      }
+
+      // Fallback: show success screen if auto-sign-in fails
       setIsSubmitted(true);
     } catch (error: unknown) {
       console.error("Failed to submit:", error);

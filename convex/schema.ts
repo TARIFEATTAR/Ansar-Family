@@ -191,6 +191,7 @@ export default defineSchema({
     address: v.string(),
     city: v.string(),
     stateRegion: v.optional(v.string()),
+    zipCode: v.optional(v.string()),
     genderFocus: v.union(
       v.literal("brothers"),
       v.literal("sisters"),
@@ -253,6 +254,8 @@ export default defineSchema({
     ),
     city: v.string(),
     stateRegion: v.optional(v.string()),
+    zipCode: v.optional(v.string()),
+    address: v.optional(v.string()),
     hubLevel: v.number(),
     isActive: v.boolean(),
     partnerApplicationId: v.optional(v.id("partners")),

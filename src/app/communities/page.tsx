@@ -70,7 +70,8 @@ export default function CommunitiesPage() {
         (org) =>
           org.name.toLowerCase().includes(q) ||
           org.city.toLowerCase().includes(q) ||
-          (org.stateRegion && org.stateRegion.toLowerCase().includes(q))
+          (org.stateRegion && org.stateRegion.toLowerCase().includes(q)) ||
+          (org.zipCode && org.zipCode.includes(q))
       );
     }
 
@@ -168,7 +169,7 @@ export default function CommunitiesPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by city, state, or hub name..."
+                placeholder="Search by city, state, zip, or hub name..."
                 className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/70 backdrop-blur-md border border-white/40 shadow-sm font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted focus:outline-none focus:ring-2 focus:ring-ansar-sage-300 focus:border-transparent transition-all"
               />
             </div>
@@ -421,6 +422,7 @@ function HubCard({
     type: string;
     city: string;
     stateRegion?: string;
+    zipCode?: string;
     hubLevel: number;
   };
   counts?: { seekerCount: number; ansarCount: number };

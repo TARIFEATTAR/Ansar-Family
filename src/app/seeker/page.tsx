@@ -5,12 +5,12 @@ import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
+import Link from "next/link";
 import {
   Loader2, Heart, BookOpen, Video, Users, ArrowRight, CheckCircle2,
   Phone, Mail, MapPin, UserCircle, Building2, Clock,
   MessageSquare, Send, Inbox as InboxIcon,
 } from "lucide-react";
-import Link from "next/link";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
 
 /**
@@ -23,17 +23,35 @@ import { MessageBubble } from "@/components/messaging/MessageBubble";
 export default function SeekerPortalPage() {
   const { user, isLoaded } = useUser();
 
+  // Self-heal: ensure user record exists in Convex (same as dashboard gateway)
+  const upsertUser = useMutation(api.users.upsertFromClerk);
+  const [upsertAttempted, setUpsertAttempted] = useState(false);
+
+  useEffect(() => {
+    if (user && isLoaded && !upsertAttempted) {
+      upsertUser({
+        clerkId: user.id,
+        email: user.primaryEmailAddress?.emailAddress ?? "",
+        name: user.fullName ?? user.firstName ?? "User",
+      }).then(() => {
+        setUpsertAttempted(true);
+      }).catch((err) => {
+        console.warn("upsertFromClerk on seeker page failed:", err);
+        setUpsertAttempted(true);
+      });
+    }
+  }, [user, isLoaded, upsertAttempted, upsertUser]);
+
   const currentUser = useQuery(
     api.users.getByClerkId,
     user?.id ? { clerkId: user.id } : "skip"
   );
 
-  // Get seeker's intake record by their email
+  // Get seeker's intake record by their email (normalized to lowercase)
+  const seekerEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
   const seekerIntake = useQuery(
     api.intakes.getByEmail,
-    user?.primaryEmailAddress?.emailAddress
-      ? { email: user.primaryEmailAddress.emailAddress }
-      : "skip"
+    seekerEmail ? { email: seekerEmail } : "skip"
   );
 
   // Get seeker's active pairing (includes Ansar + Organization details)
@@ -66,8 +84,11 @@ export default function SeekerPortalPage() {
   const replyToConversation = useMutation(api.inbox.replyToConversation);
   const startConversation = useMutation(api.inbox.startConversation);
 
-  // Loading state
-  if (!isLoaded || currentUser === undefined) {
+  // Loading state — wait for both Clerk auth and Convex user record
+  // `currentUser === undefined` means the query is still loading
+  // `currentUser === null` means the query returned nothing (record doesn't exist yet)
+  // After upsert attempt, if still null, the reactive query should pick it up shortly
+  if (!isLoaded || currentUser === undefined || (currentUser === null && !upsertAttempted)) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
         <div className="text-center">
@@ -78,8 +99,21 @@ export default function SeekerPortalPage() {
     );
   }
 
+  // User record still not found even after upsert — likely a data issue
+  if (currentUser === null) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
+        <div className="text-center max-w-md mx-auto px-6">
+          <Loader2 className="w-8 h-8 text-ansar-sage-600 animate-spin mx-auto mb-4" />
+          <p className="font-body text-ansar-gray mb-2">Setting up your account...</p>
+          <p className="font-body text-sm text-ansar-gray/60">This usually takes just a moment. If this persists, try refreshing the page.</p>
+        </div>
+      </main>
+    );
+  }
+
   // Not a seeker
-  if (currentUser?.role !== "seeker") {
+  if (currentUser.role !== "seeker") {
     return (
       <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
         <div className="text-center max-w-md mx-auto px-6">
@@ -143,26 +177,19 @@ export default function SeekerPortalPage() {
           {/* JOURNEY STATUS TRACKER                                     */}
           {/* ═══════════════════════════════════════════════════════════ */}
 
-          {/* No intake yet */}
+          {/* Intake record still loading or not yet propagated */}
           {!intakeExists && seekerIntake !== undefined && (
-            <div className="bg-ansar-terracotta-50 border border-ansar-terracotta-200 rounded-xl p-6">
+            <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-6">
               <div className="flex items-start gap-3">
-                <Heart className="w-5 h-5 text-ansar-terracotta-600 mt-0.5 flex-shrink-0" />
+                <Loader2 className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0 animate-spin" />
                 <div>
                   <h3 className="font-body font-semibold text-ansar-charcoal mb-1">
-                    Complete Your Registration
+                    We&apos;re getting things ready
                   </h3>
-                  <p className="font-body text-sm text-ansar-gray leading-relaxed mb-3">
-                    We have your account, but it looks like your intake form wasn&apos;t submitted yet.
-                    Please fill it out so we can connect you with your local community.
+                  <p className="font-body text-sm text-ansar-gray leading-relaxed">
+                    Your information is being set up. This usually takes just a moment.
+                    If this message persists, try refreshing the page.
                   </p>
-                  <Link
-                    href="/join"
-                    className="inline-flex items-center gap-2 text-sm font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-4 py-2 rounded-lg transition-colors"
-                  >
-                    Complete Intake Form
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
                 </div>
               </div>
             </div>

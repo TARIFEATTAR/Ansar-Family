@@ -263,6 +263,8 @@ export const approveAndCreateOrg = mutation({
       type: partner.orgType,
       city: partner.city,
       stateRegion: partner.stateRegion,
+      zipCode: partner.zipCode,
+      address: partner.address,
       hubLevel: partner.hubLevel,
       isActive: true,
       partnerApplicationId: args.id,

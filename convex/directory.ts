@@ -2,7 +2,7 @@ import { query } from "./_generated/server";
 
 /**
  * DIRECTORY — Public-safe queries for the /communities directory page.
- * Returns only aggregate counts — no PII is exposed.
+ * Returns only aggregate counts. No PII is exposed.
  */
 
 /**

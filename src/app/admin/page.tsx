@@ -482,6 +482,8 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
               <UsersTab
                 users={users}
                 organizations={organizations}
+                intakes={intakes}
+                ansars={ansars}
                 search={search}
                 setSearch={setSearch}
                 statusFilter={statusFilter}
@@ -1341,21 +1343,43 @@ function AdminAddContactModal({ isOpen, onClose, onCreate }: { isOpen: boolean; 
 // ═══════════════════════════════════════════════════════════════
 
 function UsersTab({
-  users, organizations, search, setSearch, statusFilter, setStatusFilter, onCreate, onUpdate, onDelete,
+  users, organizations, intakes, ansars, search, setSearch, statusFilter, setStatusFilter, onCreate, onUpdate, onDelete,
 }: {
-  users: any[]; organizations: any[]; search: string; setSearch: (v: string) => void;
+  users: any[]; organizations: any[]; intakes: any[]; ansars: any[]; search: string; setSearch: (v: string) => void;
   statusFilter: string; setStatusFilter: (v: string) => void;
   onCreate: (args: any) => Promise<any>; onUpdate: (args: any) => Promise<any>; onDelete: (id: Id<"users">) => void;
 }) {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  // Build lookup: user email -> intake organizationId (for seekers)
+  const seekerOrgByEmail = useMemo(() => {
+    const map: Record<string, string> = {};
+    intakes.forEach((intake: any) => {
+      if (intake.email && intake.organizationId) {
+        map[intake.email.toLowerCase()] = intake.organizationId;
+      }
+    });
+    return map;
+  }, [intakes]);
+
+  // Build lookup: user email -> ansar organizationId (for ansars)
+  const ansarOrgByEmail = useMemo(() => {
+    const map: Record<string, string> = {};
+    ansars.forEach((ansar: any) => {
+      if (ansar.email && ansar.organizationId) {
+        map[ansar.email.toLowerCase()] = ansar.organizationId;
+      }
+    });
+    return map;
+  }, [ansars]);
+
   const filtered = useMemo(() => {
     let result = users;
-    if (statusFilter) result = result.filter((u) => u.role === statusFilter);
+    if (statusFilter) result = result.filter((u: any) => u.role === statusFilter);
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.clerkId.toLowerCase().includes(q));
+      result = result.filter((u: any) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.clerkId.toLowerCase().includes(q));
     }
     return result;
   }, [users, search, statusFilter]);
@@ -1367,14 +1391,41 @@ function UsersTab({
     { label: "Active", value: users.filter((u) => u.isActive).length, accent: "success" },
   ];
 
+  const orgMap = useMemo(() => { const map: Record<string, any> = {}; organizations.forEach((org: any) => { map[org._id] = org; }); return map; }, [organizations]);
+
+  // Resolve organization for any user role
+  const getOrgForUser = useCallback((user: any): any | null => {
+    // Partner Leads and Ansars may have org on their user record
+    if (user.organizationId && orgMap[user.organizationId]) return orgMap[user.organizationId];
+    // Seekers: look up org from their intake record
+    if (user.role === "seeker" && user.email) {
+      const orgId = seekerOrgByEmail[user.email.toLowerCase()];
+      if (orgId && orgMap[orgId]) return orgMap[orgId];
+    }
+    // Ansars: also look up from ansar record
+    if (user.role === "ansar" && user.email) {
+      const orgId = ansarOrgByEmail[user.email.toLowerCase()];
+      if (orgId && orgMap[orgId]) return orgMap[orgId];
+    }
+    return null;
+  }, [orgMap, seekerOrgByEmail, ansarOrgByEmail]);
+
   const columns: Column<any>[] = [
     { key: "name", label: "Name", sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
     { key: "email", label: "Email", sortable: true, render: (r) => <span className="text-ansar-gray text-xs">{r.email}</span> },
     { key: "role", label: "Role", sortable: true, render: (r) => <StatusBadge status={r.role} /> },
+    { key: "organizationId", label: "Organization", render: (r) => {
+      const org = getOrgForUser(r);
+      return org ? (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-ansar-sage-700 bg-ansar-sage-50 px-2 py-0.5 rounded-full">
+          <Building2 className="w-3 h-3" />{org.name}
+        </span>
+      ) : (
+        <span className="text-ansar-muted text-xs">—</span>
+      );
+    }},
     { key: "isActive", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.isActive ? "active" : "inactive"} /> },
   ];
-
-  const orgMap = useMemo(() => { const map: Record<string, any> = {}; organizations.forEach((org) => { map[org._id] = org; }); return map; }, [organizations]);
 
   return (
     <div className="space-y-5">
@@ -1405,9 +1456,16 @@ function UsersTab({
             {selectedUser.role === "partner_lead" && (
               <EditableField label="Organization" type="select" value={selectedUser.organizationId || ""} options={[{ value: "", label: "No Organization" }, ...organizations.map((org: any) => ({ value: org._id, label: org.name }))]} onSave={(v) => onUpdate({ id: selectedUser._id, organizationId: v || null })} />
             )}
-            {selectedUser.organizationId && orgMap[selectedUser.organizationId] && (
-              <DetailField label="Organization"><span className="text-ansar-sage-700">{orgMap[selectedUser.organizationId].name}</span></DetailField>
-            )}
+            {selectedUser.role !== "partner_lead" && (() => {
+              const org = getOrgForUser(selectedUser);
+              return org ? (
+                <DetailField label="Organization">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-ansar-sage-700">
+                    <Building2 className="w-4 h-4" />{org.name}
+                  </span>
+                </DetailField>
+              ) : null;
+            })()}
             <EditableField label="Active" type="checkbox" value={selectedUser.isActive} onSave={(v) => onUpdate({ id: selectedUser._id, isActive: v })} />
           </dl>
         )}

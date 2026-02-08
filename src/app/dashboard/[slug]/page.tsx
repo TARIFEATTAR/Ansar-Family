@@ -12,7 +12,7 @@ import {
   UserPlus, Unlink, Send, Phone, Mail, MapPin, Clock,
   X as XIcon, BookUser, Copy, CheckCheck, Share2, ExternalLink,
   QrCode, ChevronDown, ChevronUp, Sparkles, CheckCircle2, Circle,
-  Inbox as InboxIcon, MailPlus, CheckSquare,
+  Inbox as InboxIcon, MailPlus, CheckSquare, Calendar, Plus, Pencil,
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import {
@@ -142,6 +142,7 @@ function PartnerDashboard({
   const readyToPair = useQuery(api.intakes.listReadyForPairing, { organizationId: organization._id }) ?? [];
   const availableAnsars = useQuery(api.ansars.listAvailableForPairing, { organizationId: organization._id }) ?? [];
   const messages = useQuery(api.messages.listAll) ?? []; // Will filter client-side
+  const events = useQuery(api.events.getByOrganization, { organizationId: organization._id }) ?? [];
 
   // Inbox
   const partnerUserId = currentUser?._id;
@@ -187,6 +188,7 @@ function PartnerDashboard({
     { id: "ansars", label: "Ansars", icon: <Users className="w-[18px] h-[18px]" />, badge: ansars.length, description: "Volunteer companions and mentors" },
     { id: "contacts", label: "Contacts", icon: <BookUser className="w-[18px] h-[18px]" />, badge: contacts.length, description: "Community members and stakeholders" },
     { id: "pairings", label: "Pairings", icon: <Link2 className="w-[18px] h-[18px]" />, badge: pairings.length, description: "Seeker-Ansar connections" },
+    { id: "events", label: "Events", icon: <Calendar className="w-[18px] h-[18px]" />, badge: events.length || undefined, description: "Community events for your seekers" },
     { id: "messages", label: "Notification Log", icon: <MessageSquare className="w-[18px] h-[18px]" />, badge: orgMessages.length, description: "SMS and email notification log" },
   ];
 
@@ -377,6 +379,13 @@ function PartnerDashboard({
             setStatusFilter={setStatusFilter}
             onMarkIntroSent={handleMarkIntroSent}
             onUnpair={handleUnpair}
+          />
+        )}
+        {activeTab === "events" && currentUser && (
+          <PartnerEventsTab
+            events={events}
+            organizationId={organization._id}
+            userId={currentUser._id}
           />
         )}
         {activeTab === "messages" && (
@@ -1670,6 +1679,270 @@ function PartnerMessagesTab({
         emptyMessage="No messages yet."
         emptyIcon={<MessageSquare className="w-12 h-12" />}
       />
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EVENTS TAB
+// ═══════════════════════════════════════════════════════════════
+
+function PartnerEventsTab({
+  events,
+  organizationId,
+  userId,
+}: {
+  events: any[];
+  organizationId: Id<"organizations">;
+  userId: Id<"users">;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [location, setLocation] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const createEvent = useMutation(api.events.create);
+  const updateEvent = useMutation(api.events.update);
+  const removeEvent = useMutation(api.events.remove);
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setDate("");
+    setTime("");
+    setLocation("");
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const handleEdit = (event: any) => {
+    setTitle(event.title);
+    setDescription(event.description || "");
+    setDate(event.date);
+    setTime(event.time || "");
+    setLocation(event.location || "");
+    setEditingId(event._id);
+    setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!title.trim() || !date) return;
+    setSaving(true);
+    try {
+      if (editingId) {
+        await updateEvent({
+          eventId: editingId as Id<"events">,
+          title: title.trim(),
+          description: description.trim() || undefined,
+          date,
+          time: time.trim() || undefined,
+          location: location.trim() || undefined,
+        });
+      } else {
+        await createEvent({
+          title: title.trim(),
+          description: description.trim() || undefined,
+          date,
+          time: time.trim() || undefined,
+          location: location.trim() || undefined,
+          organizationId,
+          createdBy: userId,
+        });
+      }
+      resetForm();
+    } catch (err) {
+      console.error("Failed to save event:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (eventId: string) => {
+    if (!confirm("Delete this event? This cannot be undone.")) return;
+    try {
+      await removeEvent({ eventId: eventId as Id<"events"> });
+    } catch (err) {
+      console.error("Failed to delete event:", err);
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <p className="font-body text-sm text-ansar-gray">
+          Create events that appear on your seekers&apos; dashboards.
+        </p>
+        {!showForm && (
+          <button
+            onClick={() => { resetForm(); setShowForm(true); }}
+            className="inline-flex items-center gap-2 text-sm font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            New Event
+          </button>
+        )}
+      </div>
+
+      {/* Create / Edit Form */}
+      {showForm && (
+        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] p-6 shadow-sm">
+          <h3 className="font-heading text-lg text-ansar-charcoal mb-4">
+            {editingId ? "Edit Event" : "Create Event"}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div className="sm:col-span-2">
+              <label className="block font-body text-xs text-ansar-muted mb-1">Event Title *</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Community Dinner"
+                className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
+              />
+            </div>
+            <div>
+              <label className="block font-body text-xs text-ansar-muted mb-1">Date *</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
+              />
+            </div>
+            <div>
+              <label className="block font-body text-xs text-ansar-muted mb-1">Time</label>
+              <input
+                type="text"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                placeholder="e.g. 6:00 PM"
+                className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block font-body text-xs text-ansar-muted mb-1">Location</label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g. Masjid Al-Noor, 123 Main St"
+                className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block font-body text-xs text-ansar-muted mb-1">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Tell seekers what to expect..."
+                rows={3}
+                className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 resize-none focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSave}
+              disabled={!title.trim() || !date || saving}
+              className="inline-flex items-center gap-2 text-sm font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2 rounded-lg transition-colors"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {editingId ? "Update Event" : "Create Event"}
+            </button>
+            <button
+              onClick={resetForm}
+              className="text-sm font-body text-ansar-muted hover:text-ansar-charcoal px-4 py-2 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Events List */}
+      {events.length === 0 && !showForm ? (
+        <div className="bg-white rounded-xl p-12 shadow-sm text-center">
+          <Calendar className="w-12 h-12 text-ansar-muted/30 mx-auto mb-4" />
+          <h3 className="font-heading text-lg text-ansar-charcoal mb-2">No events yet</h3>
+          <p className="font-body text-sm text-ansar-muted max-w-sm mx-auto mb-6">
+            Create your first event and it will appear on your seekers&apos; dashboards automatically.
+          </p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 text-sm font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-5 py-2.5 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Create Your First Event
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {events.map((event) => {
+            const eventDate = new Date(event.date + "T00:00:00");
+            const month = eventDate.toLocaleDateString("en-US", { month: "short" });
+            const day = eventDate.getDate();
+            const fullDate = eventDate.toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            });
+
+            return (
+              <div
+                key={event._id}
+                className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] p-5 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start gap-4">
+                  {/* Date badge */}
+                  <div className="w-14 h-16 bg-ansar-sage-50 rounded-lg border border-ansar-sage-200 flex flex-col items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] font-body font-medium text-ansar-sage-600 uppercase leading-none">{month}</span>
+                    <span className="text-xl font-heading text-ansar-charcoal leading-none mt-0.5">{day}</span>
+                  </div>
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-body font-semibold text-ansar-charcoal mb-1">{event.title}</h4>
+                    <p className="font-body text-xs text-ansar-gray mb-1">{fullDate}{event.time ? ` at ${event.time}` : ""}</p>
+                    {event.location && (
+                      <p className="font-body text-xs text-ansar-muted flex items-center gap-1 mb-1">
+                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                        {event.location}
+                      </p>
+                    )}
+                    {event.description && (
+                      <p className="font-body text-xs text-ansar-gray mt-2 line-clamp-2">{event.description}</p>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => handleEdit(event)}
+                      className="p-2 text-ansar-muted hover:text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors"
+                      title="Edit event"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(event._id)}
+                      className="p-2 text-ansar-muted hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete event"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

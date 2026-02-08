@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 
 /**
  * INTAKES — Seeker submission operations
@@ -338,6 +339,48 @@ export const assignToOrganization = mutation({
       organizationId: args.organizationId,
       status: "triaged",
     });
+  },
+});
+
+/**
+ * Backfill: Links orphaned partner-specific intakes to their organizations.
+ * Intakes created before the organizationId fix have partnerId set (as org ID string)
+ * but no organizationId. This one-time mutation fixes those records.
+ */
+export const backfillOrganizationLinks = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const orphaned = await ctx.db
+      .query("intakes")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("source"), "partner_specific"),
+          q.eq(q.field("organizationId"), undefined)
+        )
+      )
+      .collect();
+
+    let fixed = 0;
+    for (const intake of orphaned) {
+      if (intake.partnerId) {
+        // partnerId was stored as the org _id string — verify it exists
+        try {
+          const org = await ctx.db.get(intake.partnerId as Id<"organizations">);
+          if (org) {
+            await ctx.db.patch(intake._id, {
+              organizationId: intake.partnerId as Id<"organizations">,
+              status: intake.status === "awaiting_outreach" ? "triaged" : intake.status,
+            });
+            fixed++;
+          }
+        } catch {
+          console.warn(`⚠️ Invalid partnerId "${intake.partnerId}" on intake ${intake._id}`);
+        }
+      }
+    }
+
+    console.log(`✅ Backfill complete: fixed ${fixed} of ${orphaned.length} orphaned intakes`);
+    return { total: orphaned.length, fixed };
   },
 });
 

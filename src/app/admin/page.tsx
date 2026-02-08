@@ -431,6 +431,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
             {activeTab === "seekers" && (
               <SeekersTab
                 intakes={intakes}
+                organizations={organizations}
                 search={search}
                 setSearch={setSearch}
                 statusFilter={statusFilter}
@@ -683,29 +684,37 @@ function OverviewTab({
 // ═══════════════════════════════════════════════════════════════
 
 function SeekersTab({
-  intakes, search, setSearch, statusFilter, setStatusFilter, onTriage, onDelete, onUpdate,
+  intakes, organizations, search, setSearch, statusFilter, setStatusFilter, onTriage, onDelete, onUpdate,
 }: {
-  intakes: any[]; search: string; setSearch: (v: string) => void;
+  intakes: any[]; organizations: any[]; search: string; setSearch: (v: string) => void;
   statusFilter: string; setStatusFilter: (v: string) => void;
   onTriage: (id: Id<"intakes">) => void; onDelete: (id: Id<"intakes">) => void;
   onUpdate: (args: any) => Promise<any>;
 }) {
   const [selectedSeeker, setSelectedSeeker] = useState<any>(null);
 
+  // Build org lookup map so we can show Partner Hub names
+  const orgMap = useMemo(() => {
+    const map: Record<string, any> = {};
+    organizations.forEach((org: any) => { map[org._id] = org; });
+    return map;
+  }, [organizations]);
+
   const filtered = useMemo(() => {
     let result = intakes;
-    if (statusFilter) result = result.filter((i) => i.status === statusFilter);
+    if (statusFilter) result = result.filter((i: any) => i.status === statusFilter);
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter((i) =>
+      result = result.filter((i: any) =>
         i.fullName.toLowerCase().includes(q) ||
         i.email.toLowerCase().includes(q) ||
         i.city.toLowerCase().includes(q) ||
-        i.phone.includes(q)
+        i.phone.includes(q) ||
+        (i.organizationId && orgMap[i.organizationId]?.name?.toLowerCase().includes(q))
       );
     }
     return result;
-  }, [intakes, search, statusFilter]);
+  }, [intakes, search, statusFilter, orgMap]);
 
   const stats: StatItem[] = [
     { label: "Total", value: intakes.length, accent: "sage" },
@@ -719,6 +728,13 @@ function SeekersTab({
     { key: "email", label: "Email", sortable: true, render: (r) => <span className="text-ansar-gray text-xs">{r.email}</span> },
     { key: "phone", label: "Phone", render: (r) => <span className="text-ansar-gray text-xs">{r.phone}</span> },
     { key: "city", label: "City", sortable: true, render: (r) => <span className="text-ansar-gray">{r.city}</span> },
+    { key: "organizationId", label: "Partner Hub", render: (r) => r.organizationId && orgMap[r.organizationId] ? (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-ansar-sage-700 bg-ansar-sage-50 px-2 py-0.5 rounded-full">
+        <Building2 className="w-3 h-3" />{orgMap[r.organizationId].name}
+      </span>
+    ) : (
+      <span className="text-ansar-muted text-xs italic">General</span>
+    )},
     { key: "journeyType", label: "Journey", render: (r) => <StatusBadge status={r.journeyType} /> },
     { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
   ];
@@ -775,6 +791,28 @@ function SeekersTab({
         {selectedSeeker && (
           <dl className="space-y-0">
             <DetailField label="Status"><StatusBadge status={selectedSeeker.status} size="md" /></DetailField>
+            <DetailField label="Source">
+              {selectedSeeker.source === "partner_specific" ? (
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-ansar-sage-700">
+                  <Building2 className="w-4 h-4" />
+                  {selectedSeeker.organizationId && orgMap[selectedSeeker.organizationId]
+                    ? orgMap[selectedSeeker.organizationId].name
+                    : selectedSeeker.partnerId && orgMap[selectedSeeker.partnerId]
+                      ? orgMap[selectedSeeker.partnerId].name
+                      : "Partner Hub (unlinked)"}
+                </span>
+              ) : (
+                <span className="text-ansar-gray text-sm">General Sign-Up</span>
+              )}
+            </DetailField>
+            {selectedSeeker.organizationId && orgMap[selectedSeeker.organizationId] && (
+              <DetailField label="Partner Hub">
+                <Link href={`/dashboard/${orgMap[selectedSeeker.organizationId].slug}`} className="inline-flex items-center gap-1.5 text-sm text-ansar-sage-600 hover:text-ansar-sage-800 underline underline-offset-2">
+                  <Building2 className="w-4 h-4" />
+                  {orgMap[selectedSeeker.organizationId].name}
+                </Link>
+              </DetailField>
+            )}
             <EditableField label="Full Name" value={selectedSeeker.fullName} onSave={(v) => onUpdate({ id: selectedSeeker._id, fullName: v })} />
             <EditableField label="Email" type="email" value={selectedSeeker.email} onSave={(v) => onUpdate({ id: selectedSeeker._id, email: v })} />
             <EditableField label="Phone" type="tel" value={selectedSeeker.phone} onSave={(v) => onUpdate({ id: selectedSeeker._id, phone: v })} />

@@ -332,8 +332,8 @@ export const listByOrganization = query({
 
 /**
  * Lists Ansars available for pairing in an organization.
- * Includes both "approved" (never paired) and "active" (already paired)
- * since one Ansar can support multiple seekers.
+ * Includes both "approved" (never paired) and "active" (already paired but
+ * can mentor additional seekers) Ansars.
  */
 export const listAvailableForPairing = query({
   args: { organizationId: v.id("organizations") },

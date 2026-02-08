@@ -254,7 +254,7 @@ export default function PartnerPage() {
         }),
       });
       const authData = await authRes.json();
-      if (!authRes.ok) {
+      if (!authRes.ok && !authData.clerkUserId) {
         setFormError(authData.error || "Failed to create account.");
         return;
       }

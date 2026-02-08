@@ -47,6 +47,12 @@ export default function Home() {
             >
               Who It&apos;s For
             </Link>
+            <Link
+              href="/communities"
+              className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors"
+            >
+              Communities
+            </Link>
           </nav>
           <Link
             href="/sign-in"
@@ -93,7 +99,7 @@ export default function Home() {
                 }`}
               style={{ transitionDelay: '400ms' }}
             >
-              No new Muslim should have to figure this out alone
+              Every journey is better with community
             </h1>
 
             {/* Description */}
@@ -433,6 +439,11 @@ export default function Home() {
                 <li>
                   <Link href="/partner" className="font-body text-sm text-ansar-sage-700 hover:text-ansar-sage-600 hover:underline transition-colors cursor-pointer">
                     Register a Hub →
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/communities" className="font-body text-sm text-ansar-sage-700 hover:text-ansar-sage-600 hover:underline transition-colors cursor-pointer">
+                    Find a Community →
                   </Link>
                 </li>
               </ul>

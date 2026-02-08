@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Shield, Loader2, Trash2, CheckCircle2,
   Phone, Mail, MapPin, Clock, Eye, Check, X as XIcon, BookUser,
   UserCog, Menu, ChevronRight, TrendingUp, Activity, LogOut,
-  Copy, ExternalLink,
+  Copy, ExternalLink, Inbox,
 } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
 import { useEffect, useMemo, useState, useCallback } from "react";
@@ -18,6 +18,7 @@ import {
   StatsRow, DetailPanel, DetailField, EditableField,
 } from "@/components/crm";
 import type { Column, StatItem } from "@/components/crm";
+import { InboxTab } from "@/components/messaging";
 import { AnimatePresence, motion } from "framer-motion";
 
 /**
@@ -89,17 +90,19 @@ interface NavItem {
 
 const navConfig: Omit<NavItem, "icon">[] = [
   { id: "overview", label: "Overview", description: "Dashboard summary and recent activity" },
+  { id: "inbox", label: "Inbox", description: "In-app messages and conversations" },
   { id: "seekers", label: "Seekers", description: "People seeking support and community" },
   { id: "ansars", label: "Ansars", description: "Volunteer companions and mentors" },
   { id: "contacts", label: "Contacts", description: "Community members and stakeholders" },
   { id: "partners", label: "Partners", description: "Community Hub organizations" },
   { id: "users", label: "Users", description: "Authenticated platform users" },
   { id: "pairings", label: "Pairings", description: "Seeker-Ansar connections" },
-  { id: "messages", label: "Messages", description: "SMS and email notification log" },
+  { id: "messages", label: "Notification Log", description: "SMS and email notification log" },
 ];
 
 const navIcons: Record<string, React.ReactNode> = {
   overview: <LayoutDashboard className="w-[18px] h-[18px]" />,
+  inbox: <Inbox className="w-[18px] h-[18px]" />,
   seekers: <Heart className="w-[18px] h-[18px]" />,
   ansars: <Users className="w-[18px] h-[18px]" />,
   contacts: <BookUser className="w-[18px] h-[18px]" />,
@@ -113,7 +116,7 @@ const navIcons: Record<string, React.ReactNode> = {
 // MAIN CRM DASHBOARD
 // ═══════════════════════════════════════════════════════════════
 
-function AdminDashboard({ currentUser }: { currentUser: { role: string; name: string } | null | undefined }) {
+function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role: string; name: string } | null | undefined }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -128,6 +131,13 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
   const messages = useQuery(api.messages.listAll) ?? [];
   const users = useQuery(api.users.listAll) ?? [];
   const organizations = useQuery(api.organizations.listActive) ?? [];
+
+  // Inbox — get the current admin user's ID for inbox queries
+  const adminUserId = currentUser?._id;
+  const inboxUnread = useQuery(
+    api.inbox.getUnreadTotal,
+    adminUserId ? { userId: adminUserId } : "skip"
+  ) ?? 0;
 
   // Mutations
   const updateIntakeStatus = useMutation(api.intakes.updateStatus);
@@ -246,7 +256,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navConfig.map((item) => {
             const isActive = activeTab === item.id;
-            const messageCount = item.id === "messages" ? counts[item.id] : undefined;
+            const badgeCount = item.id === "inbox" ? inboxUnread : (item.id === "messages" ? counts[item.id] : undefined);
             return (
               <button
                 key={item.id}
@@ -261,15 +271,17 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
                   {navIcons[item.id]}
                 </span>
                 <span className="flex-1 text-left">{item.label}</span>
-                {messageCount !== undefined && messageCount > 0 && (
+                {badgeCount !== undefined && badgeCount > 0 && (
                   <span
                     className={`text-[10px] font-medium min-w-[20px] text-center px-1.5 py-0.5 rounded-full ${
-                      isActive
-                        ? "bg-ansar-sage-200 text-ansar-sage-800"
-                        : "bg-gray-100 text-ansar-muted"
+                      item.id === "inbox" && !isActive
+                        ? "bg-ansar-sage-600 text-white"
+                        : isActive
+                          ? "bg-ansar-sage-200 text-ansar-sage-800"
+                          : "bg-gray-100 text-ansar-muted"
                     }`}
                   >
-                    {messageCount}
+                    {badgeCount}
                   </span>
                 )}
               </button>
@@ -428,6 +440,13 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
                 users={users}
                 pairings={pairings}
                 messages={messages}
+              />
+            )}
+            {activeTab === "inbox" && adminUserId && (
+              <InboxTab
+                currentUserId={adminUserId}
+                currentUserName={currentUser?.name ?? "Admin"}
+                currentUserRole="super_admin"
               />
             )}
             {activeTab === "seekers" && (

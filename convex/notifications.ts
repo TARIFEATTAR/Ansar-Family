@@ -1149,6 +1149,122 @@ export const sendPairingAnsarEmail = internalAction({
 });
 
 // ═══════════════════════════════════════════════════════════════
+// INBOX MESSAGE NOTIFICATION — Notify user of new in-app message
+// ═══════════════════════════════════════════════════════════════
+
+export const notifyInboxMessage = internalAction({
+  args: {
+    recipientUserId: v.id("users"),
+    senderName: v.string(),
+    preview: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { recipientUserId, senderName, preview } = args;
+
+    // Look up the recipient's contact info from the users table
+    const user = await ctx.runQuery(internal.inbox.getUserById, { userId: recipientUserId });
+    if (!user) {
+      console.error(`❌ notifyInboxMessage: User not found: ${recipientUserId}`);
+      return;
+    }
+
+    const email = user.email;
+    let phone: string | undefined;
+
+    // Cross-reference intakes and ansars tables for phone number
+    if (user.role === "seeker") {
+      const intake = await ctx.runQuery(internal.inbox.getIntakeByEmail, { email });
+      phone = intake?.phone;
+    } else if (user.role === "ansar") {
+      const ansar = await ctx.runQuery(internal.inbox.getAnsarByEmail, { email });
+      phone = ansar?.phone;
+    } else if (user.role === "partner_lead") {
+      const partner = await ctx.runQuery(internal.inbox.getPartnerByEmail, { email });
+      phone = partner?.leadPhone;
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://ansar.family";
+    const signInUrl = `${baseUrl}/sign-in`;
+
+    // Send SMS notification if phone available
+    if (phone) {
+      const accountSid = process.env.TWILIO_ACCOUNT_SID;
+      const authToken = process.env.TWILIO_AUTH_TOKEN;
+      const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+
+      if (accountSid && authToken && fromNumber) {
+        try {
+          const normalizedPhone = normalizePhoneNumber(phone);
+          const smsBody = `New message from ${senderName}: "${preview.substring(0, 100)}"\n\nLog in to reply: ${signInUrl}\n— Ansar Family`;
+
+          await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64"),
+              },
+              body: new URLSearchParams({
+                To: normalizedPhone,
+                From: fromNumber,
+                Body: smsBody,
+              }),
+            }
+          );
+          console.log(`✅ Inbox notification SMS sent to ${normalizedPhone}`);
+        } catch (error) {
+          console.error(`❌ Inbox notification SMS failed:`, error instanceof Error ? error.message : error);
+        }
+      }
+    }
+
+    // Send email notification
+    if (email) {
+      const apiKey = process.env.RESEND_API_KEY;
+      if (apiKey) {
+        try {
+          const htmlBody = emailWrapper(`
+            <h2 style="font-family: Georgia, 'Times New Roman', serif; color: #3D3D3D; font-size: 22px; font-weight: 500; margin: 0 0 16px 0;">
+              New message from ${senderName}
+            </h2>
+            <div style="background: #F8F6F1; border-radius: 8px; padding: 20px; margin: 0 0 24px 0;">
+              <p style="font-size: 15px; line-height: 1.6; color: #5A5A5A; margin: 0; font-style: italic;">
+                "${preview}"
+              </p>
+            </div>
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="${signInUrl}"
+                 style="display: inline-block; background: #7D8B6A; color: white; padding: 12px 28px;
+                        border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">
+                Log In to Reply
+              </a>
+            </div>
+          `);
+
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              from: "Ansar Family <welcome@ansar.family>",
+              to: [email],
+              subject: `New message from ${senderName} — Ansar Family`,
+              html: htmlBody,
+            }),
+          });
+          console.log(`✅ Inbox notification email sent to ${email}`);
+        } catch (error) {
+          console.error(`❌ Inbox notification email failed:`, error instanceof Error ? error.message : error);
+        }
+      }
+    }
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
 // DIRECT MESSAGE — Send ad-hoc SMS/Email from Partner Lead dashboard
 // ═══════════════════════════════════════════════════════════════
 

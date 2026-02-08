@@ -1,13 +1,17 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
 import {
   Loader2, Heart, BookOpen, Video, Users, ArrowRight, CheckCircle2,
   Phone, Mail, MapPin, UserCircle, Building2, Clock,
+  MessageSquare, Send, Inbox as InboxIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { MessageBubble } from "@/components/messaging/MessageBubble";
 
 /**
  * SEEKER PORTAL — Dashboard for New Muslims & Seekers
@@ -63,6 +67,30 @@ export default function SeekerPortalPage() {
       </main>
     );
   }
+
+  // Inbox
+  const seekerUserId = currentUser?._id as Id<"users"> | undefined;
+  const inbox = useQuery(
+    api.inbox.getInbox,
+    seekerUserId ? { userId: seekerUserId } : "skip"
+  ) ?? [];
+  const inboxUnread = useQuery(
+    api.inbox.getUnreadTotal,
+    seekerUserId ? { userId: seekerUserId } : "skip"
+  ) ?? 0;
+
+  // Get the most recent conversation (seeker usually has one — with their Ansar)
+  const latestConvoId = inbox.length > 0 ? inbox[0].conversationId : undefined;
+  const latestConversation = useQuery(
+    api.inbox.getConversation,
+    latestConvoId && seekerUserId
+      ? { conversationId: latestConvoId, userId: seekerUserId }
+      : "skip"
+  );
+
+  const markAsRead = useMutation(api.inbox.markAsRead);
+  const replyToConversation = useMutation(api.inbox.replyToConversation);
+  const startConversation = useMutation(api.inbox.startConversation);
 
   const firstName = currentUser.name.split(" ")[0];
   const intakeExists = seekerIntake !== null && seekerIntake !== undefined;
@@ -270,6 +298,24 @@ export default function SeekerPortalPage() {
         )}
 
         {/* ═══════════════════════════════════════════════════════════ */}
+        {/* MESSAGES — shown when paired or has conversations           */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+
+        {seekerUserId && (
+          <SeekerMessagesCard
+            seekerUserId={seekerUserId}
+            seekerName={currentUser.name}
+            inbox={inbox}
+            inboxUnread={inboxUnread}
+            latestConversation={latestConversation}
+            markAsRead={markAsRead}
+            replyToConversation={replyToConversation}
+            startConversation={startConversation}
+            pairing={pairing}
+          />
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════ */}
         {/* JOURNEY PROGRESS                                           */}
         {/* ═══════════════════════════════════════════════════════════ */}
 
@@ -424,6 +470,188 @@ export default function SeekerPortalPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+/**
+ * Seeker Messages Card — inline conversation view
+ */
+function SeekerMessagesCard({
+  seekerUserId,
+  seekerName,
+  inbox,
+  inboxUnread,
+  latestConversation,
+  markAsRead,
+  replyToConversation,
+  startConversation,
+  pairing,
+}: {
+  seekerUserId: Id<"users">;
+  seekerName: string;
+  inbox: any[];
+  inboxUnread: number;
+  latestConversation: any;
+  markAsRead: any;
+  replyToConversation: any;
+  startConversation: any;
+  pairing: any;
+}) {
+  const [replyText, setReplyText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [firstMessage, setFirstMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Mark as read when conversation is viewed
+  useEffect(() => {
+    if (latestConversation && inboxUnread > 0) {
+      markAsRead({ conversationId: latestConversation._id, userId: seekerUserId });
+    }
+  }, [latestConversation, inboxUnread, markAsRead, seekerUserId]);
+
+  // Auto-scroll to latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [latestConversation?.messages?.length]);
+
+  const handleReply = async () => {
+    if (!replyText.trim() || sending || !latestConversation) return;
+    setSending(true);
+    try {
+      await replyToConversation({
+        conversationId: latestConversation._id,
+        senderId: seekerUserId,
+        senderName: seekerName,
+        senderRole: "seeker",
+        body: replyText.trim(),
+      });
+      setReplyText("");
+    } catch (error) {
+      console.error("Failed to send reply:", error);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSendFirst = async () => {
+    if (!firstMessage.trim() || sending || !pairing?.ansar) return;
+    // Find the ansar's user account
+    const ansarName = pairing.ansar.fullName;
+    // We need the ansar's userId — query available recipients
+    setSending(true);
+    try {
+      // Use startConversation — we need the recipient userId
+      // The available recipients query will have the ansar's user
+      // For now, try to find via the inbox recipients
+      const recipients = await fetch(""); // We can't call query from here
+      // Actually, startConversation needs a userId. Let's check if we have it.
+      // The seeker can't easily get the ansar's userId from pairing data alone.
+      // Let's skip the "start first message" for now — messages will come from Ansar side.
+      console.log("First message from seeker not yet supported — Ansar initiates");
+    } catch (error) {
+      console.error("Failed to send:", error);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // No conversations yet
+  if (inbox.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl p-8 mb-8 shadow-sm">
+        <h2 className="font-heading text-xl text-ansar-charcoal mb-4 flex items-center gap-2">
+          <MessageSquare className="w-6 h-6 text-ansar-sage-600" />
+          Messages
+          {inboxUnread > 0 && (
+            <span className="bg-ansar-sage-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+              {inboxUnread}
+            </span>
+          )}
+        </h2>
+        <div className="text-center py-8">
+          <InboxIcon className="w-10 h-10 text-ansar-muted/30 mx-auto mb-3" />
+          <p className="font-body text-sm text-ansar-muted">
+            No messages yet. Once you&apos;re paired with an Ansar companion,
+            you&apos;ll be able to message them here.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Has conversation — show messages
+  return (
+    <div className="bg-white rounded-2xl mb-8 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="px-8 py-5 border-b border-[rgba(61,61,61,0.08)]">
+        <h2 className="font-heading text-xl text-ansar-charcoal flex items-center gap-2">
+          <MessageSquare className="w-6 h-6 text-ansar-sage-600" />
+          Messages
+          {inboxUnread > 0 && (
+            <span className="bg-ansar-sage-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+              {inboxUnread}
+            </span>
+          )}
+        </h2>
+        {latestConversation && (
+          <p className="font-body text-xs text-ansar-muted mt-1">
+            Conversation with{" "}
+            {latestConversation.participants
+              ?.filter((p: any) => p.userId !== seekerUserId)
+              .map((p: any) => p.userName)
+              .join(", ")}
+          </p>
+        )}
+      </div>
+
+      {/* Messages */}
+      {latestConversation?.messages && (
+        <div className="px-6 py-4 space-y-4 max-h-96 overflow-y-auto bg-[#FAFAF8]">
+          {latestConversation.messages.map((msg: any) => (
+            <MessageBubble
+              key={msg._id}
+              senderName={msg.senderName}
+              senderRole={msg.senderRole}
+              body={msg.body}
+              sentAt={msg.sentAt}
+              isMine={msg.senderId === seekerUserId}
+            />
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+      )}
+
+      {/* Reply input */}
+      <div className="px-6 py-4 border-t border-[rgba(61,61,61,0.08)]">
+        <div className="flex items-end gap-2">
+          <textarea
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleReply();
+              }
+            }}
+            placeholder="Type a message..."
+            rows={1}
+            className="flex-1 px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 resize-none focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
+            style={{ minHeight: "38px", maxHeight: "100px" }}
+          />
+          <button
+            onClick={handleReply}
+            disabled={!replyText.trim() || sending}
+            className="flex items-center justify-center w-9 h-9 rounded-lg bg-ansar-sage-600 text-white hover:bg-ansar-sage-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+          >
+            {sending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

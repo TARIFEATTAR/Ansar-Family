@@ -12,6 +12,7 @@ import {
   UserPlus, Unlink, Send, Phone, Mail, MapPin, Clock,
   X as XIcon, BookUser, LogOut, Copy, CheckCheck, Share2, ExternalLink,
   QrCode, ChevronDown, ChevronUp, Sparkles, CheckCircle2, Circle,
+  Inbox as InboxIcon,
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import {
@@ -19,6 +20,7 @@ import {
   StatsRow, DetailPanel, DetailField, EditableField,
 } from "@/components/crm";
 import type { Tab, Column, StatItem } from "@/components/crm";
+import { InboxTab } from "@/components/messaging";
 import { AnimatePresence, motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -141,6 +143,13 @@ function PartnerDashboard({
   const availableAnsars = useQuery(api.ansars.listAvailableForPairing, { organizationId: organization._id }) ?? [];
   const messages = useQuery(api.messages.listAll) ?? []; // Will filter client-side
 
+  // Inbox
+  const partnerUserId = currentUser?._id;
+  const inboxUnread = useQuery(
+    api.inbox.getUnreadTotal,
+    partnerUserId ? { userId: partnerUserId } : "skip"
+  ) ?? 0;
+
   // Mutations
   const createPairing = useMutation(api.pairings.create);
   const markIntroSent = useMutation(api.pairings.markIntroSent);
@@ -172,11 +181,12 @@ function PartnerDashboard({
 
   const tabs: Tab[] = [
     { id: "overview", label: "Overview", icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: "inbox", label: "Inbox", icon: <InboxIcon className="w-4 h-4" />, count: inboxUnread || undefined },
     { id: "seekers", label: "Seekers", icon: <Heart className="w-4 h-4" />, count: seekers.length },
     { id: "ansars", label: "Ansars", icon: <Users className="w-4 h-4" />, count: ansars.length },
     { id: "contacts", label: "Contacts", icon: <BookUser className="w-4 h-4" />, count: contacts.length },
     { id: "pairings", label: "Pairings", icon: <Link2 className="w-4 h-4" />, count: pairings.length },
-    { id: "messages", label: "Messages", icon: <MessageSquare className="w-4 h-4" />, count: orgMessages.length },
+    { id: "messages", label: "Notification Log", icon: <MessageSquare className="w-4 h-4" />, count: orgMessages.length },
   ];
 
   // Handlers
@@ -334,6 +344,14 @@ function PartnerDashboard({
               orgMessages={orgMessages}
               orgSlug={organization.slug}
               hubUrl={hubUrl}
+            />
+          )}
+          {activeTab === "inbox" && partnerUserId && (
+            <InboxTab
+              currentUserId={partnerUserId}
+              currentUserName={currentUser?.name ?? "Partner Lead"}
+              currentUserRole="partner_lead"
+              organizationId={organization._id}
             />
           )}
           {activeTab === "seekers" && (

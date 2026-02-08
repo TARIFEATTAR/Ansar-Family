@@ -9,12 +9,13 @@ import {
   ArrowLeft, Heart, Users, Link2, LayoutDashboard, Loader2,
   CheckCircle2, Clock, MapPin, Phone, Mail, Calendar,
   Sparkles, BookOpen, Eye, LogOut, Copy, CheckCheck, Share2, ExternalLink,
-  QrCode, X as XIcon,
+  QrCode, X as XIcon, Inbox as InboxIcon,
 } from "lucide-react";
 import {
   TabNav, StatsRow, StatusBadge, DetailPanel, DetailField,
 } from "@/components/crm";
 import type { Tab, StatItem } from "@/components/crm";
+import { InboxTab } from "@/components/messaging";
 import { AnimatePresence, motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -124,6 +125,13 @@ function AnsarDashboard({
   // Mutations
   const markIntroSent = useMutation(api.pairings.markIntroSent);
 
+  // Inbox
+  const ansarUserId = currentUser?._id;
+  const inboxUnread = useQuery(
+    api.inbox.getUnreadTotal,
+    ansarUserId ? { userId: ansarUserId } : "skip"
+  ) ?? 0;
+
   // Get pairings for this ansar
   const pairings = useQuery(
     api.pairings.listByAnsar,
@@ -169,6 +177,7 @@ function AnsarDashboard({
 
   const tabs: Tab[] = [
     { id: "overview", label: "Overview", icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: "inbox", label: "Inbox", icon: <InboxIcon className="w-4 h-4" />, count: inboxUnread || undefined },
     {
       id: "pairings",
       label: "My Seekers",
@@ -285,6 +294,14 @@ function AnsarDashboard({
               activePairings={activePairings}
               completedPairings={completedPairings}
               seekerMap={seekerMap}
+            />
+          )}
+          {activeTab === "inbox" && ansarUserId && (
+            <InboxTab
+              currentUserId={ansarUserId}
+              currentUserName={currentUser?.name ?? "Ansar"}
+              currentUserRole="ansar"
+              organizationId={ansarRecord?.organizationId}
             />
           )}
           {activeTab === "pairings" && (

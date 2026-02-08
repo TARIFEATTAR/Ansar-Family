@@ -296,6 +296,48 @@ export default defineSchema({
     .index("by_template", ["template"]),
 
   // ═══════════════════════════════════════════════════════════════
+  // CONVERSATIONS — In-app messaging threads
+  // ═══════════════════════════════════════════════════════════════
+  conversations: defineTable({
+    type: v.union(v.literal("direct"), v.literal("broadcast")),
+    subject: v.optional(v.string()), // For broadcasts/announcements
+    organizationId: v.optional(v.id("organizations")),
+    lastMessageAt: v.number(),
+    lastMessagePreview: v.string(),
+    lastMessageSenderName: v.string(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_lastMessage", ["lastMessageAt"]),
+
+  // ═══════════════════════════════════════════════════════════════
+  // CONVERSATION PARTICIPANTS — Tracks who is in each conversation
+  // ═══════════════════════════════════════════════════════════════
+  conversation_participants: defineTable({
+    conversationId: v.id("conversations"),
+    userId: v.id("users"),
+    userName: v.string(),
+    userRole: v.string(),
+    unreadCount: v.number(),
+    lastReadAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_conversation", ["conversationId"]),
+
+  // ═══════════════════════════════════════════════════════════════
+  // CONVERSATION MESSAGES — Individual messages in a thread
+  // ═══════════════════════════════════════════════════════════════
+  conversation_messages: defineTable({
+    conversationId: v.id("conversations"),
+    senderId: v.id("users"),
+    senderName: v.string(),
+    senderRole: v.string(),
+    body: v.string(),
+    sentAt: v.number(),
+  })
+    .index("by_conversation", ["conversationId", "sentAt"]),
+
+  // ═══════════════════════════════════════════════════════════════
   // CONTACTS — CRM contacts for community members
   // ═══════════════════════════════════════════════════════════════
   contacts: defineTable({

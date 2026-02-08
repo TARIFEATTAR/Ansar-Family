@@ -19,6 +19,7 @@ import type * as notifications from "../notifications.js";
 import type * as organizations from "../organizations.js";
 import type * as pairings from "../pairings.js";
 import type * as partners from "../partners.js";
+import type * as test_workflows from "../test_workflows.js";
 import type * as users from "../users.js";
 
 import type {
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   organizations: typeof organizations;
   pairings: typeof pairings;
   partners: typeof partners;
+  test_workflows: typeof test_workflows;
   users: typeof users;
 }>;
 

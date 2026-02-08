@@ -137,7 +137,7 @@ function AnsarDashboard({
   const allIntakes = useQuery(api.intakes.listAll) ?? [];
   const seekerMap = useMemo(() => {
     const m: Record<string, any> = {};
-    allIntakes.forEach((i) => {
+    allIntakes.forEach((i: any) => {
       m[i._id] = i;
     });
     return m;
@@ -158,10 +158,10 @@ function AnsarDashboard({
   }, [hubUrl]);
 
   const activePairings = pairings.filter(
-    (p) => p.status === "active" || p.status === "pending_intro"
+    (p: any) => p.status === "active" || p.status === "pending_intro"
   );
   const completedPairings = pairings.filter(
-    (p) => p.status === "completed" || p.status === "ended"
+    (p: any) => p.status === "completed" || p.status === "ended"
   );
 
   const tabs: Tab[] = [

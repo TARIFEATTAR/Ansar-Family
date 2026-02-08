@@ -1,4 +1,7 @@
 import { mutation } from "./_generated/server";
+import { v } from "convex/values";
+import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 
 /**
  * ADMIN — Super Admin Operations
@@ -53,5 +56,68 @@ export const clearAllData = mutation({
                 pairings: pairings.length,
             },
         };
+    },
+});
+
+/**
+ * Resends the login instructions (Approved) or Application Received (Pending) email to a user.
+ * Useful if they lost the original email or need to sign in again.
+ */
+export const resendInvite = mutation({
+    args: {
+        role: v.union(v.literal("ansar"), v.literal("partner")),
+        id: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (args.role === "ansar") {
+            const ansarId = args.id as Id<"ansars">;
+            const ansar = await ctx.db.get(ansarId);
+            if (!ansar) throw new Error("Ansar not found");
+
+            if (ansar.status === "approved" || ansar.status === "active") {
+                await ctx.scheduler.runAfter(0, internal.notifications.sendApprovalNotification, {
+                    recipientId: ansar._id,
+                    email: ansar.email,
+                    phone: ansar.phone,
+                    firstName: ansar.fullName.split(" ")[0] || ansar.fullName,
+                    role: "ansar",
+                });
+            } else {
+                // Pending
+                await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
+                    recipientId: ansar._id,
+                    email: ansar.email,
+                    firstName: ansar.fullName.split(" ")[0] || ansar.fullName,
+                    fullName: ansar.fullName,
+                    template: "welcome_ansar",
+                });
+            }
+        } else if (args.role === "partner") {
+            const partnerId = args.id as Id<"partners">;
+            const partner = await ctx.db.get(partnerId);
+            if (!partner) throw new Error("Partner not found");
+
+            if (partner.status === "approved" || partner.status === "active") {
+                await ctx.scheduler.runAfter(0, internal.notifications.sendApprovalNotification, {
+                    recipientId: partner._id,
+                    email: partner.leadEmail,
+                    phone: partner.leadPhone,
+                    firstName: partner.leadName.split(" ")[0] || partner.leadName,
+                    role: "partner",
+                });
+            } else {
+                // Pending
+                // Assuming 'pending-approval' slug or no slug needed for welcome_partner if not yet approved
+                await ctx.scheduler.runAfter(0, internal.notifications.sendWelcomeEmail, {
+                    recipientId: partner._id,
+                    email: partner.leadEmail,
+                    firstName: partner.leadName.split(" ")[0] || partner.leadName,
+                    fullName: partner.leadName,
+                    template: "welcome_partner",
+                    orgName: partner.orgName,
+                    slug: "pending-approval",
+                });
+            }
+        }
     },
 });

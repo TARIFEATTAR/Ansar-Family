@@ -159,9 +159,9 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
   };
 
   const pendingCount =
-    intakes.filter((i) => i.status === "awaiting_outreach" || i.status === "disconnected").length +
-    ansars.filter((a) => a.status === "pending").length +
-    partners.filter((p) => p.status === "pending").length;
+    intakes.filter((i: any) => i.status === "awaiting_outreach" || i.status === "disconnected").length +
+    ansars.filter((a: any) => a.status === "pending").length +
+    partners.filter((p: any) => p.status === "pending").length;
 
   // Handlers
   const handleDeleteIntake = useCallback(async (id: Id<"intakes">) => {

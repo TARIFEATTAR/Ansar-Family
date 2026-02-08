@@ -129,10 +129,10 @@ export default function DashboardGatewayPage() {
                         Application Under Review
                     </h1>
                     <p className="font-body text-ansar-gray mb-6">
-                        Thank you for applying to become a Partner Hub! We'll review your application within 3-5 business days and reach out to schedule a brief intro call.
+                        Thank you for applying to become a Partner Hub! We&apos;ll review your application within 3-5 business days and reach out to schedule a brief intro call.
                     </p>
                     <p className="font-body text-sm text-ansar-muted mb-6">
-                        Once approved, you'll receive an email and gain full access to your organization's dashboard.
+                        Once approved, you&apos;ll receive an email and gain full access to your organization&apos;s dashboard.
                     </p>
                     <div className="space-y-3">
                         <SignOutButton>
@@ -162,7 +162,7 @@ export default function DashboardGatewayPage() {
                         Thank you for applying to become an Ansar! Your local community will review your application within 3-5 business days.
                     </p>
                     <p className="font-body text-sm text-ansar-muted mb-6">
-                        Once approved, you'll receive access to the 10-minute "Ansar Way" training and be connected with your local community.
+                        Once approved, you&apos;ll receive access to the 10-minute &quot;Ansar Way&quot; training and be connected with your local community.
                     </p>
                     <div className="space-y-3">
                         <SignOutButton>

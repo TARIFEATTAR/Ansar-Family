@@ -435,7 +435,7 @@ export default function VolunteerPage() {
           {step === 2 && (
             <FormStep title="Islamic Practice & Knowledge" subtitle="Your Foundation">
               <p className="font-body text-sm text-ansar-gray mb-6">
-                We don't expect everyone to be a scholar. Most newcomers just need a friend. This section helps us route specific questions to the right people.
+                We don&apos;t expect everyone to be a scholar. Most newcomers just need a friend. This section helps us route specific questions to the right people.
               </p>
               <div className="space-y-6">
                 <div>
@@ -572,7 +572,7 @@ export default function VolunteerPage() {
                 </div>
 
                 <div className="border-t border-ansar-sage-100 pt-6">
-                  <label className="form-label mb-4">The "Ansar Way" Agreement</label>
+                  <label className="form-label mb-4">The &quot;Ansar Way&quot; Agreement</label>
                   <p className="font-body text-xs text-ansar-gray-light mb-4">All agreements are required</p>
                   <div className="space-y-4">
                     <label className="flex items-start gap-3 cursor-pointer">
@@ -594,7 +594,7 @@ export default function VolunteerPage() {
                         className="mt-1 w-5 h-5 accent-ansar-sage-600"
                       />
                       <span className="font-body text-sm text-ansar-charcoal">
-                        I agree to complete the <strong>10-minute "Ansar Way" training</strong> before being paired.
+                        I agree to complete the <strong>10-minute &quot;Ansar Way&quot; training</strong> before being paired.
                       </span>
                     </label>
                     <label className="flex items-start gap-3 cursor-pointer">
@@ -616,7 +616,7 @@ export default function VolunteerPage() {
                         className="mt-1 w-5 h-5 accent-ansar-sage-600"
                       />
                       <span className="font-body text-sm text-ansar-charcoal">
-                        I agree to be contacted once a month by Ansar Family Central for a "Vibe Check" to see how I'm doing.
+                        I agree to be contacted once a month by Ansar Family Central for a &quot;Vibe Check&quot; to see how I&apos;m doing.
                       </span>
                     </label>
                   </div>
@@ -633,13 +633,13 @@ export default function VolunteerPage() {
               className="mt-6 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-start gap-3"
             >
               <span className="text-ansar-error mt-0.5 shrink-0">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="currentColor" fillOpacity="0.15"/><path d="M8 4.5v4M8 10.5h.007" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="currentColor" fillOpacity="0.15" /><path d="M8 4.5v4M8 10.5h.007" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </span>
               <div className="flex-1">
                 <p className="font-body text-sm text-ansar-error">{formError}</p>
               </div>
               <button onClick={() => setFormError(null)} className="text-ansar-error/60 hover:text-ansar-error transition-colors shrink-0">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </button>
             </motion.div>
           )}
@@ -739,7 +739,7 @@ function SuccessScreen() {
         </p>
         <p className="font-body text-sm text-ansar-gray mb-4">
           You can sign in now to check your application status.
-          Once approved by your Hub Admin, you'll have full access to the Ansar portal.
+          Once approved by your Hub Admin, you&apos;ll have full access to the Ansar portal.
         </p>
         <p className="font-body text-sm text-ansar-sage-600 mb-6">
           May Allah reward you for your intention.

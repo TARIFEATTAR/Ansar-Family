@@ -157,18 +157,18 @@ function PartnerDashboard({
   // Org-scoped messages: filter messages where recipientId matches any seeker/ansar in this org
   const orgRecipientIds = useMemo(() => {
     const ids = new Set<string>();
-    seekers.forEach((s) => ids.add(s._id));
-    ansars.forEach((a) => ids.add(a._id));
+    seekers.forEach((s: any) => ids.add(s._id));
+    ansars.forEach((a: any) => ids.add(a._id));
     return ids;
   }, [seekers, ansars]);
 
   const orgMessages = useMemo(
-    () => messages.filter((m) => orgRecipientIds.has(m.recipientId)),
+    () => messages.filter((m: any) => orgRecipientIds.has(m.recipientId)),
     [messages, orgRecipientIds]
   );
 
   // Counts
-  const pendingCount = readyToPair.length + ansars.filter((a) => a.status === "pending").length;
+  const pendingCount = readyToPair.length + ansars.filter((a: any) => a.status === "pending").length;
 
   const tabs: Tab[] = [
     { id: "overview", label: "Overview", icon: <LayoutDashboard className="w-4 h-4" /> },

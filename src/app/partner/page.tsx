@@ -524,7 +524,7 @@ export default function PartnerPage() {
           {step === 3 && (
             <FormStep title="Infrastructure & Services" subtitle="Your Hub Level">
               <p className="font-body text-sm text-ansar-gray mb-6">
-                Answer honestly. There's no wrong level. We tailor our support to meet you where you are.
+                Answer honestly. There&apos;s no wrong level. We tailor our support to meet you where you are.
               </p>
 
               {/* Hub Level Display */}
@@ -549,11 +549,10 @@ export default function PartnerPage() {
                       <span className="font-body text-sm text-ansar-gray">{q.description}</span>
                     </div>
                     <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-4 transition-colors ${
-                        formData.infrastructure[q.key]
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-4 transition-colors ${formData.infrastructure[q.key]
                           ? "bg-ansar-sage-600 border-ansar-sage-600"
                           : "border-ansar-sage-300"
-                      }`}
+                        }`}
                     >
                       {formData.infrastructure[q.key] && <Check className="w-4 h-4 text-white" />}
                     </div>
@@ -572,11 +571,10 @@ export default function PartnerPage() {
                       </span>
                     </div>
                     <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-4 transition-colors ${
-                        formData.infrastructure.wantsDinnerKit
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-4 transition-colors ${formData.infrastructure.wantsDinnerKit
                           ? "bg-ansar-sage-600 border-ansar-sage-600"
                           : "border-ansar-sage-300"
-                      }`}
+                        }`}
                     >
                       {formData.infrastructure.wantsDinnerKit && <Check className="w-4 h-4 text-white" />}
                     </div>
@@ -589,8 +587,8 @@ export default function PartnerPage() {
           {step === 4 && (
             <FormStep title="Core Trio" subtitle="Your Support Team (Optional)">
               <p className="font-body text-sm text-ansar-gray mb-6">
-                The "Core Trio" is you + an Imam/Scholar + one other committed person. This team handles local pairings and escalations.
-                You can add these later if you don't have them yet.
+                The &quot;Core Trio&quot; is you + an Imam/Scholar + one other committed person. This team handles local pairings and escalations.
+                You can add these later if you don&apos;t have them yet.
               </p>
 
               <div className="space-y-6">
@@ -678,8 +676,8 @@ export default function PartnerPage() {
               <div className="space-y-6">
                 <div className="bg-ansar-sage-50 rounded-lg p-6">
                   <p className="font-body text-sm text-ansar-gray">
-                    By becoming a Partner Hub, you're joining a network of communities committed to supporting new Muslims.
-                    Here's what we ask of you:
+                    By becoming a Partner Hub, you&apos;re joining a network of communities committed to supporting new Muslims.
+                    Here&apos;s what we ask of you:
                   </p>
                 </div>
 
@@ -704,7 +702,7 @@ export default function PartnerPage() {
                       className="mt-1 w-5 h-5 accent-ansar-sage-600"
                     />
                     <span className="font-body text-sm text-ansar-charcoal">
-                      I commit to hosting or organizing a <strong>monthly community dinner</strong> for new Muslims (we'll send the kit!).
+                      I commit to hosting or organizing a <strong>monthly community dinner</strong> for new Muslims (we&apos;ll send the kit!).
                     </span>
                   </label>
 
@@ -716,7 +714,7 @@ export default function PartnerPage() {
                       className="mt-1 w-5 h-5 accent-ansar-sage-600"
                     />
                     <span className="font-body text-sm text-ansar-charcoal">
-                      I agree to participate in a <strong>monthly "Vibe Check"</strong> call with Ansar Family Central.
+                      I agree to participate in a <strong>monthly &quot;Vibe Check&quot;</strong> call with Ansar Family Central.
                     </span>
                   </label>
 
@@ -744,13 +742,13 @@ export default function PartnerPage() {
               className="mt-6 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-start gap-3"
             >
               <span className="text-ansar-error mt-0.5 shrink-0">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="currentColor" fillOpacity="0.15"/><path d="M8 4.5v4M8 10.5h.007" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="currentColor" fillOpacity="0.15" /><path d="M8 4.5v4M8 10.5h.007" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </span>
               <div className="flex-1">
                 <p className="font-body text-sm text-ansar-error">{formError}</p>
               </div>
               <button onClick={() => setFormError(null)} className="text-ansar-error/60 hover:text-ansar-error transition-colors shrink-0">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </button>
             </motion.div>
           )}
@@ -850,7 +848,7 @@ function SuccessScreen({ orgName, hubLevel }: { orgName: string; hubLevel: numbe
         </p>
         <p className="font-body text-sm text-ansar-gray mb-6">
           Your account has been created and your application is under review.
-          You can sign in now to check your status — once approved, you'll have full access to your Hub Dashboard.
+          You can sign in now to check your status — once approved, you&apos;ll have full access to your Hub Dashboard.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/sign-in" className="btn-primary inline-flex items-center justify-center gap-2">

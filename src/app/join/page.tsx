@@ -250,7 +250,7 @@ export default function JoinPage() {
                     onChange={(e) => updateField("phone", e.target.value)}
                     placeholder="(555) 123-4567"
                   />
-                  <p className="form-helper">We'll send you a quick text to say hello!</p>
+                  <p className="form-helper">We&apos;ll send you a quick text to say hello!</p>
                 </div>
                 <div>
                   <label className="form-label">Email Address *</label>
@@ -364,7 +364,7 @@ export default function JoinPage() {
                     onChange={(e) => updateField("address", e.target.value)}
                     placeholder="Street address"
                   />
-                  <p className="form-helper">This helps us find your local 'Core Trio' and invite you to a nearby dinner.</p>
+                  <p className="form-helper">This helps us find your local &apos;Core Trio&apos; and invite you to a nearby dinner.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -434,7 +434,7 @@ export default function JoinPage() {
                     <span className="font-heading text-ansar-sage-600 text-lg">1.</span>
                     <div>
                       <p className="font-body font-medium text-ansar-charcoal">Immediate Access</p>
-                      <p className="font-body text-sm text-ansar-gray">You'll get a link to your Digital Starter Kit (10 mins of foundational videos)</p>
+                      <p className="font-body text-sm text-ansar-gray">You&apos;ll get a link to your Digital Starter Kit (10 mins of foundational videos)</p>
                     </div>
                   </div>
                   <div className="flex gap-4">
@@ -462,7 +462,7 @@ export default function JoinPage() {
                       className="mt-1 w-5 h-5 accent-ansar-sage-600"
                     />
                     <span className="font-body text-sm text-ansar-gray">
-                      I consent to being contacted by the Ansar Family team via phone and email 
+                      I consent to being contacted by the Ansar Family team via phone and email
                       to support my journey. I understand my information will be kept confidential.
                     </span>
                   </label>
@@ -479,13 +479,13 @@ export default function JoinPage() {
               className="mt-6 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-start gap-3"
             >
               <span className="text-ansar-error mt-0.5 shrink-0">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="currentColor" fillOpacity="0.15"/><path d="M8 4.5v4M8 10.5h.007" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="currentColor" fillOpacity="0.15" /><path d="M8 4.5v4M8 10.5h.007" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </span>
               <div className="flex-1">
                 <p className="font-body text-sm text-ansar-error">{formError}</p>
               </div>
               <button onClick={() => setFormError(null)} className="text-ansar-error/60 hover:text-ansar-error transition-colors shrink-0">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </button>
             </motion.div>
           )}
@@ -581,7 +581,7 @@ function SuccessScreen() {
           Welcome to the Family
         </h1>
         <p className="font-body text-ansar-gray mb-4">
-          Your safety net is activating. We're so glad you're here.
+          Your safety net is activating. We&apos;re so glad you&apos;re here.
         </p>
         <p className="font-body text-sm text-ansar-gray mb-6">
           Your account has been created. Sign in now to access helpful resources and track your journey.

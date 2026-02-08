@@ -26,6 +26,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://ansar.family"),
   title: "Ansar Family | Every Heart Rooted",
   description: "The infrastructure layer for supporting New Muslims and those returning to Islam. We provide the toolkit so local communities can focus on people, not paperwork.",
   keywords: ["Ansar", "New Muslim", "Convert", "Islam", "Community", "Support"],
@@ -35,6 +36,21 @@ export const metadata: Metadata = {
     description: "The infrastructure layer for supporting New Muslims and those returning to Islam.",
     type: "website",
     url: "https://ansar.family",
+    siteName: "Ansar Family",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Ansar Family - Every Heart Rooted",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ansar Family | Every Heart Rooted",
+    description: "The infrastructure layer for supporting New Muslims and those returning to Islam.",
+    images: ["/opengraph-image.png"],
   },
 };
 

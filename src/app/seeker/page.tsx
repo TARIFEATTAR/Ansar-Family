@@ -15,7 +15,7 @@ import Link from "next/link";
 
 export default function SeekerPortalPage() {
   const { user, isLoaded } = useUser();
-  
+
   const currentUser = useQuery(
     api.users.getByClerkId,
     user?.id ? { clerkId: user.id } : "skip"
@@ -136,7 +136,7 @@ export default function SeekerPortalPage() {
                     Your Application Has Been Received
                   </h3>
                   <p className="font-body text-sm text-ansar-gray leading-relaxed">
-                    A local community member will reach out to you within 3-5 days to schedule a meeting. 
+                    A local community member will reach out to you within 3-5 days to schedule a meeting.
                     In the meantime, explore the resources below to begin your journey.
                   </p>
                 </div>
@@ -150,10 +150,10 @@ export default function SeekerPortalPage() {
                 <Users className="w-5 h-5 text-ansar-ochre-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h3 className="font-body font-semibold text-ansar-charcoal mb-1">
-                    You've Been Connected!
+                    You&apos;ve Been Connected!
                   </h3>
                   <p className="font-body text-sm text-ansar-gray leading-relaxed">
-                    A local community has been assigned to support you. They'll be reaching out soon to introduce themselves.
+                    A local community has been assigned to support you. They&apos;ll be reaching out soon to introduce themselves.
                   </p>
                 </div>
               </div>
@@ -166,10 +166,10 @@ export default function SeekerPortalPage() {
                 <CheckCircle2 className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h3 className="font-body font-semibold text-ansar-charcoal mb-1">
-                    You're Paired with an Ansar!
+                    You&apos;re Paired with an Ansar!
                   </h3>
                   <p className="font-body text-sm text-ansar-gray leading-relaxed">
-                    Your local mentor (Ansar) will be your guide on this journey. They'll check in regularly and answer your questions.
+                    Your local mentor (Ansar) will be your guide on this journey. They&apos;ll check in regularly and answer your questions.
                   </p>
                 </div>
               </div>
@@ -197,7 +197,7 @@ export default function SeekerPortalPage() {
                   Short, practical videos to help you understand the basics of Islam.
                 </p>
                 <div className="space-y-3">
-                  <a 
+                  <a
                     href="https://www.youtube.com/watch?v=l6XQbQsNq04"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -206,7 +206,7 @@ export default function SeekerPortalPage() {
                     <span>What is Islam?</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
-                  <a 
+                  <a
                     href="https://www.youtube.com/watch?v=fCkcr0kcWOE"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -215,7 +215,7 @@ export default function SeekerPortalPage() {
                     <span>How to Pray (Step by Step)</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
-                  <a 
+                  <a
                     href="https://www.youtube.com/watch?v=hzM3KN6j7kQ"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -243,7 +243,7 @@ export default function SeekerPortalPage() {
                   Foundational texts and guides to deepen your understanding.
                 </p>
                 <div className="space-y-3">
-                  <a 
+                  <a
                     href="https://www.whyislam.org/intelligence-creation/"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -252,7 +252,7 @@ export default function SeekerPortalPage() {
                     <span>The Intelligence of Allah&apos;s Creations (WhyIslam)</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
-                  <a 
+                  <a
                     href="https://quran.com"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -261,7 +261,7 @@ export default function SeekerPortalPage() {
                     <span>Read the Quran (English Translation)</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
-                  <a 
+                  <a
                     href="https://www.islamreligion.com/articles/"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -289,14 +289,14 @@ export default function SeekerPortalPage() {
                   While you wait for your local connection, these resources are available 24/7.
                 </p>
                 <div className="space-y-3">
-                  <a 
+                  <a
                     href="tel:1-877-949-4752"
                     className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
                   >
                     <span>WhyIslam Hotline: 1-877-WHY-ISLAM</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
-                  <a 
+                  <a
                     href="https://www.whyislam.org/chat/"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -314,8 +314,8 @@ export default function SeekerPortalPage() {
         {/* Quote */}
         <div className="mt-12 border-l-4 border-ansar-sage-400 pl-6 py-2">
           <p className="font-body text-ansar-gray italic text-lg leading-relaxed">
-            "These resources are just to get your feet wet. True Islam is lived with people, not just watched. 
-            Real growth happens in community."
+            &quot;These resources are just to get your feet wet. True Islam is lived with people, not just watched.
+            Real growth happens in community.&quot;
           </p>
         </div>
       </div>

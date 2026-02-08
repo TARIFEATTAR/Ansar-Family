@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, Loader2, Building2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Building2, ClipboardCheck, Video, Rocket } from "lucide-react";
 
 /**
  * PARTNER HUB APPLICATION — "Register Your Community"
@@ -325,6 +325,55 @@ export default function PartnerPage() {
           </div>
         </div>
       </div>
+
+      {/* Journey Overview (Step 1 Only) */}
+      {step === 1 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="px-6 md:px-12 mt-12 mb-8"
+        >
+          <div className="max-w-3xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+              {/* Connecting Line (Desktop) */}
+              <div className="hidden md:block absolute top-1/2 left-0 w-full h-px bg-ansar-sage-200 -z-10 -translate-y-1/2" />
+              
+              {/* Step 1 */}
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-ansar-sage-100 rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-700 shadow-sm">
+                  <ClipboardCheck className="w-5 h-5" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-heading text-lg text-ansar-charcoal mb-1">Register</h3>
+                <p className="font-body text-xs text-ansar-gray max-w-[180px]">
+                  Create your hub profile and define your infrastructure.
+                </p>
+              </div>
+
+              {/* Step 2 */}
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-white rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-400 shadow-sm">
+                  <Video className="w-5 h-5" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-heading text-lg text-ansar-charcoal mb-1">Verify</h3>
+                <p className="font-body text-xs text-ansar-gray max-w-[180px]">
+                  Quick &quot;Vibe Check&quot; call and 15-min training.
+                </p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-white rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-400 shadow-sm">
+                  <Rocket className="w-5 h-5" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-heading text-lg text-ansar-charcoal mb-1">Launch</h3>
+                <p className="font-body text-xs text-ansar-gray max-w-[180px]">
+                  Access your dashboard and start welcoming seekers.
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Form Content */}
       <div className="flex-1 flex items-center justify-center px-6 md:px-12 py-12">

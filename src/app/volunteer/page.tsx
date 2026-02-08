@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, Loader2, Heart } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Heart, FileText, BookOpen, Users } from "lucide-react";
 
 /**
  * ANSAR VOLUNTEER FORM — "Become an Ansar"
@@ -270,13 +270,53 @@ export default function VolunteerPage() {
         </div>
       </div>
 
-      {/* Intro Text (First step only) */}
+      {/* Intro Text & Journey (First step only) */}
       {step === 1 && (
-        <div className="px-6 md:px-12 mt-8">
-          <div className="max-w-xl mx-auto text-center">
-            <p className="font-body text-sm text-ansar-gray">
-              Ansar Family is a platform that pairs practicing Muslims with those who are new to Islam or reconnecting with their faith, so no one walks this path alone. We are looking for brothers and sisters who can offer in-person support rooted in sincerity, presence, and good company.
+        <div className="px-6 md:px-12 mt-8 mb-6">
+          <div className="max-w-3xl mx-auto">
+            {/* Mission Statement */}
+            <p className="font-body text-sm text-ansar-gray text-center max-w-xl mx-auto mb-10 leading-relaxed">
+              Ansar Family pairs practicing Muslims with those new to Islam or reconnecting with their faith, so no one walks this path alone. We need brothers and sisters who can offer support rooted in sincerity, presence, and good company.
             </p>
+
+            {/* 3-Step Journey */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+              {/* Connecting Line (Desktop) */}
+              <div className="hidden md:block absolute top-1/2 left-0 w-full h-px bg-ansar-sage-200 -z-10 -translate-y-1/2" />
+
+              {/* Step 1 */}
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-ansar-sage-100 rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-700 shadow-sm">
+                  <FileText className="w-5 h-5" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-heading text-lg text-ansar-charcoal mb-1">Apply</h3>
+                <p className="font-body text-xs text-ansar-gray max-w-[180px]">
+                  Share your background and why you want to help.
+                </p>
+              </div>
+
+              {/* Step 2 */}
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-white rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-400 shadow-sm">
+                  <BookOpen className="w-5 h-5" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-heading text-lg text-ansar-charcoal mb-1">Train</h3>
+                <p className="font-body text-xs text-ansar-gray max-w-[180px]">
+                  Complete the 10-minute &quot;Ansar Way&quot; module.
+                </p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-white rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-400 shadow-sm">
+                  <Users className="w-5 h-5" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-heading text-lg text-ansar-charcoal mb-1">Connect</h3>
+                <p className="font-body text-xs text-ansar-gray max-w-[180px]">
+                  Get matched with a seeker in your local area.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}

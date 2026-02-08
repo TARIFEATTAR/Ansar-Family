@@ -2,9 +2,9 @@
 
 /**
  * ANSAR FAMILY - Homepage
- * "Every Heart Rooted" - Where every journey begins.
- * 
- * Simplified layout with enhanced garden animation
+ * Two-track messaging: warm and universal for seekers,
+ * specific and concrete for community partners.
+ * 50/50 in warmth, partner-forward in structure.
  */
 
 import Link from "next/link";
@@ -39,13 +39,13 @@ export default function Home() {
               href="#mission"
               className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors"
             >
-              Our Mission
+              How It Works
             </Link>
             <Link
               href="#ecosystem"
               className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors"
             >
-              The Ecosystem
+              Who It&apos;s For
             </Link>
           </nav>
           <Link
@@ -84,7 +84,7 @@ export default function Home() {
                 }`}
               style={{ transitionDelay: '200ms' }}
             >
-              No One Walks Alone
+              Every Heart Rooted
             </p>
 
             {/* Title */}
@@ -93,16 +93,16 @@ export default function Home() {
                 }`}
               style={{ transitionDelay: '400ms' }}
             >
-              Every Heart Rooted
+              No new Muslim should have to figure this out alone
             </h1>
 
             {/* Description */}
             <p
-              className={`font-body text-lg text-ansar-gray max-w-[680px] mx-auto mb-16 transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+              className={`font-body text-lg text-ansar-gray max-w-[720px] mx-auto mb-16 transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
                 }`}
               style={{ transitionDelay: '600ms' }}
             >
-              We handle the system. You provide the support.
+              We connect people new to Islam with local communities ready to welcome them, and we give those communities the tools to do it well.
             </p>
 
             {/* Two Primary Pathways */}
@@ -118,16 +118,16 @@ export default function Home() {
                     <Building2 className="w-6 h-6 text-ansar-sage-700" strokeWidth={1.5} />
                   </div>
                   <h3 className="font-display text-xl text-ansar-charcoal mb-2">
-                    Register Your Community
+                    Bring This to Your Community
                   </h3>
                   <p className="font-body text-sm text-ansar-sage-700/80 mb-4 font-medium tracking-wide">
-                    BECOME A PARTNER HUB
+                    FOR MASJIDS, MSAS & ORGANIZATIONS
                   </p>
                   <p className="font-body text-sm text-ansar-gray mb-6 leading-relaxed">
-                    Bring the Ansar Family infrastructure to your masjid, MSA, or organization. We handle intake, pairing, and follow-up.
+                    We handle the logistics (forms, follow-ups, notifications) so you can focus on the human part. Set up in 10 minutes.
                   </p>
                   <span className="inline-flex items-center gap-2 font-body text-sm text-ansar-sage-700 group-hover:gap-3 transition-all font-medium">
-                    Partner With Us
+                    See What You Get
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
@@ -146,7 +146,7 @@ export default function Home() {
                     BECOME AN ANSAR
                   </p>
                   <p className="font-body text-sm text-ansar-gray mb-6 leading-relaxed">
-                    Volunteer to walk alongside new Muslims in your community with friendship, mentorship, and guidance.
+                    Walk alongside someone new to Islam in your community. No teaching credentials required. Just consistency and care.
                   </p>
                   <span className="inline-flex items-center gap-2 font-body text-sm text-ansar-terracotta-700 group-hover:gap-3 transition-all font-medium">
                     Become an Ansar
@@ -188,21 +188,21 @@ export default function Home() {
               The Challenge
             </p>
             <h2 className="font-display text-[clamp(2rem,1.5rem+2.5vw,3rem)] text-ansar-charcoal mb-8">
-              Too many new Muslims walk alone
+              The gap between wanting help and finding it
             </h2>
             <div className="space-y-6 font-body text-lg text-ansar-gray leading-relaxed">
               <p>
-                Every year, thousands embrace Islam or return to their faith after years away.
-                They&apos;re filled with hope, curiosity, and a desire to grow. But too often,
-                that spark fades when they can&apos;t find community.
+                Every year, thousands of people accept Islam or reconnect with their faith
+                after years away. They&apos;re sincere, curious, and ready to grow.
+                But most of them have no idea where to go next.
               </p>
               <p>
-                Masjids are busy. Programs are scattered. Resources feel overwhelming.
-                And the personal connection that transforms knowledge into lived faith?
-                That&apos;s rare.
+                At the same time, masjids and MSAs want to welcome them. But there&apos;s
+                no easy way to find who&apos;s new, connect them with a friendly face,
+                or simply say &ldquo;dinner this Saturday.&rdquo;
               </p>
               <p className="text-ansar-charcoal font-medium">
-                We believe no one should walk this path alone.
+                Both sides want the same thing. The systems just aren&apos;t there yet.
               </p>
             </div>
           </div>
@@ -214,22 +214,21 @@ export default function Home() {
         <section id="mission" className="py-24 px-6 bg-ansar-sage-50">
           <div className="max-w-[900px] mx-auto">
             <p className="font-body text-xs font-normal tracking-[0.2em] uppercase text-ansar-sage-700 mb-4">
-              Our Solution
+              How It Works
             </p>
             <h2 className="font-display text-[clamp(2rem,1.5rem+2.5vw,3rem)] text-ansar-charcoal mb-8">
               The infrastructure layer for new Muslim support
             </h2>
             <div className="space-y-6 font-body text-lg text-ansar-gray leading-relaxed mb-12">
               <p>
-                Ansar Family is a platform that connects seekers with trained volunteer mentors
+                Ansar Family connects people new to Islam with welcoming volunteers
                 called <strong className="text-ansar-sage-700">Ansars</strong>, coordinated
-                through local <strong className="text-ansar-sage-700">Partner Hubs</strong> like
-                masjids, MSAs, and community organizations.
+                through local <strong className="text-ansar-sage-700">Partner Hubs</strong>: masjids, MSAs, and community organizations that host the program.
               </p>
               <p>
-                We don&apos;t replace your local community. We give them the tools, training,
-                and systems to do what they already want to do: welcome and support those
-                new to the faith.
+                We don&apos;t replace your community. We give it the tools to do what
+                it already wants to do: find the people who need you, welcome them in,
+                and make sure no one falls through the cracks.
               </p>
             </div>
 
@@ -239,27 +238,27 @@ export default function Home() {
                 <div className="w-10 h-10 bg-ansar-sage-100 rounded-lg flex items-center justify-center mb-4">
                   <Heart className="w-5 h-5 text-ansar-sage-600" strokeWidth={1.5} />
                 </div>
-                <h4 className="font-display text-lg text-ansar-charcoal mb-2">Personal Connection</h4>
+                <h4 className="font-display text-lg text-ansar-charcoal mb-2">Real People, Not Programs</h4>
                 <p className="font-body text-sm text-ansar-gray">
-                  One-on-one mentorship rooted in friendship, not just curriculum.
+                  New Muslims get connected with a real person from a local community. Not a course or a chatbot.
                 </p>
               </div>
               <div className="bg-white p-6 rounded-xl">
                 <div className="w-10 h-10 bg-ansar-sage-100 rounded-lg flex items-center justify-center mb-4">
                   <Building2 className="w-5 h-5 text-ansar-sage-600" strokeWidth={1.5} />
                 </div>
-                <h4 className="font-display text-lg text-ansar-charcoal mb-2">Local Roots</h4>
+                <h4 className="font-display text-lg text-ansar-charcoal mb-2">Your Community, Your Page</h4>
                 <p className="font-body text-sm text-ansar-gray">
-                  Connected to your neighborhood masjid or community center.
+                  Each partner gets a branded hub page, a QR code, and sign-up forms that route people directly to you.
                 </p>
               </div>
               <div className="bg-white p-6 rounded-xl">
                 <div className="w-10 h-10 bg-ansar-sage-100 rounded-lg flex items-center justify-center mb-4">
                   <Users className="w-5 h-5 text-ansar-sage-600" strokeWidth={1.5} />
                 </div>
-                <h4 className="font-display text-lg text-ansar-charcoal mb-2">Sustainable System</h4>
+                <h4 className="font-display text-lg text-ansar-charcoal mb-2">We Handle the Logistics</h4>
                 <p className="font-body text-sm text-ansar-gray">
-                  We handle the coordination so communities can focus on care.
+                  Automatic welcome messages, a dashboard to see who&apos;s new, and one-click emails to invite everyone to dinner.
                 </p>
               </div>
             </div>
@@ -272,14 +271,14 @@ export default function Home() {
         <section id="ecosystem" className="py-24 px-6 bg-white">
           <div className="max-w-[900px] mx-auto">
             <p className="font-body text-xs font-normal tracking-[0.2em] uppercase text-ansar-ochre-600 mb-4">
-              The Ecosystem
+              Who It&apos;s For
             </p>
             <h2 className="font-display text-[clamp(2rem,1.5rem+2.5vw,3rem)] text-ansar-charcoal mb-12">
-              Three roles, one family
+              Three roles, one mission
             </h2>
 
             <div className="space-y-8">
-              {/* Seeker */}
+              {/* Seeker — first position, brief. "You're the reason this exists." */}
               <div className="flex gap-6 items-start">
                 <div className="w-16 h-16 bg-ansar-sage-100 rounded-2xl flex items-center justify-center flex-shrink-0">
                   <Heart className="w-8 h-8 text-ansar-sage-600" strokeWidth={1.5} />
@@ -287,9 +286,9 @@ export default function Home() {
                 <div>
                   <h3 className="font-display text-2xl text-ansar-charcoal mb-2">Seekers</h3>
                   <p className="font-body text-ansar-gray leading-relaxed">
-                    Those new to Islam or reconnecting after time away. You&apos;re not a project.
-                    You&apos;re a person with questions, hopes, and a journey that matters.
-                    We pair you with an Ansar who walks beside you at your pace.
+                    New to Islam or reconnecting after time away. You sign up,
+                    we connect you with a local community and a welcoming face.
+                    You&apos;re not alone in this.
                   </p>
                 </div>
               </div>
@@ -302,14 +301,15 @@ export default function Home() {
                 <div>
                   <h3 className="font-display text-2xl text-ansar-charcoal mb-2">Ansars</h3>
                   <p className="font-body text-ansar-gray leading-relaxed">
-                    Volunteer mentors who offer their time, knowledge, and presence.
-                    You don&apos;t need to be a scholar. You need to be kind, consistent,
-                    and willing to learn alongside your seeker. We train and support you.
+                    Volunteers from your community who are kind, consistent,
+                    and willing to show up. No teaching credentials needed.
+                    Your local hub approves you and connects you with someone
+                    new to the faith.
                   </p>
                 </div>
               </div>
 
-              {/* Partner Hubs */}
+              {/* Partner Hubs — most detail, this is the primary audience */}
               <div className="flex gap-6 items-start">
                 <div className="w-16 h-16 bg-ansar-ochre-100 rounded-2xl flex items-center justify-center flex-shrink-0">
                   <Building2 className="w-8 h-8 text-ansar-ochre-600" strokeWidth={1.5} />
@@ -317,9 +317,10 @@ export default function Home() {
                 <div>
                   <h3 className="font-display text-2xl text-ansar-charcoal mb-2">Partner Hubs</h3>
                   <p className="font-body text-ansar-gray leading-relaxed">
-                    Masjids, MSAs, and organizations that host the program locally.
-                    You provide the space and community. We provide the dashboard,
-                    training, and matching system. Together, you anchor hearts.
+                    Masjids, MSAs, and organizations that want to support new Muslims
+                    but need the tools. You get a branded hub page, sign-up forms,
+                    a volunteer dashboard, and automatic welcome messages.
+                    We handle the logistics. You focus on being a community.
                   </p>
                 </div>
               </div>
@@ -328,34 +329,67 @@ export default function Home() {
         </section>
 
         {/* ============================================
-            CTA SECTION - Begin Your Journey
+            CTA SECTION - Two Equal Lanes
             ============================================ */}
         <section className="py-24 px-6 bg-white">
-          <div className="max-w-[900px] mx-auto text-center">
-            <h2 className="font-display text-[clamp(2.5rem,2rem+2.5vw,4rem)] text-ansar-charcoal mb-6">
-              Begin Your Journey
+          <div className="max-w-[900px] mx-auto">
+            <h2 className="font-display text-[clamp(2.5rem,2rem+2.5vw,4rem)] text-ansar-charcoal mb-6 text-center">
+              Where do you fit in?
             </h2>
-            <p className="font-body text-lg text-ansar-gray max-w-xl mx-auto mb-12">
-              Whether you&apos;re seeking connection, ready to give back, or want to bring this to your community, there&apos;s a place for you in the Ansar Family.
+            <p className="font-body text-lg text-ansar-gray max-w-xl mx-auto mb-12 text-center">
+              Whether you&apos;re looking for community or looking to build one, there&apos;s a place for you here.
             </p>
-            <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
-              <Link
-                href="/join"
-                className="inline-flex items-center justify-center px-8 py-4 bg-ansar-sage-600 text-white font-body rounded-full hover:bg-ansar-sage-700 transition-all hover:-translate-y-0.5"
-              >
-                I&apos;m a Seeker
+
+            {/* Two equal-weight lanes */}
+            <div className="grid md:grid-cols-2 gap-6 max-w-[800px] mx-auto mb-8">
+              {/* Community lane */}
+              <Link href="/partner" className="group">
+                <div className="bg-ansar-sage-50 p-8 rounded-[20px] border border-ansar-sage-200/30 hover:bg-ansar-sage-100/60 hover:shadow-[0_8px_32px_rgba(61,61,61,0.06)] hover:-translate-y-1 transition-all duration-300 text-center h-full">
+                  <div className="w-14 h-14 bg-ansar-sage-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                    <Building2 className="w-7 h-7 text-ansar-sage-700" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="font-display text-xl text-ansar-charcoal mb-3">
+                    I&apos;m a community looking for tools
+                  </h3>
+                  <p className="font-body text-sm text-ansar-gray mb-6 leading-relaxed">
+                    Register your masjid, MSA, or organization as a Partner Hub. Three committed people and one monthly gathering. That&apos;s all it takes.
+                  </p>
+                  <span className="inline-flex items-center gap-2 font-body text-sm text-ansar-sage-700 group-hover:gap-3 transition-all font-medium">
+                    Register Your Hub
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </div>
               </Link>
+
+              {/* Seeker lane */}
+              <Link href="/join" className="group">
+                <div className="bg-ansar-terracotta-50/50 p-8 rounded-[20px] border border-ansar-terracotta-200/20 hover:bg-ansar-terracotta-50 hover:shadow-[0_8px_32px_rgba(61,61,61,0.06)] hover:-translate-y-1 transition-all duration-300 text-center h-full">
+                  <div className="w-14 h-14 bg-ansar-terracotta-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                    <Heart className="w-7 h-7 text-ansar-terracotta-700" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="font-display text-xl text-ansar-charcoal mb-3">
+                    I&apos;m new to Islam and looking for people
+                  </h3>
+                  <p className="font-body text-sm text-ansar-gray mb-6 leading-relaxed">
+                    We&apos;ll connect you with a welcoming community near you and someone who&apos;s been where you are. No pressure, no timeline.
+                  </p>
+                  <span className="inline-flex items-center gap-2 font-body text-sm text-ansar-terracotta-700 group-hover:gap-3 transition-all font-medium">
+                    Find Your Community
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </div>
+              </Link>
+            </div>
+
+            {/* Volunteer — secondary, centered */}
+            <div className="text-center">
               <Link
                 href="/volunteer"
-                className="inline-flex items-center justify-center px-8 py-4 bg-ansar-terracotta-600 text-white font-body rounded-full hover:bg-ansar-terracotta-700 transition-all hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 font-body text-sm text-ansar-gray hover:text-ansar-terracotta-700 transition-colors"
               >
-                I Want to Volunteer
-              </Link>
-              <Link
-                href="/partner"
-                className="inline-flex items-center justify-center px-8 py-4 border-2 border-ansar-ochre-600 text-ansar-ochre-700 font-body rounded-full hover:bg-ansar-ochre-50 transition-all hover:-translate-y-0.5"
-              >
-                Register a Hub
+                <Users className="w-4 h-4" strokeWidth={1.5} />
+                Want to volunteer as an Ansar?
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
@@ -374,8 +408,9 @@ export default function Home() {
                 Ansar Family
               </h3>
               <p className="font-body text-sm text-ansar-gray leading-relaxed">
-                Every heart rooted. Building bridges between those new to Islam
-                and the communities that welcome them home.
+                Connecting people new to Islam with the local communities
+                ready to welcome them, and giving those communities the
+                tools to do it well.
               </p>
             </div>
 
@@ -387,7 +422,7 @@ export default function Home() {
               <ul className="space-y-3">
                 <li>
                   <Link href="/join" className="font-body text-sm text-ansar-sage-700 hover:text-ansar-sage-600 hover:underline transition-colors cursor-pointer">
-                    Join as a Seeker →
+                    I&apos;m New to Islam →
                   </Link>
                 </li>
                 <li>
@@ -397,7 +432,7 @@ export default function Home() {
                 </li>
                 <li>
                   <Link href="/partner" className="font-body text-sm text-ansar-sage-700 hover:text-ansar-sage-600 hover:underline transition-colors cursor-pointer">
-                    Partner With Us →
+                    Register a Hub →
                   </Link>
                 </li>
               </ul>

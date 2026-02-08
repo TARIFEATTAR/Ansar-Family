@@ -120,3 +120,54 @@ export const sendMessage = mutation({
     return { scheduled: true };
   },
 });
+
+// ═══════════════════════════════════════════════════════════════
+// BULK EMAIL — Send email to multiple recipients from Partner Dashboard
+// ═══════════════════════════════════════════════════════════════
+
+export const sendBulkEmail = mutation({
+  args: {
+    recipients: v.array(
+      v.object({
+        id: v.string(),
+        email: v.string(),
+        name: v.string(),
+      })
+    ),
+    subject: v.string(),
+    message: v.string(),
+    senderName: v.string(),
+    organizationName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (args.recipients.length === 0) {
+      throw new Error("At least one recipient is required");
+    }
+    if (!args.subject.trim()) {
+      throw new Error("Subject cannot be empty");
+    }
+    if (!args.message.trim()) {
+      throw new Error("Message cannot be empty");
+    }
+
+    // Schedule individual email sends for each recipient
+    // Resend has batch limits, so we send individually with slight delays
+    let scheduled = 0;
+    for (const recipient of args.recipients) {
+      if (!recipient.email) continue;
+
+      await ctx.scheduler.runAfter(scheduled * 200, internal.notifications.sendBulkEmailItem, {
+        recipientId: recipient.id,
+        recipientEmail: recipient.email,
+        recipientName: recipient.name,
+        subject: args.subject.trim(),
+        message: args.message.trim(),
+        senderName: args.senderName,
+        organizationName: args.organizationName,
+      });
+      scheduled++;
+    }
+
+    return { scheduled, total: args.recipients.length };
+  },
+});

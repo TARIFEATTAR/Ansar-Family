@@ -176,13 +176,16 @@ function getWelcomeSeekerEmail(
       <!-- CTA Button -->
       <div style="text-align: center; margin: 32px 0;">
         <p style="font-size: 14px; color: #8A8A85; margin: 0 0 16px 0;">
-          In the meantime, we've prepared a Digital Starter Kit just for you:
+          In the meantime, we've prepared a starter kit just for you:
         </p>
-        <a href="${baseUrl}/sign-in" 
+        <a href="${baseUrl}/resources/new-muslim" 
            style="display: inline-block; background: #7D8B6A; color: white; padding: 14px 32px; 
                   border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
-          Sign In to Your Portal →
+          View Your New Muslim Resources →
         </a>
+        <p style="font-size: 13px; color: #8A8A85; margin: 16px 0 0 0;">
+          You can also <a href="${baseUrl}/sign-in" style="color: #7D8B6A; text-decoration: underline;">sign in to your portal</a> anytime.
+        </p>
       </div>
       
       <!-- Quote Block -->
@@ -465,7 +468,7 @@ function getPairingSeekerEmail(
 // ═══════════════════════════════════════════════════════════════
 
 function getWelcomeSeekerSMS(firstName: string, baseUrl: string = "https://ansar.family"): string {
-  return `Assalamu Alaikum ${firstName}! Welcome to Ansar Family 🌱 We'll connect you to your local community within 48hrs. Sign in to your portal: ${baseUrl}/sign-in\n\nReply STOP to opt out.`;
+  return `Assalamu Alaikum ${firstName}! Welcome to Ansar Family 🌱 You're not alone — we'll connect you to your local community within 48hrs. Start here: ${baseUrl}/resources/new-muslim\n\nReply STOP to opt out.`;
 }
 
 function getWelcomeAnsarSMS(firstName: string): string {
@@ -1392,6 +1395,127 @@ export const sendDirectMessage = internalAction({
     }
 
     return results;
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// BULK EMAIL — Send a single email as part of a bulk send
+// ═══════════════════════════════════════════════════════════════
+
+function getBulkEmailHtml(
+  recipientName: string,
+  message: string,
+  senderName: string,
+  organizationName: string,
+): { subject: string; html: string } {
+  const firstName = recipientName.split(" ")[0] || recipientName;
+
+  const html = emailWrapper(`
+      <h2 style="font-family: Georgia, 'Times New Roman', serif; color: #3D3D3D; font-size: 22px; font-weight: 500; margin: 0 0 20px 0;">
+        Assalamu Alaikum, ${firstName}
+      </h2>
+      
+      <p style="font-size: 16px; line-height: 1.7; color: #5A5A5A; margin: 0 0 24px 0; white-space: pre-line;">
+        ${message.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}
+      </p>
+      
+      <div style="border-top: 1px solid #E8ECE4; padding-top: 20px; margin-top: 24px;">
+        <p style="font-size: 14px; color: #8A8A85; margin: 0;">
+          — ${senderName}, ${organizationName}
+        </p>
+        <p style="font-size: 12px; color: #A3A39E; margin: 8px 0 0;">
+          Sent via <a href="https://ansar.family" style="color: #7D8B6A; text-decoration: none;">Ansar Family</a>
+        </p>
+      </div>
+  `);
+
+  return { subject: "", html }; // subject is set by caller
+}
+
+export const sendBulkEmailItem = internalAction({
+  args: {
+    recipientId: v.string(),
+    recipientEmail: v.string(),
+    recipientName: v.string(),
+    subject: v.string(),
+    message: v.string(),
+    senderName: v.string(),
+    organizationName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const apiKey = process.env.RESEND_API_KEY;
+
+    if (!apiKey) {
+      console.error("❌ Missing Resend API key for bulk email");
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "email",
+        recipientId: args.recipientId,
+        recipientEmail: args.recipientEmail,
+        template: "bulk_email",
+        subject: args.subject,
+        status: "failed",
+        errorMessage: "Missing Resend configuration",
+      });
+      return { success: false, error: "Missing Resend configuration" };
+    }
+
+    const emailContent = getBulkEmailHtml(
+      args.recipientName,
+      args.message,
+      args.senderName,
+      args.organizationName,
+    );
+
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          from: "Ansar Family <welcome@ansar.family>",
+          to: [args.recipientEmail],
+          subject: args.subject,
+          html: emailContent.html,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Resend API error");
+      }
+
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "email",
+        recipientId: args.recipientId,
+        recipientEmail: args.recipientEmail,
+        template: "bulk_email",
+        subject: args.subject,
+        status: "sent",
+        externalId: data.id,
+      });
+
+      console.log(`✅ Bulk email sent to ${args.recipientEmail}, ID: ${data.id}`);
+      return { success: true, id: data.id };
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error(`❌ Bulk email failed to ${args.recipientEmail}:`, errorMessage);
+
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "email",
+        recipientId: args.recipientId,
+        recipientEmail: args.recipientEmail,
+        template: "bulk_email",
+        subject: args.subject,
+        status: "failed",
+        errorMessage,
+      });
+
+      return { success: false, error: errorMessage };
+    }
   },
 });
 

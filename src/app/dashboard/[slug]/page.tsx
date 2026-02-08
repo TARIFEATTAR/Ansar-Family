@@ -12,7 +12,7 @@ import {
   UserPlus, Unlink, Send, Phone, Mail, MapPin, Clock,
   X as XIcon, BookUser, LogOut, Copy, CheckCheck, Share2, ExternalLink,
   QrCode, ChevronDown, ChevronUp, Sparkles, CheckCircle2, Circle,
-  Inbox as InboxIcon,
+  Inbox as InboxIcon, MailPlus, CheckSquare,
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import {
@@ -162,6 +162,7 @@ function PartnerDashboard({
   const updateContact = useMutation(api.contacts.update);
   const deleteContact = useMutation(api.contacts.deleteContact);
   const sendMessageMutation = useMutation(api.messages.sendMessage);
+  const sendBulkEmailMutation = useMutation(api.messages.sendBulkEmail);
 
   // Org-scoped messages: filter messages where recipientId matches any seeker/ansar in this org
   const orgRecipientIds = useMemo(() => {
@@ -366,7 +367,9 @@ function PartnerDashboard({
               onDelete={handleDeleteSeeker}
               onUpdate={updateIntake}
               onSendMessage={sendMessageMutation}
+              onBulkEmail={sendBulkEmailMutation}
               senderName={currentUser?.name || "Partner Lead"}
+              organizationName={organization.name}
             />
           )}
           {activeTab === "ansars" && (
@@ -378,6 +381,9 @@ function PartnerDashboard({
               setStatusFilter={setStatusFilter}
               onApprove={handleApproveAnsar}
               onUpdate={updateAnsar}
+              onBulkEmail={sendBulkEmailMutation}
+              senderName={currentUser?.name || "Partner Lead"}
+              organizationName={organization.name}
             />
           )}
           {activeTab === "contacts" && (
@@ -728,7 +734,7 @@ function PartnerOverviewTab({
 
 function PartnerSeekersTab({
   seekers, availableAnsars, search, setSearch, statusFilter, setStatusFilter,
-  onPair, onDelete, onUpdate, onSendMessage, senderName,
+  onPair, onDelete, onUpdate, onSendMessage, onBulkEmail, senderName, organizationName,
 }: {
   seekers: any[]; availableAnsars: any[];
   search: string; setSearch: (v: string) => void;
@@ -737,11 +743,15 @@ function PartnerSeekersTab({
   onDelete: (id: Id<"intakes">) => void;
   onUpdate: (args: any) => Promise<any>;
   onSendMessage: (args: any) => Promise<any>;
+  onBulkEmail: (args: any) => Promise<any>;
   senderName: string;
+  organizationName: string;
 }) {
   const [selectedSeeker, setSelectedSeeker] = useState<any>(null);
   const [pairingSeeker, setPairingSeeker] = useState<Id<"intakes"> | null>(null);
   const [showMessageModal, setShowMessageModal] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkEmail, setShowBulkEmail] = useState(false);
 
   const filtered = useMemo(() => {
     let result = seekers;
@@ -758,6 +768,29 @@ function PartnerSeekersTab({
     return result;
   }, [seekers, search, statusFilter]);
 
+  // Seekers with emails (eligible for bulk email)
+  const emailableSelected = useMemo(
+    () => filtered.filter((s) => selectedIds.has(s._id) && s.email),
+    [filtered, selectedIds]
+  );
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((s) => s._id)));
+    }
+  }, [filtered, selectedIds.size]);
+
   const stats: StatItem[] = [
     { label: "Total", value: seekers.length, accent: "sage" },
     { label: "Awaiting Outreach", value: seekers.filter((s) => s.status === "awaiting_outreach").length, accent: "terracotta" },
@@ -766,6 +799,19 @@ function PartnerSeekersTab({
   ];
 
   const columns: Column<any>[] = [
+    {
+      key: "_select",
+      label: "",
+      render: (r) => (
+        <input
+          type="checkbox"
+          checked={selectedIds.has(r._id)}
+          onChange={(e) => { e.stopPropagation(); toggleSelect(r._id); }}
+          onClick={(e) => e.stopPropagation()}
+          className="rounded border-gray-300 text-ansar-sage-600 focus:ring-ansar-sage-500 cursor-pointer"
+        />
+      ),
+    },
     { key: "fullName", label: "Name", sortable: true, render: (r) => <span className="font-medium">{r.fullName}</span> },
     { key: "phone", label: "Phone", render: (r) => <span className="text-ansar-gray text-xs">{r.phone}</span> },
     { key: "city", label: "City", sortable: true, render: (r) => r.city },
@@ -776,20 +822,50 @@ function PartnerSeekersTab({
   return (
     <div className="space-y-5">
       <StatsRow stats={stats} />
-      <SearchBar
-        placeholder="Search seekers..."
-        value={search}
-        onChange={setSearch}
-        filters={[{
-          id: "status", label: "All Statuses", value: statusFilter,
-          options: [
-            { value: "awaiting_outreach", label: "Awaiting Outreach" },
-            { value: "triaged", label: "Triaged" },
-            { value: "connected", label: "Connected" },
-          ],
-        }]}
-        onFilterChange={(_, v) => setStatusFilter(v)}
-      />
+
+      {/* Bulk Action Bar */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <SearchBar
+          placeholder="Search seekers..."
+          value={search}
+          onChange={setSearch}
+          filters={[{
+            id: "status", label: "All Statuses", value: statusFilter,
+            options: [
+              { value: "awaiting_outreach", label: "Awaiting Outreach" },
+              { value: "triaged", label: "Triaged" },
+              { value: "connected", label: "Connected" },
+            ],
+          }]}
+          onFilterChange={(_, v) => setStatusFilter(v)}
+        />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleSelectAll}
+            className={`flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border transition-all ${
+              selectedIds.size > 0
+                ? "bg-ansar-sage-50 border-ansar-sage-300 text-ansar-sage-700"
+                : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50"
+            }`}
+          >
+            <CheckSquare className="w-3.5 h-3.5" />
+            {selectedIds.size > 0
+              ? `${selectedIds.size} selected`
+              : "Select All"}
+          </button>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={() => setShowBulkEmail(true)}
+              disabled={emailableSelected.length === 0}
+              className="flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg bg-ansar-sage-600 text-white hover:bg-ansar-sage-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <MailPlus className="w-3.5 h-3.5" />
+              Email {emailableSelected.length > 0 ? `(${emailableSelected.length})` : ""}
+            </button>
+          )}
+        </div>
+      </div>
+
       <DataTable
         columns={columns}
         data={filtered}
@@ -947,6 +1023,17 @@ function PartnerSeekersTab({
             setPairingSeeker(null);
           }
         }}
+      />
+
+      {/* Bulk Email Modal */}
+      <BulkEmailModal
+        isOpen={showBulkEmail}
+        onClose={() => setShowBulkEmail(false)}
+        recipients={emailableSelected.map((s: any) => ({ id: s._id, email: s.email, name: s.fullName }))}
+        senderName={senderName}
+        organizationName={organizationName}
+        onSend={onBulkEmail}
+        recipientLabel="seekers"
       />
     </div>
   );
@@ -1188,14 +1275,20 @@ function SendMessageModal({
 
 function PartnerAnsarsTab({
   ansars, search, setSearch, statusFilter, setStatusFilter, onApprove, onUpdate,
+  onBulkEmail, senderName, organizationName,
 }: {
   ansars: any[];
   search: string; setSearch: (v: string) => void;
   statusFilter: string; setStatusFilter: (v: string) => void;
   onApprove: (id: Id<"ansars">) => void;
   onUpdate: (args: any) => Promise<any>;
+  onBulkEmail: (args: any) => Promise<any>;
+  senderName: string;
+  organizationName: string;
 }) {
   const [selectedAnsar, setSelectedAnsar] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkEmail, setShowBulkEmail] = useState(false);
 
   const filtered = useMemo(() => {
     let result = ansars;
@@ -1211,6 +1304,29 @@ function PartnerAnsarsTab({
     return result;
   }, [ansars, search, statusFilter]);
 
+  // Ansars with emails (eligible for bulk email)
+  const emailableSelected = useMemo(
+    () => filtered.filter((a) => selectedIds.has(a._id) && a.email),
+    [filtered, selectedIds]
+  );
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((a) => a._id)));
+    }
+  }, [filtered, selectedIds.size]);
+
   const stats: StatItem[] = [
     { label: "Total", value: ansars.length, accent: "sage" },
     { label: "Pending", value: ansars.filter((a) => a.status === "pending").length, accent: "terracotta" },
@@ -1219,6 +1335,19 @@ function PartnerAnsarsTab({
   ];
 
   const columns: Column<any>[] = [
+    {
+      key: "_select",
+      label: "",
+      render: (r) => (
+        <input
+          type="checkbox"
+          checked={selectedIds.has(r._id)}
+          onChange={(e) => { e.stopPropagation(); toggleSelect(r._id); }}
+          onClick={(e) => e.stopPropagation()}
+          className="rounded border-gray-300 text-ansar-sage-600 focus:ring-ansar-sage-500 cursor-pointer"
+        />
+      ),
+    },
     { key: "fullName", label: "Name", sortable: true, render: (r) => <span className="font-medium">{r.fullName}</span> },
     { key: "phone", label: "Phone", render: (r) => <span className="text-ansar-gray text-xs">{r.phone}</span> },
     { key: "city", label: "City", sortable: true, render: (r) => r.city },
@@ -1229,20 +1358,50 @@ function PartnerAnsarsTab({
   return (
     <div className="space-y-5">
       <StatsRow stats={stats} />
-      <SearchBar
-        placeholder="Search ansars..."
-        value={search}
-        onChange={setSearch}
-        filters={[{
-          id: "status", label: "All Statuses", value: statusFilter,
-          options: [
-            { value: "pending", label: "Pending" },
-            { value: "approved", label: "Approved" },
-            { value: "active", label: "Active" },
-          ],
-        }]}
-        onFilterChange={(_, v) => setStatusFilter(v)}
-      />
+
+      {/* Bulk Action Bar */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <SearchBar
+          placeholder="Search ansars..."
+          value={search}
+          onChange={setSearch}
+          filters={[{
+            id: "status", label: "All Statuses", value: statusFilter,
+            options: [
+              { value: "pending", label: "Pending" },
+              { value: "approved", label: "Approved" },
+              { value: "active", label: "Active" },
+            ],
+          }]}
+          onFilterChange={(_, v) => setStatusFilter(v)}
+        />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleSelectAll}
+            className={`flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border transition-all ${
+              selectedIds.size > 0
+                ? "bg-ansar-sage-50 border-ansar-sage-300 text-ansar-sage-700"
+                : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50"
+            }`}
+          >
+            <CheckSquare className="w-3.5 h-3.5" />
+            {selectedIds.size > 0
+              ? `${selectedIds.size} selected`
+              : "Select All"}
+          </button>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={() => setShowBulkEmail(true)}
+              disabled={emailableSelected.length === 0}
+              className="flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg bg-ansar-sage-600 text-white hover:bg-ansar-sage-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <MailPlus className="w-3.5 h-3.5" />
+              Email {emailableSelected.length > 0 ? `(${emailableSelected.length})` : ""}
+            </button>
+          )}
+        </div>
+      </div>
+
       <DataTable
         columns={columns}
         data={filtered}
@@ -1355,6 +1514,17 @@ function PartnerAnsarsTab({
           </dl>
         )}
       </DetailPanel>
+
+      {/* Bulk Email Modal */}
+      <BulkEmailModal
+        isOpen={showBulkEmail}
+        onClose={() => setShowBulkEmail(false)}
+        recipients={emailableSelected.map((a: any) => ({ id: a._id, email: a.email, name: a.fullName }))}
+        senderName={senderName}
+        organizationName={organizationName}
+        onSend={onBulkEmail}
+        recipientLabel="ansars"
+      />
     </div>
   );
 }
@@ -1945,6 +2115,196 @@ function AddContactModal({
                 {isSubmitting ? "Adding..." : "Add Contact"}
               </button>
             </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BULK EMAIL MODAL
+// ═══════════════════════════════════════════════════════════════
+
+function BulkEmailModal({
+  isOpen, onClose, recipients, senderName, organizationName, onSend, recipientLabel,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  recipients: { id: string; email: string; name: string }[];
+  senderName: string;
+  organizationName: string;
+  onSend: (args: any) => Promise<any>;
+  recipientLabel: string;
+}) {
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [result, setResult] = useState<{ scheduled: number; total: number } | null>(null);
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSubject("");
+      setMessage("");
+      setIsSending(false);
+      setSent(false);
+      setResult(null);
+    }
+  }, [isOpen]);
+
+  const handleSend = async () => {
+    if (!subject.trim() || !message.trim() || recipients.length === 0) return;
+
+    setIsSending(true);
+    try {
+      const res = await onSend({
+        recipients,
+        subject: subject.trim(),
+        message: message.trim(),
+        senderName,
+        organizationName,
+      });
+      setResult(res);
+      setSent(true);
+    } catch (error) {
+      console.error("Failed to send bulk email:", error);
+      alert("Failed to send emails. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[560px] md:max-h-[85vh] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+          >
+            <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
+              <div>
+                <h3 className="font-heading text-lg text-ansar-charcoal flex items-center gap-2">
+                  <MailPlus className="w-5 h-5 text-ansar-sage-600" />
+                  Email {recipients.length} {recipientLabel}
+                </h3>
+                <p className="font-body text-xs text-ansar-muted mt-0.5">
+                  Send a branded email to selected {recipientLabel} via Ansar Family
+                </p>
+              </div>
+              <button onClick={onClose} className="p-1 text-ansar-muted hover:text-ansar-charcoal rounded-lg transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            {sent ? (
+              <div className="p-8 text-center">
+                <CheckCircle2 className="w-12 h-12 text-ansar-sage-600 mx-auto mb-4" />
+                <p className="font-heading text-xl text-ansar-charcoal mb-2">Emails Queued!</p>
+                <p className="font-body text-sm text-ansar-gray">
+                  {result?.scheduled || recipients.length} email{(result?.scheduled || recipients.length) !== 1 ? "s" : ""} are being sent to your {recipientLabel}.
+                  They&apos;ll arrive within the next few minutes.
+                </p>
+                <button
+                  onClick={onClose}
+                  className="btn-primary mt-6 text-sm py-2 px-6"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                  {/* Recipient Preview */}
+                  <div>
+                    <label className="block font-body text-xs font-medium text-ansar-muted uppercase tracking-wide mb-2">
+                      Recipients ({recipients.length})
+                    </label>
+                    <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
+                      {recipients.slice(0, 20).map((r) => (
+                        <span
+                          key={r.id}
+                          className="inline-flex items-center gap-1 bg-ansar-sage-50 text-ansar-sage-700 text-[11px] font-body px-2 py-0.5 rounded-full"
+                        >
+                          <Mail className="w-2.5 h-2.5" />
+                          {r.name.split(" ")[0]}
+                        </span>
+                      ))}
+                      {recipients.length > 20 && (
+                        <span className="inline-flex items-center text-[11px] font-body text-ansar-muted px-2 py-0.5">
+                          +{recipients.length - 20} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Subject */}
+                  <div>
+                    <label className="block font-body text-sm font-medium text-ansar-charcoal mb-1.5">
+                      Subject <span className="text-ansar-error">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      placeholder="e.g., Monthly Dinner — This Saturday!"
+                      className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-400"
+                    />
+                  </div>
+
+                  {/* Message Body */}
+                  <div>
+                    <label className="block font-body text-sm font-medium text-ansar-charcoal mb-1.5">
+                      Message <span className="text-ansar-error">*</span>
+                    </label>
+                    <textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder={`Write your message to ${recipients.length} ${recipientLabel}...\n\nExample: Assalamu Alaikum! We're hosting our monthly community dinner this Saturday at 6pm. Bring your family and a dish to share. We'd love to see you there!`}
+                      rows={7}
+                      className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-400 resize-none"
+                    />
+                    <p className="font-body text-[10px] text-ansar-muted mt-1.5">
+                      Each email will start with &quot;Assalamu Alaikum, [First Name]&quot; and end with &quot;— {senderName}, {organizationName}&quot;
+                    </p>
+                  </div>
+                </div>
+
+                <div className="px-6 py-4 border-t border-[rgba(61,61,61,0.08)] flex items-center justify-between">
+                  <p className="font-body text-xs text-ansar-muted">
+                    Sent from: <span className="font-medium">welcome@ansar.family</span>
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={onClose} className="btn-outline text-sm py-2 px-4" disabled={isSending}>
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSend}
+                      disabled={isSending || !subject.trim() || !message.trim()}
+                      className="btn-primary text-sm py-2 px-5 disabled:opacity-50"
+                    >
+                      {isSending ? (
+                        <span className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Sending...</span>
+                      ) : (
+                        <span className="flex items-center gap-2"><Send className="w-3.5 h-3.5" /> Send to {recipients.length} {recipientLabel}</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </motion.div>
         </>
       )}

@@ -11,7 +11,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Heart, Users, Building2, ArrowRight, Send, Phone, Coffee, UtensilsCrossed, QrCode, LayoutDashboard, MessageCircle } from "lucide-react";
-// Image import removed - hero uses animated gradient blobs instead of static image
+import Image from "next/image";
 import GardenAnimation from "@/components/GardenAnimation";
 import { motion } from "framer-motion";
 
@@ -122,6 +122,18 @@ export default function Home() {
             HERO SECTION - Split Layout: Text Left, Cards Right
             ============================================ */}
         <section className="min-h-screen flex items-center px-6 md:px-12 pt-28 pb-16 relative overflow-hidden">
+          {/* Hero background watercolor */}
+          <div className="absolute inset-0 z-0 pointer-events-none select-none">
+            <Image
+              src="/images/accents/hero-watercolor-bg.png"
+              alt=""
+              fill
+              className="object-cover opacity-40"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-ansar-cream/30 via-transparent to-ansar-cream/70" />
+          </div>
+
           {/* Ambient floating shapes - subtle background animation */}
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
             <motion.div

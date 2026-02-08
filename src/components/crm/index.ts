@@ -1,5 +1,7 @@
 export { TabNav } from "./TabNav";
 export type { Tab } from "./TabNav";
+export { DashboardSidebar } from "./DashboardSidebar";
+export type { SidebarNavItem } from "./DashboardSidebar";
 export { DataTable } from "./DataTable";
 export type { Column } from "./DataTable";
 export { SearchBar } from "./SearchBar";

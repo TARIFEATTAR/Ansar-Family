@@ -1,20 +1,20 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useUser, SignOutButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
 import {
-  ArrowLeft, Heart, Users, Link2, LayoutDashboard, Loader2,
+  Heart, Users, Link2, LayoutDashboard, Loader2,
   CheckCircle2, Clock, MapPin, Phone, Mail, Calendar,
-  Sparkles, BookOpen, Eye, LogOut, Copy, CheckCheck, Share2, ExternalLink,
+  Sparkles, BookOpen, Eye, Copy, CheckCheck, Share2, ExternalLink,
   QrCode, X as XIcon, Inbox as InboxIcon,
 } from "lucide-react";
 import {
-  TabNav, StatsRow, StatusBadge, DetailPanel, DetailField,
+  DashboardSidebar, StatsRow, StatusBadge, DetailPanel, DetailField,
 } from "@/components/crm";
-import type { Tab, StatItem } from "@/components/crm";
+import type { SidebarNavItem, StatItem } from "@/components/crm";
 import { InboxTab } from "@/components/messaging";
 import { AnimatePresence, motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
@@ -175,147 +175,95 @@ function AnsarDashboard({
     (p: any) => p.status === "completed" || p.status === "ended"
   );
 
-  const tabs: Tab[] = [
-    { id: "overview", label: "Overview", icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: "inbox", label: "Inbox", icon: <InboxIcon className="w-4 h-4" />, count: inboxUnread || undefined },
-    {
-      id: "pairings",
-      label: "My Seekers",
-      icon: <Heart className="w-4 h-4" />,
-      count: activePairings.length,
-    },
-    { id: "profile", label: "My Profile", icon: <Users className="w-4 h-4" /> },
+  const navItems: SidebarNavItem[] = [
+    { id: "overview", label: "Overview", icon: <LayoutDashboard className="w-[18px] h-[18px]" />, description: "Your dashboard at a glance" },
+    { id: "inbox", label: "Inbox", icon: <InboxIcon className="w-[18px] h-[18px]" />, badge: inboxUnread || undefined, description: "Messages and conversations" },
+    { id: "pairings", label: "My Seekers", icon: <Heart className="w-[18px] h-[18px]" />, badge: activePairings.length || undefined, description: "Your assigned seeker connections" },
+    { id: "profile", label: "My Profile", icon: <Users className="w-[18px] h-[18px]" />, description: "Your volunteer profile details" },
   ];
 
-  return (
-    <main className="min-h-screen bg-ansar-cream">
-      {/* Header */}
-      <header className="px-6 md:px-8 py-4 border-b border-[rgba(61,61,61,0.08)] bg-white">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-ansar-muted hover:text-ansar-charcoal transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <Users className="w-4 h-4 text-ansar-sage-600" />
-            <div>
-              <h1 className="font-heading text-lg text-ansar-charcoal leading-tight">
-                Ansar Dashboard
-              </h1>
-              {organization && (
-                <p className="font-body text-[11px] text-ansar-muted">
-                  {organization.name} &middot; {organization.city}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="font-body text-xs text-ansar-muted hidden sm:inline">
-              {currentUser?.name}
-            </span>
-            <SignOutButton>
-              <button className="flex items-center gap-1.5 text-[12px] text-ansar-muted hover:text-ansar-charcoal border border-[rgba(61,61,61,0.10)] px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors font-body">
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </button>
-            </SignOutButton>
-          </div>
-        </div>
-      </header>
-
-      {/* Shareable Hub Link */}
-      {hubUrl && (
-        <div className="px-6 md:px-8 py-3 bg-ansar-sage-50/60 border-b border-[rgba(61,61,61,0.06)]">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-            <div className="flex items-center gap-2 text-ansar-sage-700">
-              <Share2 className="w-3.5 h-3.5" />
-              <span className="font-body text-xs font-medium">Invite Seekers</span>
-            </div>
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <code className="font-body text-xs text-ansar-charcoal bg-white px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.08)] truncate flex-1 min-w-0">
-                {hubUrl}
-              </code>
-              <button
-                onClick={copyHubLink}
-                className={`flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border transition-all shrink-0 ${
-                  linkCopied
-                    ? "bg-ansar-sage-100 border-ansar-sage-300 text-ansar-sage-700"
-                    : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 hover:border-ansar-sage-300"
-                }`}
-              >
-                {linkCopied ? (
-                  <>
-                    <CheckCheck className="w-3.5 h-3.5" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    Copy Link
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => setShowQR(true)}
-                className="flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 hover:border-ansar-sage-300 transition-all shrink-0 bg-white"
-              >
-                <QrCode className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">QR Code</span>
-              </button>
-              <Link
-                href={`/${organization!.slug}`}
-                target="_blank"
-                className="flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 hover:border-ansar-sage-300 transition-all shrink-0 bg-white"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">View Hub Page</span>
-              </Link>
-            </div>
-            <p className="font-body text-[10px] text-ansar-muted sm:hidden">
-              Share this link with seekers to join your community.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <TabNav tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
-
-      {/* Content */}
-      <div className="px-6 md:px-8 py-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          {activeTab === "overview" && (
-            <OverviewTab
-              firstName={firstName}
-              ansarRecord={ansarRecord}
-              organization={organization}
-              activePairings={activePairings}
-              completedPairings={completedPairings}
-              seekerMap={seekerMap}
-            />
-          )}
-          {activeTab === "inbox" && ansarUserId && (
-            <InboxTab
-              currentUserId={ansarUserId}
-              currentUserName={currentUser?.name ?? "Ansar"}
-              currentUserRole="ansar"
-              organizationId={ansarRecord?.organizationId}
-            />
-          )}
-          {activeTab === "pairings" && (
-            <PairingsTab
-              pairings={pairings}
-              seekerMap={seekerMap}
-              onMarkIntroSent={markIntroSent}
-            />
-          )}
-          {activeTab === "profile" && (
-            <ProfileTab ansarRecord={ansarRecord} organization={organization} />
-          )}
-        </div>
+  // Hub link footer (if org exists)
+  const hubLinkFooter = hubUrl ? (
+    <div className="space-y-2 pb-2">
+      <div className="flex items-center gap-2 text-ansar-sage-700 mb-1">
+        <Share2 className="w-3 h-3" />
+        <span className="font-body text-[10px] font-medium uppercase tracking-wide">Invite Seekers</span>
       </div>
+      <code className="font-body text-[10px] text-ansar-charcoal bg-ansar-sage-50 px-2.5 py-1.5 rounded-lg border border-[rgba(61,61,61,0.06)] block truncate">
+        {hubUrl}
+      </code>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={copyHubLink}
+          className={`flex-1 flex items-center justify-center gap-1 text-[10px] font-body font-medium px-2 py-1.5 rounded-lg border transition-all ${
+            linkCopied
+              ? "bg-ansar-sage-100 border-ansar-sage-300 text-ansar-sage-700"
+              : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50"
+          }`}
+        >
+          {linkCopied ? <><CheckCheck className="w-3 h-3" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
+        </button>
+        <button
+          onClick={() => setShowQR(true)}
+          className="flex items-center justify-center gap-1 text-[10px] font-body font-medium px-2 py-1.5 rounded-lg border border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 transition-all bg-white"
+        >
+          <QrCode className="w-3 h-3" />
+          QR
+        </button>
+        <Link
+          href={`/${organization!.slug}`}
+          target="_blank"
+          className="flex items-center justify-center gap-1 text-[10px] font-body font-medium px-2 py-1.5 rounded-lg border border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 transition-all bg-white"
+        >
+          <ExternalLink className="w-3 h-3" />
+          View
+        </Link>
+      </div>
+    </div>
+  ) : undefined;
+
+  return (
+    <>
+      <DashboardSidebar
+        brandIcon={<Users className="w-4.5 h-4.5 text-white" />}
+        brandTitle="Ansar Dashboard"
+        brandSubtitle={organization ? `${organization.name} \u00B7 ${organization.city}` : "Volunteer Portal"}
+        navItems={navItems}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        userName={currentUser?.name}
+        userRoleLabel="Ansar Volunteer"
+        footerContent={hubLinkFooter}
+      >
+        {activeTab === "overview" && (
+          <OverviewTab
+            firstName={firstName}
+            ansarRecord={ansarRecord}
+            organization={organization}
+            activePairings={activePairings}
+            completedPairings={completedPairings}
+            seekerMap={seekerMap}
+          />
+        )}
+        {activeTab === "inbox" && ansarUserId && (
+          <InboxTab
+            currentUserId={ansarUserId}
+            currentUserName={currentUser?.name ?? "Ansar"}
+            currentUserRole="ansar"
+            organizationId={ansarRecord?.organizationId}
+          />
+        )}
+        {activeTab === "pairings" && (
+          <PairingsTab
+            pairings={pairings}
+            seekerMap={seekerMap}
+            onMarkIntroSent={markIntroSent}
+          />
+        )}
+        {activeTab === "profile" && (
+          <ProfileTab ansarRecord={ansarRecord} organization={organization} />
+        )}
+      </DashboardSidebar>
 
       {/* QR Code Modal */}
       {hubUrl && (
@@ -326,7 +274,7 @@ function AnsarDashboard({
           orgName={organization?.name || "Community"}
         />
       )}
-    </main>
+    </>
   );
 }
 

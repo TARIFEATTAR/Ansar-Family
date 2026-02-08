@@ -1,25 +1,25 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useUser, UserButton, SignOutButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import Link from "next/link";
 import { useParams, notFound } from "next/navigation";
 import {
-  ArrowLeft, Heart, Users, Building2, Link2, MessageSquare,
+  Heart, Users, Building2, Link2, MessageSquare,
   LayoutDashboard, Loader2, Trash2, Eye, Check,
   UserPlus, Unlink, Send, Phone, Mail, MapPin, Clock,
-  X as XIcon, BookUser, LogOut, Copy, CheckCheck, Share2, ExternalLink,
+  X as XIcon, BookUser, Copy, CheckCheck, Share2, ExternalLink,
   QrCode, ChevronDown, ChevronUp, Sparkles, CheckCircle2, Circle,
   Inbox as InboxIcon, MailPlus, CheckSquare,
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import {
-  TabNav, DataTable, SearchBar, StatusBadge,
+  DashboardSidebar, DataTable, SearchBar, StatusBadge,
   StatsRow, DetailPanel, DetailField, EditableField,
 } from "@/components/crm";
-import type { Tab, Column, StatItem } from "@/components/crm";
+import type { SidebarNavItem, Column, StatItem } from "@/components/crm";
 import { InboxTab } from "@/components/messaging";
 import { AnimatePresence, motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
@@ -180,15 +180,21 @@ function PartnerDashboard({
   // Counts
   const pendingCount = readyToPair.length + ansars.filter((a: any) => a.status === "pending").length;
 
-  const tabs: Tab[] = [
-    { id: "overview", label: "Overview", icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: "inbox", label: "Inbox", icon: <InboxIcon className="w-4 h-4" />, count: inboxUnread || undefined },
-    { id: "seekers", label: "Seekers", icon: <Heart className="w-4 h-4" />, count: seekers.length },
-    { id: "ansars", label: "Ansars", icon: <Users className="w-4 h-4" />, count: ansars.length },
-    { id: "contacts", label: "Contacts", icon: <BookUser className="w-4 h-4" />, count: contacts.length },
-    { id: "pairings", label: "Pairings", icon: <Link2 className="w-4 h-4" />, count: pairings.length },
-    { id: "messages", label: "Notification Log", icon: <MessageSquare className="w-4 h-4" />, count: orgMessages.length },
+  const navItems: SidebarNavItem[] = [
+    { id: "overview", label: "Overview", icon: <LayoutDashboard className="w-[18px] h-[18px]" />, description: "Dashboard summary and activity" },
+    { id: "inbox", label: "Inbox", icon: <InboxIcon className="w-[18px] h-[18px]" />, badge: inboxUnread || undefined, description: "Messages and conversations" },
+    { id: "seekers", label: "Seekers", icon: <Heart className="w-[18px] h-[18px]" />, badge: seekers.length, description: "People seeking support and community" },
+    { id: "ansars", label: "Ansars", icon: <Users className="w-[18px] h-[18px]" />, badge: ansars.length, description: "Volunteer companions and mentors" },
+    { id: "contacts", label: "Contacts", icon: <BookUser className="w-[18px] h-[18px]" />, badge: contacts.length, description: "Community members and stakeholders" },
+    { id: "pairings", label: "Pairings", icon: <Link2 className="w-[18px] h-[18px]" />, badge: pairings.length, description: "Seeker-Ansar connections" },
+    { id: "messages", label: "Notification Log", icon: <MessageSquare className="w-[18px] h-[18px]" />, badge: orgMessages.length, description: "SMS and email notification log" },
   ];
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    setSearch("");
+    setStatusFilter("");
+  };
 
   // Handlers
   const handleCreatePairing = useCallback(async (seekerId: Id<"intakes">, ansarId: Id<"ansars">) => {
@@ -237,192 +243,152 @@ function PartnerDashboard({
     informal_circle: "Community Circle", other: "Community",
   };
 
+  // Hub link sidebar footer
+  const hubLinkFooter = (
+    <div className="space-y-2 pb-2">
+      <div className="flex items-center gap-2 text-ansar-sage-700 mb-1">
+        <Share2 className="w-3 h-3" />
+        <span className="font-body text-[10px] font-medium uppercase tracking-wide">Hub Link</span>
+      </div>
+      <code className="font-body text-[10px] text-ansar-charcoal bg-ansar-sage-50 px-2.5 py-1.5 rounded-lg border border-[rgba(61,61,61,0.06)] block truncate">
+        {hubUrl}
+      </code>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={copyHubLink}
+          className={`flex-1 flex items-center justify-center gap-1 text-[10px] font-body font-medium px-2 py-1.5 rounded-lg border transition-all ${
+            linkCopied
+              ? "bg-ansar-sage-100 border-ansar-sage-300 text-ansar-sage-700"
+              : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50"
+          }`}
+        >
+          {linkCopied ? <><CheckCheck className="w-3 h-3" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
+        </button>
+        <button
+          onClick={() => setShowQR(true)}
+          className="flex items-center justify-center gap-1 text-[10px] font-body font-medium px-2 py-1.5 rounded-lg border border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 transition-all bg-white"
+        >
+          <QrCode className="w-3 h-3" />
+          QR
+        </button>
+        <Link
+          href={`/${organization.slug}`}
+          target="_blank"
+          className="flex items-center justify-center gap-1 text-[10px] font-body font-medium px-2 py-1.5 rounded-lg border border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 transition-all bg-white"
+        >
+          <ExternalLink className="w-3 h-3" />
+          View
+        </Link>
+      </div>
+      {pendingCount > 0 && (
+        <div className="bg-ansar-terracotta-50 text-ansar-terracotta-700 text-[10px] font-body font-medium px-2.5 py-1.5 rounded-lg text-center">
+          {pendingCount} pending action{pendingCount !== 1 ? "s" : ""}
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <main className="min-h-screen bg-ansar-cream">
-      {/* Header */}
-      <header className="px-6 md:px-8 py-4 border-b border-[rgba(61,61,61,0.08)] bg-white">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-ansar-muted hover:text-ansar-charcoal transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <Building2 className="w-4 h-4 text-ansar-sage-600" />
-            <div>
-              <h1 className="font-heading text-lg text-ansar-charcoal leading-tight">{organization.name}</h1>
-              <p className="font-body text-[11px] text-ansar-muted">
-                {orgTypeLabel[organization.type] || organization.type} &middot; {organization.city} &middot; Level {organization.hubLevel}
-              </p>
-            </div>
-            {pendingCount > 0 && (
-              <span className="bg-ansar-terracotta-100 text-ansar-terracotta-700 text-[10px] font-body font-medium px-2 py-0.5 rounded-full">
-                {pendingCount} pending
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            {currentUser && (
-              <span className="font-body text-xs text-ansar-muted hidden sm:inline">
-                {currentUser.name}
-              </span>
-            )}
-            <SignOutButton>
-              <button className="flex items-center gap-1.5 text-[12px] text-ansar-muted hover:text-ansar-charcoal border border-[rgba(61,61,61,0.10)] px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors font-body">
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </button>
-            </SignOutButton>
-          </div>
-        </div>
-      </header>
-
-      {/* Shareable Hub Link */}
-      <div className="px-6 md:px-8 py-3 bg-ansar-sage-50/60 border-b border-[rgba(61,61,61,0.06)]">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 text-ansar-sage-700">
-            <Share2 className="w-3.5 h-3.5" />
-            <span className="font-body text-xs font-medium">Your Hub Link</span>
-          </div>
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <code className="font-body text-xs text-ansar-charcoal bg-white px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.08)] truncate flex-1 min-w-0">
-              {hubUrl}
-            </code>
-            <button
-              onClick={copyHubLink}
-              className={`flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border transition-all shrink-0 ${
-                linkCopied
-                  ? "bg-ansar-sage-100 border-ansar-sage-300 text-ansar-sage-700"
-                  : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 hover:border-ansar-sage-300"
-              }`}
-            >
-              {linkCopied ? (
-                <>
-                  <CheckCheck className="w-3.5 h-3.5" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" />
-                  Copy Link
-                </>
-              )}
-            </button>
-            <button
-              onClick={() => setShowQR(true)}
-              className="flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 hover:border-ansar-sage-300 transition-all shrink-0 bg-white"
-            >
-              <QrCode className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">QR Code</span>
-            </button>
-            <Link
-              href={`/${organization.slug}`}
-              target="_blank"
-              className="flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 hover:border-ansar-sage-300 transition-all shrink-0 bg-white"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">View Hub Page</span>
-            </Link>
-          </div>
-          <p className="font-body text-[10px] text-ansar-muted sm:hidden">
-            Share this link with seekers to join through your hub.
-          </p>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <TabNav tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
-
-      {/* Content */}
-      <div className="px-6 md:px-8 py-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          {activeTab === "overview" && (
-            <PartnerOverviewTab
-              seekers={seekers}
-              ansars={ansars}
-              contacts={contacts}
-              pairings={pairings}
-              pairingStats={pairingStats}
-              readyToPair={readyToPair}
-              orgMessages={orgMessages}
-              orgSlug={organization.slug}
-              hubUrl={hubUrl}
-            />
-          )}
-          {activeTab === "inbox" && partnerUserId && (
-            <InboxTab
-              currentUserId={partnerUserId}
-              currentUserName={currentUser?.name ?? "Partner Lead"}
-              currentUserRole="partner_lead"
-              organizationId={organization._id}
-            />
-          )}
-          {activeTab === "seekers" && (
-            <PartnerSeekersTab
-              seekers={seekers}
-              availableAnsars={availableAnsars}
-              search={search}
-              setSearch={setSearch}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              onPair={handleCreatePairing}
-              onDelete={handleDeleteSeeker}
-              onUpdate={updateIntake}
-              onSendMessage={sendMessageMutation}
-              onBulkEmail={sendBulkEmailMutation}
-              senderName={currentUser?.name || "Partner Lead"}
-              organizationName={organization.name}
-            />
-          )}
-          {activeTab === "ansars" && (
-            <PartnerAnsarsTab
-              ansars={ansars}
-              search={search}
-              setSearch={setSearch}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              onApprove={handleApproveAnsar}
-              onUpdate={updateAnsar}
-              onBulkEmail={sendBulkEmailMutation}
-              senderName={currentUser?.name || "Partner Lead"}
-              organizationName={organization.name}
-            />
-          )}
-          {activeTab === "contacts" && (
-            <PartnerContactsTab
-              contacts={contacts}
-              organizationId={organization._id}
-              search={search}
-              setSearch={setSearch}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              onCreate={createContact}
-              onUpdate={updateContact}
-              onDelete={handleDeleteContact}
-            />
-          )}
-          {activeTab === "pairings" && (
-            <PartnerPairingsTab
-              pairings={pairings}
-              seekers={seekers}
-              ansars={ansars}
-              search={search}
-              setSearch={setSearch}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              onMarkIntroSent={handleMarkIntroSent}
-              onUnpair={handleUnpair}
-            />
-          )}
-          {activeTab === "messages" && (
-            <PartnerMessagesTab
-              messages={orgMessages}
-              search={search}
-              setSearch={setSearch}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-            />
-          )}
-        </div>
-      </div>
+    <>
+      <DashboardSidebar
+        brandIcon={<Building2 className="w-4.5 h-4.5 text-white" />}
+        brandTitle={organization.name}
+        brandSubtitle={`${orgTypeLabel[organization.type] || organization.type} \u00B7 ${organization.city}`}
+        navItems={navItems}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        userName={currentUser?.name}
+        userRoleLabel="Partner Lead"
+        footerContent={hubLinkFooter}
+      >
+        {activeTab === "overview" && (
+          <PartnerOverviewTab
+            seekers={seekers}
+            ansars={ansars}
+            contacts={contacts}
+            pairings={pairings}
+            pairingStats={pairingStats}
+            readyToPair={readyToPair}
+            orgMessages={orgMessages}
+            orgSlug={organization.slug}
+            hubUrl={hubUrl}
+          />
+        )}
+        {activeTab === "inbox" && partnerUserId && (
+          <InboxTab
+            currentUserId={partnerUserId}
+            currentUserName={currentUser?.name ?? "Partner Lead"}
+            currentUserRole="partner_lead"
+            organizationId={organization._id}
+          />
+        )}
+        {activeTab === "seekers" && (
+          <PartnerSeekersTab
+            seekers={seekers}
+            availableAnsars={availableAnsars}
+            search={search}
+            setSearch={setSearch}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            onPair={handleCreatePairing}
+            onDelete={handleDeleteSeeker}
+            onUpdate={updateIntake}
+            onSendMessage={sendMessageMutation}
+            onBulkEmail={sendBulkEmailMutation}
+            senderName={currentUser?.name || "Partner Lead"}
+            organizationName={organization.name}
+          />
+        )}
+        {activeTab === "ansars" && (
+          <PartnerAnsarsTab
+            ansars={ansars}
+            search={search}
+            setSearch={setSearch}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            onApprove={handleApproveAnsar}
+            onUpdate={updateAnsar}
+            onBulkEmail={sendBulkEmailMutation}
+            senderName={currentUser?.name || "Partner Lead"}
+            organizationName={organization.name}
+          />
+        )}
+        {activeTab === "contacts" && (
+          <PartnerContactsTab
+            contacts={contacts}
+            organizationId={organization._id}
+            search={search}
+            setSearch={setSearch}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            onCreate={createContact}
+            onUpdate={updateContact}
+            onDelete={handleDeleteContact}
+          />
+        )}
+        {activeTab === "pairings" && (
+          <PartnerPairingsTab
+            pairings={pairings}
+            seekers={seekers}
+            ansars={ansars}
+            search={search}
+            setSearch={setSearch}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            onMarkIntroSent={handleMarkIntroSent}
+            onUnpair={handleUnpair}
+          />
+        )}
+        {activeTab === "messages" && (
+          <PartnerMessagesTab
+            messages={orgMessages}
+            search={search}
+            setSearch={setSearch}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+          />
+        )}
+      </DashboardSidebar>
 
       {/* QR Code Modal */}
       <QRCodeModal
@@ -431,7 +397,7 @@ function PartnerDashboard({
         url={hubUrl}
         orgName={organization.name}
       />
-    </main>
+    </>
   );
 }
 

@@ -150,7 +150,7 @@ export default function NewMuslimResourcesPage() {
 
           {/* Core Framing Message */}
           <motion.div
-            className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-2xl p-8 max-w-2xl mx-auto"
+            className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-lg p-8 max-w-2xl mx-auto"
             variants={fadeInUp}
             initial="hidden"
             animate="visible"
@@ -174,7 +174,7 @@ export default function NewMuslimResourcesPage() {
       <section className="px-6 md:px-12 pb-16">
         <div className="max-w-3xl mx-auto">
           <motion.div
-            className="bg-white rounded-2xl border border-[rgba(61,61,61,0.08)] overflow-hidden"
+            className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] overflow-hidden"
             variants={fadeInUp}
             initial="hidden"
             animate="visible"
@@ -260,7 +260,7 @@ export default function NewMuslimResourcesPage() {
 
           {/* Post-video reminder */}
           <motion.div
-            className="mt-8 bg-ansar-sage-50 rounded-xl p-6 border border-ansar-sage-200"
+            className="mt-8 bg-ansar-sage-50 rounded-lg p-6 border border-ansar-sage-200"
             variants={fadeInUp}
             initial="hidden"
             whileInView="visible"
@@ -279,7 +279,7 @@ export default function NewMuslimResourcesPage() {
       <section className="px-6 md:px-12 pb-16">
         <div className="max-w-3xl mx-auto">
           <motion.div
-            className="bg-white rounded-2xl border border-[rgba(61,61,61,0.08)] overflow-hidden"
+            className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] overflow-hidden"
             variants={fadeInUp}
             initial="hidden"
             whileInView="visible"
@@ -337,7 +337,7 @@ export default function NewMuslimResourcesPage() {
       <section className="px-6 md:px-12 pb-24">
         <div className="max-w-3xl mx-auto">
           <motion.div
-            className="bg-ansar-sage-50 rounded-2xl p-10 text-center border border-ansar-sage-200"
+            className="bg-ansar-sage-50 rounded-lg p-10 text-center border border-ansar-sage-200"
             variants={fadeInUp}
             initial="hidden"
             whileInView="visible"
@@ -398,7 +398,7 @@ function VideoCard({ video, index }: { video: typeof videoSeries[0]; index: numb
 
   return (
     <motion.div
-      className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] overflow-hidden"
+      className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] overflow-hidden"
       variants={fadeInUp}
       initial="hidden"
       whileInView="visible"
@@ -464,7 +464,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] overflow-hidden">
+    <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-ansar-sage-50/30 transition-colors"

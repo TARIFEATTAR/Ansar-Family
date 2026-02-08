@@ -99,7 +99,7 @@ export function MessageBubble({
 
         {/* Message body */}
         <div
-          className={`px-3.5 py-2.5 rounded-xl border ${bubbleColor} ${
+          className={`px-3.5 py-2.5 rounded-lg border ${bubbleColor} ${
             isMine ? "rounded-tr-sm" : "rounded-tl-sm"
           }`}
         >

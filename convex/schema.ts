@@ -357,6 +357,43 @@ export default defineSchema({
     .index("by_date", ["date"]),
 
   // ═══════════════════════════════════════════════════════════════
+  // HUB RESOURCES — Videos, articles & links managed by partner hubs
+  // ═══════════════════════════════════════════════════════════════
+  hub_resources: defineTable({
+    // Content
+    title: v.string(),
+    url: v.string(),                        // YouTube URL, article URL, etc.
+    description: v.optional(v.string()),
+    type: v.union(
+      v.literal("video"),
+      v.literal("article"),
+      v.literal("link")
+    ),
+
+    // Video-specific (auto-extracted from YouTube URLs)
+    videoId: v.optional(v.string()),         // e.g. "dQw4w9WgXcQ"
+    thumbnailUrl: v.optional(v.string()),    // YouTube thumbnail
+
+    // Targeting
+    targetType: v.union(
+      v.literal("all"),                      // All seekers in this hub
+      v.literal("specific")                  // Specific seeker only
+    ),
+    targetSeekerId: v.optional(v.id("intakes")),  // When targetType is "specific"
+
+    // Ownership
+    organizationId: v.id("organizations"),
+    createdBy: v.id("users"),
+
+    // Status
+    isActive: v.boolean(),
+    order: v.optional(v.number()),           // For custom ordering
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_type", ["type"])
+    .index("by_target_seeker", ["targetSeekerId"]),
+
+  // ═══════════════════════════════════════════════════════════════
   // CONTACTS — CRM contacts for community members
   // ═══════════════════════════════════════════════════════════════
   contacts: defineTable({

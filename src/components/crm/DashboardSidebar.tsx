@@ -121,7 +121,7 @@ export function DashboardSidebar({
         {/* Brand */}
         <div className="px-5 py-5 border-b border-[rgba(61,61,61,0.06)]">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className={`w-9 h-9 rounded-xl ${iconBg} flex items-center justify-center shadow-sm`}>
+            <div className={`w-9 h-9 rounded-lg ${iconBg} flex items-center justify-center shadow-sm`}>
               {brandIcon}
             </div>
             <div>

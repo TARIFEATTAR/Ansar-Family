@@ -76,7 +76,7 @@ export function DataTable<T extends Record<string, unknown>>({
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.06)] py-16 px-8 text-center">
+      <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] py-16 px-8 text-center">
         {emptyIcon && (
           <div className="flex justify-center mb-4 text-ansar-sage-200">
             {emptyIcon}
@@ -93,7 +93,7 @@ export function DataTable<T extends Record<string, unknown>>({
   return (
     <>
       {/* Desktop Table */}
-      <div className="hidden md:block bg-white rounded-xl border border-[rgba(61,61,61,0.06)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+      <div className="hidden md:block bg-white rounded-lg border border-[rgba(61,61,61,0.06)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
         {/* Row count */}
         <div className="px-5 py-2.5 border-b border-[rgba(61,61,61,0.04)] bg-[#FDFCFA]">
           <span className="font-body text-[11px] text-ansar-muted">
@@ -108,7 +108,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 {columns.map((col) => (
                   <th
                     key={col.key}
-                    className={`px-5 py-3.5 text-left font-body text-[11px] font-medium uppercase tracking-wider text-ansar-muted bg-[#FDFCFA] ${
+                    className={`px-5 py-3 text-left font-body text-[11px] font-medium uppercase tracking-wider text-ansar-muted bg-[#FDFCFA] ${
                       col.sortable
                         ? "cursor-pointer select-none hover:text-ansar-gray transition-colors"
                         : ""
@@ -134,7 +134,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   </th>
                 ))}
                 {actions && (
-                  <th className="px-5 py-3.5 text-right font-body text-[11px] font-medium uppercase tracking-wider text-ansar-muted bg-[#FDFCFA] w-28">
+                  <th className="px-5 py-3 text-right font-body text-[11px] font-medium uppercase tracking-wider text-ansar-muted bg-[#FDFCFA] w-28">
                     Actions
                   </th>
                 )}
@@ -154,14 +154,14 @@ export function DataTable<T extends Record<string, unknown>>({
                   {columns.map((col) => (
                     <td
                       key={col.key}
-                      className={`px-5 py-4 font-body text-sm text-ansar-charcoal ${col.className || ""}`}
+                      className={`px-5 py-3 font-body text-sm text-ansar-charcoal ${col.className || ""}`}
                     >
                       {col.render(row)}
                     </td>
                   ))}
                   {actions && (
                     <td
-                      className="px-5 py-4 text-right"
+                      className="px-5 py-3 text-right"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {actions(row)}
@@ -194,7 +194,7 @@ export function DataTable<T extends Record<string, unknown>>({
             <div
               key={String(row[keyField]) || idx}
               onClick={() => onRowClick?.(row)}
-              className="bg-white rounded-xl border border-[rgba(61,61,61,0.06)] p-4 space-y-2.5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]"
+              className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] p-4 space-y-2.5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]"
             >
               {columns.map((col) => (
                 <div

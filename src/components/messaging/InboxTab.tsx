@@ -74,7 +74,7 @@ export function InboxTab({
   // If a conversation is selected, show the thread view
   if (selectedConversationId) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-[rgba(61,61,61,0.06)] overflow-hidden" style={{ height: "calc(100vh - 260px)", minHeight: "500px" }}>
+      <div className="bg-white rounded-lg shadow-sm border border-[rgba(61,61,61,0.06)] overflow-hidden" style={{ height: "calc(100vh - 260px)", minHeight: "500px" }}>
         <ConversationView
           conversationId={selectedConversationId}
           currentUserId={currentUserId}
@@ -90,7 +90,7 @@ export function InboxTab({
     <div className="space-y-4">
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl p-4 border border-[rgba(61,61,61,0.06)]">
+        <div className="bg-white rounded-lg p-4 border border-[rgba(61,61,61,0.06)]">
           <div className="flex items-center gap-2 mb-1">
             <MessageSquare className="w-4 h-4 text-ansar-sage-600" />
             <span className="font-body text-[11px] text-ansar-muted uppercase tracking-wider">
@@ -101,7 +101,7 @@ export function InboxTab({
             {inbox.length}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-[rgba(61,61,61,0.06)]">
+        <div className="bg-white rounded-lg p-4 border border-[rgba(61,61,61,0.06)]">
           <div className="flex items-center gap-2 mb-1">
             <Inbox className="w-4 h-4 text-amber-500" />
             <span className="font-body text-[11px] text-ansar-muted uppercase tracking-wider">
@@ -113,7 +113,7 @@ export function InboxTab({
           </p>
         </div>
         {canBroadcast && (
-          <div className="bg-white rounded-xl p-4 border border-[rgba(61,61,61,0.06)]">
+          <div className="bg-white rounded-lg p-4 border border-[rgba(61,61,61,0.06)]">
             <div className="flex items-center gap-2 mb-1">
               <Megaphone className="w-4 h-4 text-purple-500" />
               <span className="font-body text-[11px] text-ansar-muted uppercase tracking-wider">
@@ -136,12 +136,12 @@ export function InboxTab({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[rgba(61,61,61,0.08)] rounded-xl font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[rgba(61,61,61,0.08)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
           />
         </div>
         <button
           onClick={() => setShowCompose(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-ansar-sage-600 text-white rounded-xl font-body text-sm font-medium hover:bg-ansar-sage-700 transition-colors shrink-0"
+          className="flex items-center gap-2 px-4 py-2.5 bg-ansar-sage-600 text-white rounded-lg font-body text-sm font-medium hover:bg-ansar-sage-700 transition-colors shrink-0"
         >
           <PenSquare className="w-4 h-4" />
           <span className="hidden sm:inline">Compose</span>
@@ -149,7 +149,7 @@ export function InboxTab({
       </div>
 
       {/* Conversation list */}
-      <div className="bg-white rounded-2xl shadow-sm border border-[rgba(61,61,61,0.06)] overflow-hidden divide-y divide-[rgba(61,61,61,0.06)]">
+      <div className="bg-white rounded-lg shadow-sm border border-[rgba(61,61,61,0.06)] overflow-hidden divide-y divide-[rgba(61,61,61,0.06)]">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6">
             <Inbox className="w-10 h-10 text-ansar-muted/40 mb-4" />

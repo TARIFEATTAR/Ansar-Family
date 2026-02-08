@@ -46,6 +46,43 @@ export const upsertFromClerk = mutation({
           role: "super_admin",
           isActive: true,
         });
+        return existingByClerkId._id;
+      }
+
+      // Self-heal: If user is currently a "seeker" but has a partner/ansar application, upgrade them.
+      // This fixes users who signed up before their application was approved or matched.
+      if (existingByClerkId.role === "seeker") {
+        // Check partner applications
+        const partnerApp = await ctx.db
+          .query("partners")
+          .withIndex("by_email", (q) => q.eq("leadEmail", email))
+          .first();
+
+        if (partnerApp && (partnerApp.status === "approved" || partnerApp.status === "active")) {
+          await ctx.db.patch(existingByClerkId._id, {
+            role: "partner_lead",
+            organizationId: partnerApp.organizationId,
+            isActive: true,
+          });
+          console.log(`✅ Upgraded user ${existingByClerkId._id} to partner_lead based on app`);
+          return existingByClerkId._id;
+        }
+
+        // Check ansar applications
+        const ansarApp = await ctx.db
+          .query("ansars")
+          .withIndex("by_email", (q) => q.eq("email", email))
+          .first();
+
+        if (ansarApp && (ansarApp.status === "approved" || ansarApp.status === "active")) {
+          await ctx.db.patch(existingByClerkId._id, {
+            role: "ansar",
+            organizationId: ansarApp.organizationId,
+            isActive: true,
+          });
+          console.log(`✅ Upgraded user ${existingByClerkId._id} to ansar based on app`);
+          return existingByClerkId._id;
+        }
       }
 
       return existingByClerkId._id;

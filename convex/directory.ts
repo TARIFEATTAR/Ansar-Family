@@ -20,16 +20,23 @@ export const getStats = query({
     const ansars = await ctx.db.query("ansars").collect();
     const intakes = await ctx.db.query("intakes").collect();
 
-    // Count only ansars/seekers that belong to an active org
+    // Set of active org IDs for filtering
     const activeOrgIds = new Set(orgs.map((o) => o._id));
 
-    const ansarCount = ansars.filter(
-      (a) => a.organizationId && activeOrgIds.has(a.organizationId)
-    ).length;
+    // Count only ansars/seekers that belong to an active org
+    let ansarCount = 0;
+    for (const a of ansars) {
+      if (a.organizationId && activeOrgIds.has(a.organizationId)) {
+        ansarCount++;
+      }
+    }
 
-    const seekerCount = intakes.filter(
-      (i) => i.organizationId && activeOrgIds.has(i.organizationId)
-    ).length;
+    let seekerCount = 0;
+    for (const i of intakes) {
+      if (i.organizationId && activeOrgIds.has(i.organizationId)) {
+        seekerCount++;
+      }
+    }
 
     return {
       hubCount: orgs.length,

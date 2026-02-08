@@ -464,7 +464,7 @@ export default function PartnerVolunteerPage() {
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-6 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-start gap-3"
+              className="mt-6 bg-[#fef2f2] border border-[#fecaca] rounded-lg px-4 py-3 flex items-start gap-3"
             >
               <span className="text-ansar-error mt-0.5 shrink-0">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="currentColor" fillOpacity="0.15"/><path d="M8 4.5v4M8 10.5h.007" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>

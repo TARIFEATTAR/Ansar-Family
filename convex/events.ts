@@ -29,15 +29,12 @@ export const getByOrganization = query({
   },
 });
 
-/** Get all upcoming events (for admin view) */
+/** Get all events (for admin view — includes past and inactive) */
 export const listAll = query({
   args: {},
   handler: async (ctx) => {
-    const today = new Date().toISOString().split("T")[0];
     const events = await ctx.db.query("events").collect();
-    return events
-      .filter((e) => e.isActive && e.date >= today)
-      .sort((a, b) => a.date.localeCompare(b.date));
+    return events.sort((a, b) => b.date.localeCompare(a.date));
   },
 });
 

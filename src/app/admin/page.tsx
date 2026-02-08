@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Shield, Loader2, Trash2, CheckCircle2,
   Phone, Mail, MapPin, Clock, Eye, Check, X as XIcon, BookUser,
   UserCog, Menu, ChevronRight, TrendingUp, Activity, LogOut,
-  Copy, ExternalLink, Inbox,
+  Copy, ExternalLink, Inbox, Calendar, Plus, Pencil,
 } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
 import { useEffect, useMemo, useState, useCallback } from "react";
@@ -97,6 +97,7 @@ const navConfig: Omit<NavItem, "icon">[] = [
   { id: "partners", label: "Partners", description: "Community Hub organizations" },
   { id: "users", label: "Users", description: "Authenticated platform users" },
   { id: "pairings", label: "Pairings", description: "Seeker-Ansar connections" },
+  { id: "events", label: "Events", description: "Community events across all hubs" },
   { id: "messages", label: "Notification Log", description: "SMS and email notification log" },
 ];
 
@@ -109,6 +110,7 @@ const navIcons: Record<string, React.ReactNode> = {
   partners: <Building2 className="w-[18px] h-[18px]" />,
   users: <UserCog className="w-[18px] h-[18px]" />,
   pairings: <Link2 className="w-[18px] h-[18px]" />,
+  events: <Calendar className="w-[18px] h-[18px]" />,
   messages: <MessageSquare className="w-[18px] h-[18px]" />,
 };
 
@@ -131,6 +133,7 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
   const messages = useQuery(api.messages.listAll) ?? [];
   const users = useQuery(api.users.listAll) ?? [];
   const organizations = useQuery(api.organizations.listActive) ?? [];
+  const allEvents = useQuery(api.events.listAll) ?? [];
 
   // Inbox — get the current admin user's ID for inbox queries
   const adminUserId = currentUser?._id;
@@ -158,6 +161,7 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
   const createUser = useMutation(api.users.createManual);
   const updateUser = useMutation(api.users.update);
   const deleteUser = useMutation(api.users.deleteUser);
+  const removeEvent = useMutation(api.events.remove);
 
   // Counts per section
   const counts: Record<string, number> = {
@@ -167,6 +171,7 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
     partners: partners.length,
     users: users.length,
     pairings: pairings.length,
+    events: allEvents.length,
     messages: messages.length,
   };
 
@@ -238,7 +243,7 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
         {/* Brand */}
         <div className="px-5 py-5 border-b border-[rgba(61,61,61,0.06)]">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl bg-ansar-sage-600 flex items-center justify-center shadow-sm">
+            <div className="w-9 h-9 rounded-lg bg-ansar-sage-600 flex items-center justify-center shadow-sm">
               <Shield className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
@@ -256,7 +261,7 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navConfig.map((item) => {
             const isActive = activeTab === item.id;
-            const badgeCount = item.id === "inbox" ? inboxUnread : (item.id === "messages" ? counts[item.id] : undefined);
+            const badgeCount = item.id === "inbox" ? inboxUnread : (["messages", "events"].includes(item.id) ? counts[item.id] : undefined);
             return (
               <button
                 key={item.id}
@@ -527,6 +532,19 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
                 setStatusFilter={setStatusFilter}
               />
             )}
+            {activeTab === "events" && (
+              <AdminEventsTab
+                events={allEvents}
+                organizations={organizations}
+                search={search}
+                setSearch={setSearch}
+                onDelete={async (id: Id<"events">) => {
+                  if (confirm("Delete this event? This cannot be undone.")) {
+                    await removeEvent({ eventId: id });
+                  }
+                }}
+              />
+            )}
             {activeTab === "messages" && (
               <MessagesTab
                 messages={messages}
@@ -552,18 +570,33 @@ function OverviewTab({
 }: {
   intakes: any[]; ansars: any[]; contacts: any[]; partners: any[]; users: any[]; pairings: any[]; messages: any[];
 }) {
-  const topStats: StatItem[] = [
-    { label: "Seekers", value: intakes.length, icon: <Heart className="w-4 h-4" />, accent: "terracotta" },
-    { label: "Ansars", value: ansars.length, icon: <Users className="w-4 h-4" />, accent: "sage" },
-    { label: "Contacts", value: contacts.length, icon: <BookUser className="w-4 h-4" />, accent: "ochre" },
-    { label: "Partners", value: partners.length, icon: <Building2 className="w-4 h-4" />, accent: "ochre" },
-  ];
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
 
-  const bottomStats: StatItem[] = [
-    { label: "Users", value: users.length, icon: <UserCog className="w-4 h-4" />, accent: "sage" },
-    { label: "Active Pairings", value: pairings.filter((p) => p.status === "active" || p.status === "pending_intro").length, icon: <Link2 className="w-4 h-4" />, accent: "success" },
-    { label: "Pending Review", value: intakes.filter((i) => i.status === "awaiting_outreach" || i.status === "disconnected").length + ansars.filter((a) => a.status === "pending").length + partners.filter((p) => p.status === "pending").length, icon: <Clock className="w-4 h-4" />, accent: "terracotta" },
-    { label: "Messages Sent", value: messages.filter((m) => m.status === "sent").length, icon: <MessageSquare className="w-4 h-4" />, accent: "muted" },
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
+  const pendingSeekers = intakes.filter((i: any) => i.status === "awaiting_outreach" || i.status === "disconnected").length;
+  const pendingAnsars = ansars.filter((a: any) => a.status === "pending").length;
+  const pendingPartners = partners.filter((p: any) => p.status === "pending").length;
+  const totalPending = pendingSeekers + pendingAnsars + pendingPartners;
+
+  const stats = [
+    { label: "Seekers", value: intakes.length, icon: <Heart className="w-4 h-4" /> },
+    { label: "Ansars", value: ansars.length, icon: <Users className="w-4 h-4" /> },
+    { label: "Partners", value: partners.length, icon: <Building2 className="w-4 h-4" /> },
+    { label: "Pairings", value: pairings.filter((p) => p.status === "active").length, icon: <Link2 className="w-4 h-4" /> },
+    { label: "Users", value: users.length, icon: <UserCog className="w-4 h-4" /> },
+    { label: "Messages", value: messages.length, icon: <MessageSquare className="w-4 h-4" /> },
   ];
 
   const recentSeekers = intakes.slice(0, 5);
@@ -571,136 +604,214 @@ function OverviewTab({
   const recentPairings = pairings.slice(0, 5);
 
   return (
-    <div className="space-y-6">
-      {/* Key Metrics */}
-      <StatsRow stats={topStats} />
-      <StatsRow stats={bottomStats} />
-
-      {/* Recent Activity Grid */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Recent Seekers */}
-        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.06)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-          <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.04)] flex items-center justify-between">
-            <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
-              <Heart className="w-4 h-4 text-ansar-terracotta-500" />
-              Recent Seekers
-            </h3>
-            <span className="font-body text-[10px] font-medium text-ansar-muted uppercase tracking-wider">
-              Last 5
-            </span>
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-8"
+    >
+      {/* Hero Stats Bar */}
+      <motion.div variants={itemVariants}>
+        <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] shadow-sm overflow-hidden">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-y md:divide-y-0 divide-x-0 md:divide-x divide-[rgba(61,61,61,0.06)]">
+            {stats.map((stat, idx) => (
+              <div key={idx} className="px-4 py-4 flex flex-col items-center text-center hover:bg-ansar-cream/30 transition-colors">
+                <span className="font-body text-[10px] font-semibold uppercase tracking-widest text-ansar-muted mb-1.5 flex items-center gap-1.5">
+                  {stat.label}
+                </span>
+                <span className="font-heading text-2xl text-ansar-charcoal leading-none">
+                  {stat.value}
+                </span>
+              </div>
+            ))}
           </div>
-          <div className="divide-y divide-[rgba(61,61,61,0.04)]">
-            {recentSeekers.length === 0 ? (
-              <p className="px-5 py-8 text-center font-body text-sm text-ansar-muted">No seekers yet.</p>
-            ) : (
-              recentSeekers.map((s) => (
-                <div key={s._id} className="px-5 py-3.5 flex items-center justify-between hover:bg-ansar-sage-50/30 transition-colors">
-                  <div className="min-w-0">
-                    <p className="font-body text-sm text-ansar-charcoal font-medium truncate">{s.fullName}</p>
-                    <p className="font-body text-[11px] text-ansar-muted flex items-center gap-1.5 mt-0.5">
-                      <MapPin className="w-3 h-3" />
-                      {s.city}{s.stateRegion ? ` - ${s.stateRegion}` : ""}
-                    </p>
+        </div>
+      </motion.div>
+
+      {/* Main Content Grid */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        
+        {/* Left Column: Primary Feed (2/3) */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Recent Seekers */}
+          <motion.div variants={itemVariants} className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.04)] flex items-center justify-between">
+              <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
+                <span className="w-7 h-7 rounded-full bg-ansar-terracotta-50 flex items-center justify-center">
+                  <Heart className="w-3.5 h-3.5 text-ansar-terracotta-600" />
+                </span>
+                Recent Seekers
+              </h3>
+              <Link href="/admin?tab=seekers" className="text-[11px] font-medium text-ansar-sage-600 hover:text-ansar-sage-700 uppercase tracking-wide">View All</Link>
+            </div>
+            <div className="divide-y divide-[rgba(61,61,61,0.04)]">
+              {recentSeekers.length === 0 ? (
+                <p className="px-6 py-10 text-center font-body text-sm text-ansar-muted">No seekers yet.</p>
+              ) : (
+                recentSeekers.map((s) => (
+                  <div key={s._id} className="px-5 py-3 flex items-center justify-between hover:bg-ansar-cream/30 transition-all group cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      {/* Avatar Circle */}
+                      <div className="w-9 h-9 rounded-full bg-ansar-sage-100 flex items-center justify-center text-ansar-sage-700 font-heading text-xs">
+                        {s.fullName.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-body text-sm text-ansar-charcoal font-medium group-hover:text-ansar-sage-700 transition-colors">
+                          {s.fullName}
+                        </p>
+                        <p className="font-body text-[10px] text-ansar-muted flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-2.5 h-2.5" />
+                          {s.city}{s.stateRegion ? `, ${s.stateRegion}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <StatusBadge status={s.status} size="sm" />
+                      <ChevronRight className="w-3.5 h-3.5 text-ansar-muted/50 group-hover:text-ansar-sage-400 group-hover:translate-x-0.5 transition-all" />
+                    </div>
                   </div>
-                  <StatusBadge status={s.status} />
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+                ))
+              )}
+            </div>
+          </motion.div>
 
-        {/* Recent Ansars */}
-        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.06)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-          <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.04)] flex items-center justify-between">
-            <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
-              <Users className="w-4 h-4 text-ansar-sage-600" />
-              Recent Ansars
-            </h3>
-            <span className="font-body text-[10px] font-medium text-ansar-muted uppercase tracking-wider">
-              Last 5
-            </span>
-          </div>
-          <div className="divide-y divide-[rgba(61,61,61,0.04)]">
-            {recentAnsars.length === 0 ? (
-              <p className="px-5 py-8 text-center font-body text-sm text-ansar-muted">No ansars yet.</p>
-            ) : (
-              recentAnsars.map((a) => (
-                <div key={a._id} className="px-5 py-3.5 flex items-center justify-between hover:bg-ansar-sage-50/30 transition-colors">
-                  <div className="min-w-0">
-                    <p className="font-body text-sm text-ansar-charcoal font-medium truncate">{a.fullName}</p>
-                    <p className="font-body text-[11px] text-ansar-muted flex items-center gap-1.5 mt-0.5">
-                      <MapPin className="w-3 h-3" />
-                      {a.city}
-                    </p>
+          {/* Recent Ansars */}
+          <motion.div variants={itemVariants} className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.04)] flex items-center justify-between">
+              <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
+                <span className="w-7 h-7 rounded-full bg-ansar-sage-50 flex items-center justify-center">
+                  <Users className="w-3.5 h-3.5 text-ansar-sage-600" />
+                </span>
+                Recent Ansars
+              </h3>
+              <Link href="/admin?tab=ansars" className="text-[11px] font-medium text-ansar-sage-600 hover:text-ansar-sage-700 uppercase tracking-wide">View All</Link>
+            </div>
+            <div className="divide-y divide-[rgba(61,61,61,0.04)]">
+              {recentAnsars.length === 0 ? (
+                <p className="px-6 py-10 text-center font-body text-sm text-ansar-muted">No ansars yet.</p>
+              ) : (
+                recentAnsars.map((a) => (
+                  <div key={a._id} className="px-5 py-3 flex items-center justify-between hover:bg-ansar-cream/30 transition-all group cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-ansar-ochre-50 flex items-center justify-center text-ansar-ochre-700 font-heading text-xs">
+                        {a.fullName.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-body text-sm text-ansar-charcoal font-medium group-hover:text-ansar-sage-700 transition-colors">
+                          {a.fullName}
+                        </p>
+                        <p className="font-body text-[10px] text-ansar-muted flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-2.5 h-2.5" />
+                          {a.city}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <StatusBadge status={a.status} size="sm" />
+                      <ChevronRight className="w-3.5 h-3.5 text-ansar-muted/50 group-hover:text-ansar-sage-400 group-hover:translate-x-0.5 transition-all" />
+                    </div>
                   </div>
-                  <StatusBadge status={a.status} />
-                </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+
         </div>
 
-        {/* Recent Pairings */}
-        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.06)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-          <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.04)] flex items-center justify-between">
-            <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
-              <Link2 className="w-4 h-4 text-ansar-sage-600" />
-              Recent Pairings
+        {/* Right Column: System Status (1/3) */}
+        <div className="space-y-6">
+          
+          {/* Pending Actions Card */}
+          <motion.div variants={itemVariants} className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] shadow-sm overflow-hidden p-5">
+            <h3 className="font-heading text-base text-ansar-charcoal mb-4 flex items-center justify-between">
+              <span>Action Items</span>
+              {totalPending > 0 && <span className="bg-ansar-terracotta-100 text-ansar-terracotta-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{totalPending}</span>}
             </h3>
-            <span className="font-body text-[10px] font-medium text-ansar-muted uppercase tracking-wider">
-              Last 5
-            </span>
-          </div>
-          <div className="divide-y divide-[rgba(61,61,61,0.04)]">
-            {recentPairings.length === 0 ? (
-              <p className="px-5 py-8 text-center font-body text-sm text-ansar-muted">No pairings yet.</p>
-            ) : (
-              recentPairings.map((p) => (
-                <div key={p._id} className="px-5 py-3.5 flex items-center justify-between hover:bg-ansar-sage-50/30 transition-colors">
-                  <p className="font-body text-xs text-ansar-muted">
-                    {new Date(p.pairedAt).toLocaleDateString()}
-                  </p>
-                  <StatusBadge status={p.status} />
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-2.5 rounded-md bg-gray-50 hover:bg-ansar-cream/50 transition-colors cursor-pointer group">
+                <div className="flex items-center gap-2.5">
+                  <Heart className="w-3.5 h-3.5 text-ansar-terracotta-500" />
+                  <span className="text-sm font-body text-ansar-charcoal">Seekers to Triage</span>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
+                <span className={`text-xs font-semibold ${pendingSeekers > 0 ? "text-ansar-terracotta-600" : "text-ansar-muted"}`}>
+                  {pendingSeekers}
+                </span>
+              </div>
+              
+              <div className="flex items-center justify-between p-2.5 rounded-md bg-gray-50 hover:bg-ansar-cream/50 transition-colors cursor-pointer group">
+                <div className="flex items-center gap-2.5">
+                  <Users className="w-3.5 h-3.5 text-ansar-ochre-500" />
+                  <span className="text-sm font-body text-ansar-charcoal">Ansars to Approve</span>
+                </div>
+                <span className={`text-xs font-semibold ${pendingAnsars > 0 ? "text-ansar-ochre-600" : "text-ansar-muted"}`}>
+                  {pendingAnsars}
+                </span>
+              </div>
 
-        {/* Message Summary */}
-        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.06)] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-          <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.04)] flex items-center justify-between">
-            <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
-              <Activity className="w-4 h-4 text-ansar-ochre-600" />
-              Message Activity
+              <div className="flex items-center justify-between p-2.5 rounded-md bg-gray-50 hover:bg-ansar-cream/50 transition-colors cursor-pointer group">
+                <div className="flex items-center gap-2.5">
+                  <Building2 className="w-3.5 h-3.5 text-ansar-sage-500" />
+                  <span className="text-sm font-body text-ansar-charcoal">Partners to Review</span>
+                </div>
+                <span className={`text-xs font-semibold ${pendingPartners > 0 ? "text-ansar-sage-600" : "text-ansar-muted"}`}>
+                  {pendingPartners}
+                </span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Recent Pairings List (Compact) */}
+          <motion.div variants={itemVariants} className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-[rgba(61,61,61,0.04)]">
+              <h3 className="font-heading text-sm text-ansar-charcoal flex items-center gap-2">
+                <Link2 className="w-3.5 h-3.5 text-ansar-sage-600" />
+                Latest Pairings
+              </h3>
+            </div>
+            <div className="divide-y divide-[rgba(61,61,61,0.04)]">
+              {recentPairings.map((p) => (
+                <div key={p._id} className="px-5 py-2.5 text-sm">
+                  <div className="flex justify-between items-start mb-0.5">
+                    <span className="font-medium text-xs text-ansar-charcoal">New Pairing</span>
+                    <span className="text-[10px] text-ansar-muted">{new Date(p.pairedAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-ansar-gray">
+                    <span className="bg-ansar-sage-50 px-1.5 py-0.5 rounded text-ansar-sage-700">Active</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Message Activity */}
+          <motion.div variants={itemVariants} className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] shadow-sm overflow-hidden p-5">
+            <h3 className="font-heading text-sm text-ansar-charcoal mb-3 flex items-center gap-2">
+              <Activity className="w-3.5 h-3.5 text-ansar-ochre-600" />
+              System Activity
             </h3>
-          </div>
-          <div className="px-5 py-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="font-body text-sm text-ansar-gray">Total Sent</span>
-              <span className="font-heading text-lg text-ansar-charcoal">{messages.filter(m => m.status === "sent").length}</span>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-ansar-gray">Messages Sent</span>
+                <span className="font-semibold text-ansar-charcoal">{messages.filter(m => m.status === "sent").length}</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-1 overflow-hidden">
+                <div 
+                  className="bg-ansar-sage-500 h-full rounded-full" 
+                  style={{ width: `${(messages.filter(m => m.status === "sent").length / Math.max(messages.length, 1)) * 100}%` }}
+                />
+              </div>
+              <div className="flex gap-3 text-[10px] text-ansar-muted">
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-ansar-sage-500"></span> Success</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-ansar-error"></span> Failed</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-body text-sm text-ansar-gray">Failed</span>
-              <span className="font-heading text-lg text-ansar-error">{messages.filter(m => m.status === "failed").length}</span>
-            </div>
-            <div className="h-px bg-[rgba(61,61,61,0.06)]" />
-            <div className="flex items-center justify-between">
-              <span className="font-body text-sm text-ansar-gray flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5" /> Emails
-              </span>
-              <span className="font-body text-sm text-ansar-charcoal font-medium">{messages.filter(m => m.type === "email").length}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-body text-sm text-ansar-gray flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5" /> SMS
-              </span>
-              <span className="font-body text-sm text-ansar-charcoal font-medium">{messages.filter(m => m.type === "sms").length}</span>
-            </div>
-          </div>
+          </motion.div>
+
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -1454,7 +1565,7 @@ function AdminAddContactModal({ isOpen, onClose, onCreate }: { isOpen: boolean; 
       {isOpen && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 25 }} className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[520px] md:max-h-[85vh] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 25 }} className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[520px] md:max-h-[85vh] bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden">
             <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
               <h3 className="font-heading text-lg text-ansar-charcoal">Add Contact</h3>
               <button onClick={onClose} className="p-1 text-ansar-muted hover:text-ansar-charcoal rounded-lg transition-colors"><XIcon className="w-5 h-5" /></button>
@@ -1641,7 +1752,7 @@ function AddUserModal({ isOpen, onClose, organizations, onCreate }: { isOpen: bo
       {isOpen && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 25 }} className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[520px] md:max-h-[85vh] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 25 }} className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[520px] md:max-h-[85vh] bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden">
             <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
               <h3 className="font-heading text-lg text-ansar-charcoal">Add User</h3>
               <button onClick={onClose} className="p-1 text-ansar-muted hover:text-ansar-charcoal rounded-lg transition-colors"><XIcon className="w-5 h-5" /></button>
@@ -1665,5 +1776,152 @@ function AddUserModal({ isOpen, onClose, organizations, onCreate }: { isOpen: bo
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN EVENTS TAB
+// ═══════════════════════════════════════════════════════════════
+
+function AdminEventsTab({
+  events,
+  organizations,
+  search,
+  setSearch,
+  onDelete,
+}: {
+  events: any[];
+  organizations: any[];
+  search: string;
+  setSearch: (s: string) => void;
+  onDelete: (id: Id<"events">) => void;
+}) {
+  const orgMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const org of organizations) {
+      map[org._id] = org.name;
+    }
+    return map;
+  }, [organizations]);
+
+  const filteredEvents = useMemo(() => {
+    if (!search) return events;
+    const q = search.toLowerCase();
+    return events.filter(
+      (e: any) =>
+        e.title.toLowerCase().includes(q) ||
+        (e.location && e.location.toLowerCase().includes(q)) ||
+        (orgMap[e.organizationId] && orgMap[e.organizationId].toLowerCase().includes(q))
+    );
+  }, [events, search, orgMap]);
+
+  return (
+    <>
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Search events by title, location, or hub..."
+        count={filteredEvents.length}
+        label="events"
+      />
+
+      {filteredEvents.length === 0 ? (
+        <div className="bg-white rounded-lg p-12 shadow-sm text-center">
+          <Calendar className="w-12 h-12 text-ansar-muted/30 mx-auto mb-4" />
+          <h3 className="font-heading text-lg text-ansar-charcoal mb-2">
+            {search ? "No matching events" : "No events yet"}
+          </h3>
+          <p className="font-body text-sm text-ansar-muted max-w-sm mx-auto">
+            {search
+              ? "Try adjusting your search terms."
+              : "Events are created by Partner Hubs and appear on seeker dashboards."}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] overflow-hidden">
+          <div className="divide-y divide-[rgba(61,61,61,0.04)]">
+            {filteredEvents.map((event: any) => {
+              const eventDate = new Date(event.date + "T00:00:00");
+              const month = eventDate.toLocaleDateString("en-US", { month: "short" });
+              const day = eventDate.getDate();
+              const orgName = orgMap[event.organizationId] || "Unknown Hub";
+              const isPast = eventDate < new Date(new Date().toISOString().split("T")[0] + "T00:00:00");
+
+              return (
+                <div
+                  key={event._id}
+                  className={`px-5 py-4 flex items-start gap-4 hover:bg-ansar-sage-50/30 transition-colors ${isPast ? "opacity-60" : ""}`}
+                >
+                  {/* Date badge */}
+                  <div className={`w-14 h-14 rounded-lg flex flex-col items-center justify-center shrink-0 ${
+                    isPast ? "bg-gray-50" : "bg-ansar-sage-50"
+                  }`}>
+                    <span className={`text-[10px] font-body font-medium uppercase leading-none ${
+                      isPast ? "text-ansar-muted" : "text-ansar-sage-600"
+                    }`}>
+                      {month}
+                    </span>
+                    <span className="text-lg font-heading text-ansar-charcoal leading-tight">
+                      {day}
+                    </span>
+                  </div>
+
+                  {/* Event info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-body text-sm text-ansar-charcoal font-medium">
+                          {event.title}
+                          {isPast && (
+                            <span className="ml-2 text-[10px] font-body bg-gray-100 text-ansar-muted px-1.5 py-0.5 rounded-full">
+                              Past
+                            </span>
+                          )}
+                        </p>
+                        <p className="font-body text-xs text-ansar-sage-600 mt-0.5">
+                          <Building2 className="w-3 h-3 inline mr-1 -mt-0.5" />
+                          {orgName}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => onDelete(event._id)}
+                        className="p-1.5 text-ansar-muted hover:text-red-500 rounded-lg transition-colors shrink-0"
+                        title="Delete event"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                      {event.time && (
+                        <span className="font-body text-xs text-ansar-muted flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {event.time}
+                        </span>
+                      )}
+                      {event.location && (
+                        <span className="font-body text-xs text-ansar-muted flex items-center gap-1">
+                          <MapPin className="w-3 h-3" /> {event.location}
+                        </span>
+                      )}
+                      <span className={`text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full ${
+                        event.isActive
+                          ? "bg-green-50 text-green-600"
+                          : "bg-gray-100 text-ansar-muted"
+                      }`}>
+                        {event.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                    {event.description && (
+                      <p className="font-body text-xs text-ansar-muted mt-1.5 line-clamp-2">
+                        {event.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -328,7 +328,7 @@ function AnsarQRCodeModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[380px] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[380px] bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden"
           >
             <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
               <h3 className="font-heading text-lg text-ansar-charcoal">Hub QR Code</h3>
@@ -337,7 +337,7 @@ function AnsarQRCodeModal({
               </button>
             </div>
             <div className="p-6 flex flex-col items-center gap-5">
-              <div className="bg-white p-4 rounded-xl border border-[rgba(61,61,61,0.08)]">
+              <div className="bg-white p-4 rounded-lg border border-[rgba(61,61,61,0.08)]">
                 <QRCodeSVG
                   id="ansar-hub-qr-code"
                   value={url}
@@ -417,9 +417,9 @@ function OverviewTab({
   return (
     <div className="space-y-8">
       {/* Welcome Card */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm border border-[rgba(61,61,61,0.06)]">
+      <div className="bg-white rounded-lg p-8 shadow-sm border border-[rgba(61,61,61,0.06)]">
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-ansar-sage-100 to-ansar-sage-200 rounded-2xl flex items-center justify-center flex-shrink-0">
+          <div className="w-14 h-14 bg-gradient-to-br from-ansar-sage-100 to-ansar-sage-200 rounded-lg flex items-center justify-center flex-shrink-0">
             <Sparkles className="w-7 h-7 text-ansar-sage-600" />
           </div>
           <div className="flex-1">
@@ -440,7 +440,7 @@ function OverviewTab({
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Active Seekers */}
-        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] overflow-hidden">
+        <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] overflow-hidden">
           <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.06)]">
             <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
               <span className="w-2 h-2 bg-ansar-terracotta-600 rounded-full" />
@@ -483,7 +483,7 @@ function OverviewTab({
         </div>
 
         {/* Community Info */}
-        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] overflow-hidden">
+        <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] overflow-hidden">
           <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.06)]">
             <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
               <span className="w-2 h-2 bg-ansar-sage-600 rounded-full" />
@@ -586,7 +586,7 @@ function PairingsTab({
           Active Seekers
         </h3>
         {active.length === 0 ? (
-          <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] p-8 text-center">
+          <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] p-8 text-center">
             <Heart className="w-10 h-10 text-ansar-sage-200 mx-auto mb-3" />
             <p className="font-body text-sm text-ansar-muted">
               No active seekers right now. Your hub will pair you when a seeker is ready.
@@ -597,7 +597,7 @@ function PairingsTab({
             {active.map((p) => (
               <div
                 key={p._id}
-                className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] p-5 hover:border-ansar-sage-300 hover:shadow-sm transition-all"
+                className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] p-5 hover:border-ansar-sage-300 hover:shadow-sm transition-all"
               >
                 <button
                   onClick={() => setSelectedPairing(p)}
@@ -662,7 +662,7 @@ function PairingsTab({
               <button
                 key={p._id}
                 onClick={() => setSelectedPairing(p)}
-                className="w-full text-left bg-white rounded-xl border border-[rgba(61,61,61,0.08)] p-4 hover:border-ansar-sage-200 transition-all opacity-75 hover:opacity-100"
+                className="w-full text-left bg-white rounded-lg border border-[rgba(61,61,61,0.08)] p-4 hover:border-ansar-sage-200 transition-all opacity-75 hover:opacity-100"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -776,7 +776,7 @@ function ProfileTab({
 }) {
   if (!ansarRecord) {
     return (
-      <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] p-8 text-center">
+      <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] p-8 text-center">
         <Users className="w-10 h-10 text-ansar-sage-200 mx-auto mb-3" />
         <p className="font-body text-sm text-ansar-muted">
           Your profile is being set up. Please check back soon.
@@ -800,11 +800,11 @@ function ProfileTab({
   return (
     <div className="space-y-6">
       {/* Profile Card */}
-      <div className="bg-white rounded-2xl border border-[rgba(61,61,61,0.08)] overflow-hidden">
+      <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-ansar-sage-50 to-ansar-sage-100 px-6 py-6 md:px-8">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+            <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center shadow-sm">
               <span className="font-heading text-2xl text-ansar-sage-600">
                 {ansarRecord.fullName.charAt(0).toUpperCase()}
               </span>

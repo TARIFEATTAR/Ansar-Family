@@ -170,7 +170,7 @@ export default function CommunitiesPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by city, state, zip, or hub name..."
-                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/70 backdrop-blur-md border border-white/40 shadow-sm font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted focus:outline-none focus:ring-2 focus:ring-ansar-sage-300 focus:border-transparent transition-all"
+                className="w-full pl-12 pr-4 py-4 rounded-lg bg-white/70 backdrop-blur-md border border-white/40 shadow-sm font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted focus:outline-none focus:ring-2 focus:ring-ansar-sage-300 focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -219,7 +219,7 @@ export default function CommunitiesPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="appearance-none pl-4 pr-10 py-2 rounded-xl bg-white/70 backdrop-blur-md border border-white/40 shadow-sm font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-300 cursor-pointer"
+                className="appearance-none pl-4 pr-10 py-2 rounded-lg bg-white/70 backdrop-blur-md border border-white/40 shadow-sm font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-300 cursor-pointer"
               >
                 {orgTypeOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -286,7 +286,7 @@ export default function CommunitiesPage() {
             </p>
             <Link
               href="/partner"
-              className="inline-flex items-center gap-2 bg-ansar-sage-600 text-white px-6 py-3 rounded-xl font-body text-sm font-medium hover:bg-ansar-sage-700 transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 bg-ansar-sage-600 text-white px-6 py-3 rounded-lg font-body text-sm font-medium hover:bg-ansar-sage-700 transition-colors shadow-sm"
             >
               Register Your Hub
               <ArrowRight className="w-4 h-4" />
@@ -391,7 +391,7 @@ function StatCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 + delay * 0.1, duration: 0.5 }}
-      className="bg-white/70 backdrop-blur-md rounded-2xl border border-white/40 shadow-sm p-5 text-center"
+      className="bg-white/70 backdrop-blur-md rounded-lg border border-white/40 shadow-sm p-5 text-center"
     >
       <div className="flex items-center justify-center gap-2 text-ansar-sage-600 mb-2">
         {icon}
@@ -500,7 +500,7 @@ function HubCard({
 function EmptyState() {
   return (
     <div className="text-center py-20">
-      <div className="w-16 h-16 bg-ansar-sage-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+      <div className="w-16 h-16 bg-ansar-sage-50 rounded-lg flex items-center justify-center mx-auto mb-6">
         <Building2 className="w-8 h-8 text-ansar-sage-600" strokeWidth={1.5} />
       </div>
       <h3 className="font-display text-2xl text-ansar-charcoal mb-3">
@@ -512,7 +512,7 @@ function EmptyState() {
       </p>
       <Link
         href="/partner"
-        className="inline-flex items-center gap-2 bg-ansar-sage-600 text-white px-6 py-3 rounded-xl font-body text-sm font-medium hover:bg-ansar-sage-700 transition-colors shadow-sm"
+        className="inline-flex items-center gap-2 bg-ansar-sage-600 text-white px-6 py-3 rounded-lg font-body text-sm font-medium hover:bg-ansar-sage-700 transition-colors shadow-sm"
       >
         Register the First Hub
         <ArrowRight className="w-4 h-4" />

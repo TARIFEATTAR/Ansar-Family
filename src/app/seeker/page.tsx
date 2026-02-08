@@ -10,7 +10,7 @@ import {
   Loader2, Heart, BookOpen, Video, Users, ArrowRight, CheckCircle2,
   Phone, Mail, MapPin, UserCircle, Building2, Clock,
   MessageSquare, Send, Inbox as InboxIcon, Home, PlayCircle,
-  Calendar, LifeBuoy, ExternalLink,
+  Calendar, LifeBuoy, ExternalLink, FileText,
 } from "lucide-react";
 import { DashboardSidebar, SidebarNavItem } from "@/components/crm";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
@@ -89,6 +89,16 @@ export default function SeekerPortalPage() {
     api.events.getByOrganization,
     orgId ? { organizationId: orgId } : "skip"
   ) ?? [];
+
+  // Get hub resources (videos, articles, links) for this seeker
+  const hubResources = useQuery(
+    api.hubResources.listForSeeker,
+    orgId
+      ? { organizationId: orgId, seekerId: seekerIntake?._id }
+      : "skip"
+  ) ?? [];
+  const hubVideos = hubResources.filter((r: any) => r.type === "video");
+  const hubArticles = hubResources.filter((r: any) => r.type === "article" || r.type === "link");
 
   // Inbox
   const seekerUserId = currentUser?._id as Id<"users"> | undefined;
@@ -184,6 +194,7 @@ export default function SeekerPortalPage() {
           seekerIntake={seekerIntake}
           pairing={pairing}
           events={events}
+          hubVideos={hubVideos}
           inboxUnread={inboxUnread}
           onNavigate={setActiveTab}
         />
@@ -214,7 +225,7 @@ export default function SeekerPortalPage() {
       )}
 
       {/* ═══════ LEARN TAB ═══════ */}
-      {activeTab === "learn" && <LearnTab />}
+      {activeTab === "learn" && <LearnTab hubVideos={hubVideos} hubArticles={hubArticles} />}
 
       {/* ═══════ SUPPORT TAB ═══════ */}
       {activeTab === "support" && <SupportTab />}
@@ -233,6 +244,7 @@ function HomeTab({
   seekerIntake,
   pairing,
   events,
+  hubVideos,
   inboxUnread,
   onNavigate,
 }: {
@@ -242,13 +254,24 @@ function HomeTab({
   seekerIntake: any;
   pairing: any;
   events: any[];
+  hubVideos: any[];
   inboxUnread: number;
   onNavigate: (tab: string) => void;
 }) {
+  // Merge hub videos (from partner) with default onboarding videos
+  const mergedVideos = [
+    ...hubVideos.map((v: any) => ({
+      id: v.videoId || v._id,
+      title: v.title,
+      duration: "",
+      isHub: true,
+    })),
+    ...ONBOARDING_VIDEOS,
+  ];
   return (
     <>
       {/* Welcome + Status Banner */}
-      <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+      <div className="bg-white rounded-lg p-6 lg:p-8 shadow-sm">
         <div className="flex items-start gap-4 mb-5">
           <div className="w-12 h-12 bg-ansar-sage-100 rounded-full flex items-center justify-center flex-shrink-0">
             <Heart className="w-6 h-6 text-ansar-sage-600" />
@@ -272,33 +295,35 @@ function HomeTab({
         />
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <QuickAction
-          icon={<MessageSquare className="w-5 h-5" />}
-          label="Messages"
-          badge={inboxUnread}
-          onClick={() => onNavigate("messages")}
-        />
-        <QuickAction
-          icon={<PlayCircle className="w-5 h-5" />}
-          label="Watch & Learn"
-          onClick={() => onNavigate("learn")}
-        />
-        <QuickAction
-          icon={<Calendar className="w-5 h-5" />}
-          label="Events"
-          badge={events.length}
-          onClick={() => {
-            const el = document.getElementById("events-section");
-            el?.scrollIntoView({ behavior: "smooth" });
-          }}
-        />
-        <QuickAction
-          icon={<LifeBuoy className="w-5 h-5" />}
-          label="Get Support"
-          onClick={() => onNavigate("support")}
-        />
+      {/* Quick Actions Bar */}
+      <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] shadow-sm overflow-hidden">
+        <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 divide-x-0 lg:divide-x divide-[rgba(61,61,61,0.06)]">
+          <QuickAction
+            icon={<MessageSquare className="w-5 h-5" />}
+            label="Messages"
+            badge={inboxUnread}
+            onClick={() => onNavigate("messages")}
+          />
+          <QuickAction
+            icon={<PlayCircle className="w-5 h-5" />}
+            label="Watch & Learn"
+            onClick={() => onNavigate("learn")}
+          />
+          <QuickAction
+            icon={<Calendar className="w-5 h-5" />}
+            label="Events"
+            badge={events.length}
+            onClick={() => {
+              const el = document.getElementById("events-section");
+              el?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
+          <QuickAction
+            icon={<LifeBuoy className="w-5 h-5" />}
+            label="Get Support"
+            onClick={() => onNavigate("support")}
+          />
+        </div>
       </div>
 
       {/* Two-column layout: Events + Ansar/Journey */}
@@ -306,7 +331,7 @@ function HomeTab({
         {/* Left column (3/5): Events + Videos */}
         <div className="lg:col-span-3 space-y-6">
           {/* Upcoming Events */}
-          <div id="events-section" className="bg-white rounded-2xl p-6 shadow-sm">
+          <div id="events-section" className="bg-white rounded-lg p-6 shadow-sm">
             <h2 className="font-heading text-lg text-ansar-charcoal mb-4 flex items-center gap-2">
               <Calendar className="w-5 h-5 text-ansar-sage-600" />
               Upcoming Events
@@ -328,7 +353,7 @@ function HomeTab({
           </div>
 
           {/* Video Carousel Preview */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <div className="bg-white rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-heading text-lg text-ansar-charcoal flex items-center gap-2">
                 <PlayCircle className="w-5 h-5 text-ansar-sage-600" />
@@ -341,7 +366,7 @@ function HomeTab({
                 View all <ArrowRight className="w-3 h-3" />
               </button>
             </div>
-            <VideoCarousel videos={ONBOARDING_VIDEOS.slice(0, 5)} />
+            <VideoCarousel videos={mergedVideos.slice(0, 5)} />
           </div>
         </div>
 
@@ -351,7 +376,7 @@ function HomeTab({
           {pairing && pairing.ansar ? (
             <AnsarCard pairing={pairing} />
           ) : (
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="font-heading text-lg text-ansar-charcoal mb-3 flex items-center gap-2">
                 <UserCircle className="w-5 h-5 text-ansar-sage-600" />
                 Your Ansar
@@ -367,7 +392,7 @@ function HomeTab({
 
           {/* Mini Journey Tracker */}
           {intakeExists && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <div className="bg-white rounded-lg p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-heading text-lg text-ansar-charcoal">Your Journey</h3>
                 <button
@@ -421,8 +446,17 @@ function MessagesTab({
   pairing: any;
 }) {
   const [replyText, setReplyText] = useState("");
+  const [firstMessage, setFirstMessage] = useState("");
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const startConversation = useMutation(api.inbox.startConversation);
+
+  // Get the Ansar's user record so we can message them
+  const ansarUserId = pairing?.ansar?.userId;
+  const ansarUser = useQuery(
+    api.users.getByEmail,
+    pairing?.ansar?.email ? { email: pairing.ansar.email.toLowerCase() } : "skip"
+  );
 
   useEffect(() => {
     if (latestConversation && inboxUnread > 0) {
@@ -453,9 +487,79 @@ function MessagesTab({
     }
   };
 
+  const handleSendFirst = async () => {
+    if (!firstMessage.trim() || sending) return;
+    const recipientId = ansarUser?._id;
+    if (!recipientId) return;
+    setSending(true);
+    try {
+      await startConversation({
+        senderId: seekerUserId,
+        senderName: seekerName,
+        senderRole: "seeker",
+        recipientId,
+        recipientName: pairing.ansar.fullName,
+        recipientRole: "ansar",
+        body: firstMessage.trim(),
+        organizationId: pairing.organizationId,
+      });
+      setFirstMessage("");
+    } catch (error) {
+      console.error("Failed to start conversation:", error);
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (inbox.length === 0) {
+    // Paired with Ansar — allow sending first message
+    if (pairing?.ansar && ansarUser) {
+      return (
+        <div className="bg-white rounded-lg p-8 shadow-sm">
+          <div className="text-center mb-6">
+            <div className="w-14 h-14 bg-ansar-sage-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-lg font-heading text-ansar-sage-700">
+                {pairing.ansar.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+              </span>
+            </div>
+            <h3 className="font-heading text-lg text-ansar-charcoal mb-1">
+              Say Salam to {pairing.ansar.fullName.split(" ")[0]}
+            </h3>
+            <p className="font-body text-sm text-ansar-muted max-w-sm mx-auto">
+              Your Ansar companion is ready to connect. Send them your first message!
+            </p>
+          </div>
+          <div className="max-w-md mx-auto">
+            <div className="flex items-end gap-2">
+              <textarea
+                value={firstMessage}
+                onChange={(e) => setFirstMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendFirst();
+                  }
+                }}
+                placeholder="Assalamu Alaikum! I'm excited to connect..."
+                rows={3}
+                className="flex-1 px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 resize-none focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
+              />
+              <button
+                onClick={handleSendFirst}
+                disabled={!firstMessage.trim() || sending}
+                className="flex items-center justify-center w-10 h-10 rounded-lg bg-ansar-sage-600 text-white hover:bg-ansar-sage-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+              >
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Not paired yet
     return (
-      <div className="bg-white rounded-2xl p-8 shadow-sm">
+      <div className="bg-white rounded-lg p-8 shadow-sm">
         <div className="text-center py-12">
           <InboxIcon className="w-12 h-12 text-ansar-muted/30 mx-auto mb-4" />
           <h3 className="font-heading text-lg text-ansar-charcoal mb-2">No messages yet</h3>
@@ -468,7 +572,7 @@ function MessagesTab({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col" style={{ minHeight: "500px" }}>
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col" style={{ minHeight: "500px" }}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)]">
         {latestConversation && (
@@ -547,7 +651,7 @@ function JourneyTab({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Journey Progress */}
-      <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+      <div className="bg-white rounded-lg p-6 lg:p-8 shadow-sm">
         <h2 className="font-heading text-xl text-ansar-charcoal mb-6">Your Journey</h2>
         {intakeExists ? (
           <div className="space-y-0">
@@ -595,7 +699,7 @@ function JourneyTab({
         {pairing && pairing.ansar ? (
           <AnsarCard pairing={pairing} />
         ) : (
-          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+          <div className="bg-white rounded-lg p-6 lg:p-8 shadow-sm">
             <h2 className="font-heading text-xl text-ansar-charcoal mb-6 flex items-center gap-2">
               <UserCircle className="w-6 h-6 text-ansar-sage-600" />
               Your Ansar (Companion)
@@ -625,22 +729,101 @@ function JourneyTab({
 // LEARN TAB
 // ═══════════════════════════════════════════════════════════════
 
-function LearnTab() {
+function LearnTab({ hubVideos, hubArticles }: { hubVideos: any[]; hubArticles: any[] }) {
   const [playingId, setPlayingId] = useState<string | null>(null);
+
+  // Merge hub videos (from partner) with default onboarding videos
+  const allVideos = [
+    ...hubVideos.map((v: any) => ({
+      id: v.videoId || v._id,
+      title: v.title,
+      duration: "",
+      isHub: true,
+      description: v.description,
+    })),
+    ...ONBOARDING_VIDEOS,
+  ];
 
   return (
     <>
-      {/* Video Section */}
-      <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+      {/* Hub-specific content from your community */}
+      {hubVideos.length > 0 && (
+        <div className="bg-white rounded-lg p-6 lg:p-8 shadow-sm border-l-4 border-ansar-sage-400">
+          <h2 className="font-heading text-xl text-ansar-charcoal mb-2 flex items-center gap-2">
+            <PlayCircle className="w-5 h-5 text-ansar-sage-600" />
+            From Your Community
+          </h2>
+          <p className="font-body text-sm text-ansar-gray mb-6">
+            Videos shared by your local community to help you on your journey.
+          </p>
+
+          {/* Playing video */}
+          {playingId && (
+            <div className="mb-6">
+              <div className="relative w-full rounded-lg overflow-hidden bg-black" style={{ paddingBottom: "56.25%" }}>
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src={`https://www.youtube.com/embed/${playingId}?autoplay=1&rel=0`}
+                  title="Video player"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              <button
+                onClick={() => setPlayingId(null)}
+                className="mt-3 text-xs font-body text-ansar-muted hover:text-ansar-charcoal"
+              >
+                Close video
+              </button>
+            </div>
+          )}
+
+          <VideoCarousel
+            videos={hubVideos.map((v: any) => ({
+              id: v.videoId || v._id,
+              title: v.title,
+              duration: "",
+            }))}
+            onPlay={setPlayingId}
+            activeId={playingId}
+          />
+        </div>
+      )}
+
+      {/* Hub articles & links */}
+      {hubArticles.length > 0 && (
+        <div className="bg-white rounded-lg p-6 lg:p-8 shadow-sm border-l-4 border-ansar-ochre-400">
+          <h2 className="font-heading text-xl text-ansar-charcoal mb-2 flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-ansar-ochre-600" />
+            Recommended by Your Community
+          </h2>
+          <p className="font-body text-sm text-ansar-gray mb-6">
+            Articles and resources shared by your local hub.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {hubArticles.map((a: any) => (
+              <ResourceLink
+                key={a._id}
+                title={a.title}
+                source={a.description || new URL(a.url).hostname.replace("www.", "")}
+                href={a.url}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Default Video Section */}
+      <div className="bg-white rounded-lg p-6 lg:p-8 shadow-sm">
         <h2 className="font-heading text-xl text-ansar-charcoal mb-2">Getting Started Videos</h2>
         <p className="font-body text-sm text-ansar-gray mb-6">
           Short, practical videos to help you understand the basics of Islam.
         </p>
 
         {/* Playing video */}
-        {playingId && (
+        {!hubVideos.length && playingId && (
           <div className="mb-6">
-            <div className="relative w-full rounded-xl overflow-hidden bg-black" style={{ paddingBottom: "56.25%" }}>
+            <div className="relative w-full rounded-lg overflow-hidden bg-black" style={{ paddingBottom: "56.25%" }}>
               <iframe
                 className="absolute inset-0 w-full h-full"
                 src={`https://www.youtube.com/embed/${playingId}?autoplay=1&rel=0`}
@@ -663,7 +846,7 @@ function LearnTab() {
       </div>
 
       {/* Reading Resources */}
-      <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+      <div className="bg-white rounded-lg p-6 lg:p-8 shadow-sm">
         <h2 className="font-heading text-xl text-ansar-charcoal mb-2 flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-ansar-ochre-600" />
           Essential Reading
@@ -705,7 +888,7 @@ function LearnTab() {
 function SupportTab() {
   return (
     <>
-      <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+      <div className="bg-white rounded-lg p-6 lg:p-8 shadow-sm">
         <h2 className="font-heading text-xl text-ansar-charcoal mb-2">Need Help?</h2>
         <p className="font-body text-sm text-ansar-gray mb-6">
           These resources are available 24/7. You&apos;re never alone on this journey.
@@ -714,7 +897,7 @@ function SupportTab() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <a
             href="tel:1-877-949-4752"
-            className="flex items-center gap-4 bg-ansar-sage-50 hover:bg-ansar-sage-100 border border-ansar-sage-200 rounded-xl p-5 transition-colors group"
+            className="flex items-center gap-4 bg-ansar-sage-50 hover:bg-ansar-sage-100 border border-ansar-sage-200 rounded-lg p-5 transition-colors group"
           >
             <div className="w-12 h-12 bg-ansar-sage-600 rounded-full flex items-center justify-center flex-shrink-0">
               <Phone className="w-5 h-5 text-white" />
@@ -730,7 +913,7 @@ function SupportTab() {
             href="https://www.whyislam.org/chat/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-4 bg-ansar-ochre-50 hover:bg-ansar-ochre-100 border border-ansar-ochre-200 rounded-xl p-5 transition-colors group"
+            className="flex items-center gap-4 bg-ansar-ochre-50 hover:bg-ansar-ochre-100 border border-ansar-ochre-200 rounded-lg p-5 transition-colors group"
           >
             <div className="w-12 h-12 bg-ansar-ochre-500 rounded-full flex items-center justify-center flex-shrink-0">
               <MessageSquare className="w-5 h-5 text-white" />
@@ -746,7 +929,7 @@ function SupportTab() {
             href="https://www.whyislam.org/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-5 transition-colors group"
+            className="flex items-center gap-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-5 transition-colors group"
           >
             <div className="w-12 h-12 bg-ansar-charcoal rounded-full flex items-center justify-center flex-shrink-0">
               <Users className="w-5 h-5 text-white" />
@@ -759,7 +942,7 @@ function SupportTab() {
 
           <a
             href="mailto:support@ansar.family"
-            className="flex items-center gap-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-5 transition-colors group"
+            className="flex items-center gap-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-5 transition-colors group"
           >
             <div className="w-12 h-12 bg-ansar-charcoal rounded-full flex items-center justify-center flex-shrink-0">
               <Mail className="w-5 h-5 text-white" />
@@ -801,12 +984,17 @@ function StatusBanner({
 }) {
   if (!intakeExists && seekerIntake !== undefined) {
     return (
-      <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-5">
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-5">
         <div className="flex items-start gap-3">
-          <Loader2 className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0 animate-spin" />
+          <FileText className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
           <div>
-            <h3 className="font-body font-semibold text-ansar-charcoal text-sm mb-0.5">We&apos;re getting things ready</h3>
-            <p className="font-body text-xs text-ansar-gray">Your information is being set up. This usually takes just a moment.</p>
+            <h3 className="font-body font-semibold text-ansar-charcoal text-sm mb-0.5">Complete Your Profile</h3>
+            <p className="font-body text-xs text-ansar-gray mb-3">
+              We couldn&apos;t find your intake application. Please complete your profile to get matched with a community.
+            </p>
+            <Link href="/join" className="inline-flex items-center justify-center px-4 py-2 text-xs font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 rounded-lg transition-colors">
+              Complete Profile
+            </Link>
           </div>
         </div>
       </div>
@@ -815,7 +1003,7 @@ function StatusBanner({
 
   if (intakeExists && status === "awaiting_outreach") {
     return (
-      <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-5">
+      <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-lg p-5">
         <div className="flex items-start gap-3">
           <Clock className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0" />
           <div>
@@ -829,7 +1017,7 @@ function StatusBanner({
 
   if (intakeExists && status === "triaged") {
     return (
-      <div className="bg-ansar-ochre-50 border border-ansar-ochre-200 rounded-xl p-5">
+      <div className="bg-ansar-ochre-50 border border-ansar-ochre-200 rounded-lg p-5">
         <div className="flex items-start gap-3">
           <Building2 className="w-5 h-5 text-ansar-ochre-600 mt-0.5 flex-shrink-0" />
           <div>
@@ -850,7 +1038,7 @@ function StatusBanner({
 
   if (intakeExists && (status === "connected" || status === "active")) {
     return (
-      <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-5">
+      <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-lg p-5">
         <div className="flex items-start gap-3">
           <CheckCircle2 className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0" />
           <div>
@@ -880,12 +1068,12 @@ function QuickAction({
   return (
     <button
       onClick={onClick}
-      className="relative bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col items-center gap-2 group border border-transparent hover:border-ansar-sage-200"
+      className="relative flex flex-col items-center justify-center p-4 hover:bg-ansar-cream/30 transition-colors group h-full"
     >
-      <span className="text-ansar-sage-600 group-hover:scale-110 transition-transform">{icon}</span>
+      <span className="text-ansar-sage-600 mb-1.5 group-hover:scale-110 transition-transform">{icon}</span>
       <span className="font-body text-xs text-ansar-charcoal font-medium">{label}</span>
       {badge !== undefined && badge > 0 && (
-        <span className="absolute top-2 right-2 bg-ansar-sage-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+        <span className="absolute top-3 right-3 lg:top-4 lg:right-4 bg-ansar-sage-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
           {badge}
         </span>
       )}
@@ -896,7 +1084,7 @@ function QuickAction({
 /** Ansar companion card */
 function AnsarCard({ pairing }: { pairing: any }) {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm">
+    <div className="bg-white rounded-lg p-6 shadow-sm">
       <h3 className="font-heading text-lg text-ansar-charcoal mb-4 flex items-center gap-2">
         <UserCircle className="w-5 h-5 text-ansar-sage-600" />
         Your Ansar
@@ -963,7 +1151,7 @@ function EventCard({ event }: { event: any }) {
   const day = date.getDate();
 
   return (
-    <div className="flex items-start gap-4 p-4 rounded-xl bg-ansar-sage-50/50 border border-[rgba(61,61,61,0.06)] hover:bg-ansar-sage-50 transition-colors">
+    <div className="flex items-start gap-4 p-4 rounded-lg bg-ansar-sage-50/50 border border-[rgba(61,61,61,0.06)] hover:bg-ansar-sage-50 transition-colors">
       {/* Date badge */}
       <div className="w-12 h-14 bg-white rounded-lg border border-[rgba(61,61,61,0.08)] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
         <span className="text-[10px] font-body font-medium text-ansar-sage-600 uppercase leading-none">{month}</span>
@@ -1005,10 +1193,10 @@ function VideoCarousel({
           key={video.id}
           onClick={() => onPlay ? onPlay(video.id) : window.open(`https://www.youtube.com/watch?v=${video.id}`, "_blank")}
           className={`flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] snap-start group ${
-            activeId === video.id ? "ring-2 ring-ansar-sage-600 rounded-xl" : ""
+            activeId === video.id ? "ring-2 ring-ansar-sage-600 rounded-lg" : ""
           }`}
         >
-          <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video">
+          <div className="relative rounded-lg overflow-hidden bg-gray-100 aspect-video">
             <img
               src={`https://img.youtube.com/vi/${video.id}/mqdefault.jpg`}
               alt={video.title}
@@ -1039,7 +1227,7 @@ function ResourceLink({ title, source, href }: { title: string; source: string; 
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-3 bg-gray-50 hover:bg-ansar-sage-50 border border-[rgba(61,61,61,0.06)] rounded-xl p-4 transition-colors group"
+      className="flex items-center gap-3 bg-gray-50 hover:bg-ansar-sage-50 border border-[rgba(61,61,61,0.06)] rounded-lg p-4 transition-colors group"
     >
       <div className="flex-1 min-w-0">
         <h4 className="font-body font-medium text-ansar-charcoal text-sm truncate">{title}</h4>

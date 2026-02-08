@@ -3,7 +3,8 @@
 import { ReactNode } from "react";
 
 /**
- * StatsRow — Elevated stat cards with accent border and icon badge
+ * StatsRow — Consolidated "Hero Bar" style stats.
+ * Renders a single container with divided columns instead of separate cards.
  */
 
 export interface StatItem {
@@ -15,72 +16,57 @@ export interface StatItem {
 
 interface StatsRowProps {
   stats: StatItem[];
-  columns?: 2 | 3 | 4;
+  columns?: number;
 }
 
-const accentClasses: Record<string, { border: string; iconBg: string; icon: string }> = {
-  sage: {
-    border: "border-l-[var(--sage-500)]",
-    iconBg: "bg-ansar-sage-50",
-    icon: "text-ansar-sage-600",
-  },
-  terracotta: {
-    border: "border-l-[var(--terracotta-500)]",
-    iconBg: "bg-ansar-terracotta-50",
-    icon: "text-ansar-terracotta-600",
-  },
-  ochre: {
-    border: "border-l-[var(--ochre-500)]",
-    iconBg: "bg-ansar-ochre-50",
-    icon: "text-ansar-ochre-600",
-  },
-  success: {
-    border: "border-l-[#6B8E6B]",
-    iconBg: "bg-[#f0f5f0]",
-    icon: "text-ansar-success",
-  },
-  muted: {
-    border: "border-l-[var(--text-muted)]",
-    iconBg: "bg-gray-50",
-    icon: "text-ansar-muted",
-  },
+const accentTextColors: Record<string, string> = {
+  sage: "text-ansar-sage-600",
+  terracotta: "text-ansar-terracotta-600",
+  ochre: "text-ansar-ochre-600",
+  success: "text-ansar-success",
+  muted: "text-ansar-muted",
 };
 
-export function StatsRow({ stats, columns = 4 }: StatsRowProps) {
-  const gridCols =
-    columns === 2
-      ? "grid-cols-1 sm:grid-cols-2"
-      : columns === 3
-        ? "grid-cols-1 sm:grid-cols-3"
-        : "grid-cols-2 lg:grid-cols-4";
+export function StatsRow({ stats, columns }: StatsRowProps) {
+  // Determine column count based on prop or stats length
+  const colCount = columns || stats.length;
+  
+  // Tailwind classes must be complete strings for JIT
+  const lgGridClass = 
+    colCount === 2 ? "lg:grid-cols-2" :
+    colCount === 3 ? "lg:grid-cols-3" :
+    colCount === 4 ? "lg:grid-cols-4" :
+    colCount === 5 ? "lg:grid-cols-5" :
+    colCount === 6 ? "lg:grid-cols-6" :
+    "lg:grid-cols-4"; // default fallback
+
+  const mdGridClass = colCount >= 4 ? "md:grid-cols-4" : `md:grid-cols-${colCount}`;
 
   return (
-    <div className={`grid ${gridCols} gap-4`}>
-      {stats.map((stat, idx) => {
-        const colors = accentClasses[stat.accent || "sage"];
-        return (
-          <div
-            key={idx}
-            className={`bg-white rounded-xl border border-[rgba(61,61,61,0.06)] border-l-[3px] ${colors.border} px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] transition-shadow hover:shadow-soft`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-body text-[11px] font-medium uppercase tracking-wider text-ansar-muted">
+    <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] shadow-sm overflow-hidden">
+      <div className={`grid grid-cols-2 ${mdGridClass} ${lgGridClass} divide-y md:divide-y-0 divide-x-0 md:divide-x divide-[rgba(61,61,61,0.06)]`}>
+        {stats.map((stat, idx) => {
+          const textColor = accentTextColors[stat.accent || "sage"];
+          return (
+            <div
+              key={idx}
+              className="px-4 py-4 flex flex-col items-center text-center hover:bg-ansar-cream/30 transition-colors group"
+            >
+              <span className="font-body text-[10px] font-semibold uppercase tracking-widest text-ansar-muted mb-1.5 flex items-center gap-1.5">
+                {stat.icon && (
+                  <span className={`${textColor} w-3.5 h-3.5 flex items-center justify-center transition-transform group-hover:scale-110`}>
+                    {stat.icon}
+                  </span>
+                )}
                 {stat.label}
               </span>
-              {stat.icon && (
-                <span
-                  className={`w-8 h-8 rounded-lg ${colors.iconBg} ${colors.icon} flex items-center justify-center shrink-0`}
-                >
-                  {stat.icon}
-                </span>
-              )}
+              <span className="font-heading text-2xl text-ansar-charcoal leading-none">
+                {stat.value}
+              </span>
             </div>
-            <p className="font-heading text-3xl text-ansar-charcoal">
-              {stat.value}
-            </p>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

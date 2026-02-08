@@ -61,7 +61,7 @@ export function SearchBar({
           value={localValue}
           onChange={(e) => handleChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-9 py-2.5 bg-white border border-[rgba(61,61,61,0.10)] rounded-xl font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/60 focus:outline-none focus:border-ansar-sage-400 focus:ring-2 focus:ring-ansar-sage-100 transition-all"
+          className="w-full pl-10 pr-9 py-2.5 bg-white border border-[rgba(61,61,61,0.10)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/60 focus:outline-none focus:border-ansar-sage-400 focus:ring-2 focus:ring-ansar-sage-100 transition-all"
         />
         {localValue && (
           <button
@@ -82,7 +82,7 @@ export function SearchBar({
               <select
                 value={filter.value}
                 onChange={(e) => onFilterChange?.(filter.id, e.target.value)}
-                className={`pl-8 pr-8 py-2.5 bg-white border rounded-xl font-body text-sm text-ansar-charcoal focus:outline-none focus:border-ansar-sage-400 focus:ring-2 focus:ring-ansar-sage-100 transition-all appearance-none cursor-pointer ${
+                className={`pl-8 pr-8 py-2.5 bg-white border rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:border-ansar-sage-400 focus:ring-2 focus:ring-ansar-sage-100 transition-all appearance-none cursor-pointer ${
                   hasActiveFilter
                     ? "border-ansar-sage-300 bg-ansar-sage-50/50"
                     : "border-[rgba(61,61,61,0.10)]"

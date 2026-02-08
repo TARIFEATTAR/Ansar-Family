@@ -13,6 +13,7 @@ import {
   X as XIcon, BookUser, Copy, CheckCheck, Share2, ExternalLink,
   QrCode, ChevronDown, ChevronUp, Sparkles, CheckCircle2, Circle,
   Inbox as InboxIcon, MailPlus, CheckSquare, Calendar, Plus, Pencil,
+  PlayCircle, FileText, Globe, Video,
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import {
@@ -143,6 +144,7 @@ function PartnerDashboard({
   const availableAnsars = useQuery(api.ansars.listAvailableForPairing, { organizationId: organization._id }) ?? [];
   const messages = useQuery(api.messages.listAll) ?? []; // Will filter client-side
   const events = useQuery(api.events.getByOrganization, { organizationId: organization._id }) ?? [];
+  const hubResources = useQuery(api.hubResources.listByOrganization, { organizationId: organization._id }) ?? [];
 
   // Inbox
   const partnerUserId = currentUser?._id;
@@ -189,6 +191,7 @@ function PartnerDashboard({
     { id: "contacts", label: "Contacts", icon: <BookUser className="w-[18px] h-[18px]" />, badge: contacts.length, description: "Community members and stakeholders" },
     { id: "pairings", label: "Pairings", icon: <Link2 className="w-[18px] h-[18px]" />, badge: pairings.length, description: "Seeker-Ansar connections" },
     { id: "events", label: "Events", icon: <Calendar className="w-[18px] h-[18px]" />, badge: events.length || undefined, description: "Community events for your seekers" },
+    { id: "content", label: "Content", icon: <PlayCircle className="w-[18px] h-[18px]" />, badge: hubResources.length || undefined, description: "Videos, articles & links for seekers" },
     { id: "messages", label: "Notification Log", icon: <MessageSquare className="w-[18px] h-[18px]" />, badge: orgMessages.length, description: "SMS and email notification log" },
   ];
 
@@ -314,6 +317,8 @@ function PartnerDashboard({
             orgMessages={orgMessages}
             orgSlug={organization.slug}
             hubUrl={hubUrl}
+            events={events}
+            onNavigateToEvents={() => handleTabChange("events")}
           />
         )}
         {activeTab === "inbox" && partnerUserId && (
@@ -384,6 +389,14 @@ function PartnerDashboard({
         {activeTab === "events" && currentUser && (
           <PartnerEventsTab
             events={events}
+            organizationId={organization._id}
+            userId={currentUser._id}
+          />
+        )}
+        {activeTab === "content" && currentUser && (
+          <PartnerContentTab
+            resources={hubResources}
+            seekers={seekers}
             organizationId={organization._id}
             userId={currentUser._id}
           />
@@ -460,7 +473,7 @@ function QRCodeModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[380px] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[380px] bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden"
           >
             <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
               <h3 className="font-heading text-lg text-ansar-charcoal">Hub QR Code</h3>
@@ -469,7 +482,7 @@ function QRCodeModal({
               </button>
             </div>
             <div className="p-6 flex flex-col items-center gap-5">
-              <div className="bg-white p-4 rounded-xl border border-[rgba(61,61,61,0.08)]">
+              <div className="bg-white p-4 rounded-lg border border-[rgba(61,61,61,0.08)]">
                 <QRCodeSVG
                   id="hub-qr-code"
                   value={url}
@@ -537,7 +550,7 @@ function OnboardingChecklist({ orgSlug, hubUrl, seekerCount, ansarCount }: {
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl border border-ansar-sage-200 overflow-hidden"
+      className="bg-white rounded-lg border border-ansar-sage-200 overflow-hidden"
     >
       <div className="px-5 py-4 flex items-center justify-between cursor-pointer" onClick={() => setCollapsed(!collapsed)}>
         <div className="flex items-center gap-3">
@@ -611,11 +624,11 @@ function OnboardingChecklist({ orgSlug, hubUrl, seekerCount, ansarCount }: {
 // ═══════════════════════════════════════════════════════════════
 
 function PartnerOverviewTab({
-  seekers, ansars, contacts, pairings, pairingStats, readyToPair, orgMessages, orgSlug, hubUrl,
+  seekers, ansars, contacts, pairings, pairingStats, readyToPair, orgMessages, orgSlug, hubUrl, events, onNavigateToEvents,
 }: {
   seekers: any[]; ansars: any[]; contacts: any[]; pairings: any[];
   pairingStats: any; readyToPair: any[]; orgMessages: any[];
-  orgSlug: string; hubUrl: string;
+  orgSlug: string; hubUrl: string; events: any[]; onNavigateToEvents: () => void;
 }) {
   const stats: StatItem[] = [
     { label: "Seekers", value: seekers.length, icon: <Heart className="w-4 h-4" />, accent: "terracotta" },
@@ -644,7 +657,7 @@ function PartnerOverviewTab({
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Ready to Pair */}
-        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] overflow-hidden">
+        <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] overflow-hidden">
           <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.06)]">
             <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
               <span className="w-2 h-2 bg-ansar-terracotta-600 rounded-full" />
@@ -674,7 +687,7 @@ function PartnerOverviewTab({
         </div>
 
         {/* Recent Pairings */}
-        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] overflow-hidden">
+        <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] overflow-hidden">
           <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.06)]">
             <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
               <span className="w-2 h-2 bg-ansar-sage-600 rounded-full" />
@@ -698,6 +711,84 @@ function PartnerOverviewTab({
             )}
           </div>
         </div>
+      </div>
+
+      {/* Upcoming Events */}
+      <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] overflow-hidden">
+        <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.06)] flex items-center justify-between">
+          <h3 className="font-heading text-base text-ansar-charcoal flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-ansar-sage-600" />
+            Upcoming Events
+            {events.length > 0 && (
+              <span className="bg-ansar-sage-100 text-ansar-sage-700 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full">
+                {events.length}
+              </span>
+            )}
+          </h3>
+          <button
+            onClick={onNavigateToEvents}
+            className="flex items-center gap-1.5 text-xs font-body font-medium text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Manage Events
+          </button>
+        </div>
+        {events.length === 0 ? (
+          <div className="px-5 py-8 text-center">
+            <Calendar className="w-10 h-10 text-ansar-muted/20 mx-auto mb-3" />
+            <p className="font-body text-sm text-ansar-muted mb-3">
+              No upcoming events. Create events that your seekers will see on their dashboards.
+            </p>
+            <button
+              onClick={onNavigateToEvents}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-ansar-sage-600 text-white rounded-lg text-xs font-body font-medium hover:bg-ansar-sage-700 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Create First Event
+            </button>
+          </div>
+        ) : (
+          <div className="divide-y divide-[rgba(61,61,61,0.04)]">
+            {events.slice(0, 5).map((event) => {
+              const eventDate = new Date(event.date + "T00:00:00");
+              return (
+                <div key={event._id} className="px-5 py-3 flex items-start gap-4 hover:bg-ansar-sage-50/30 transition-colors">
+                  <div className="w-12 h-12 rounded-lg bg-ansar-sage-50 flex flex-col items-center justify-center shrink-0">
+                    <span className="text-[10px] font-body font-medium text-ansar-sage-600 uppercase leading-none">
+                      {eventDate.toLocaleDateString("en-US", { month: "short" })}
+                    </span>
+                    <span className="text-base font-heading text-ansar-charcoal leading-tight">
+                      {eventDate.getDate()}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-sm text-ansar-charcoal font-medium truncate">{event.title}</p>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      {event.time && (
+                        <span className="font-body text-xs text-ansar-muted flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {event.time}
+                        </span>
+                      )}
+                      {event.location && (
+                        <span className="font-body text-xs text-ansar-muted flex items-center gap-1">
+                          <MapPin className="w-3 h-3" /> {event.location}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {events.length > 5 && (
+              <button
+                onClick={onNavigateToEvents}
+                className="w-full px-5 py-3 text-center font-body text-xs text-ansar-sage-600 hover:bg-ansar-sage-50/50 transition-colors"
+              >
+                View all {events.length} events
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1042,7 +1133,7 @@ function PairingModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[440px] md:max-h-[80vh] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[440px] md:max-h-[80vh] bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden"
           >
             <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
               <h3 className="font-heading text-lg text-ansar-charcoal">Select an Ansar</h3>
@@ -1059,7 +1150,7 @@ function PairingModal({
                     <button
                       key={ansar._id}
                       onClick={() => onSelect(ansar._id)}
-                      className="w-full text-left p-4 rounded-xl border border-[rgba(61,61,61,0.08)] hover:border-ansar-sage-300 hover:bg-ansar-sage-50/50 transition-all group"
+                      className="w-full text-left p-4 rounded-lg border border-[rgba(61,61,61,0.08)] hover:border-ansar-sage-300 hover:bg-ansar-sage-50/50 transition-all group"
                     >
                       <div className="flex items-center justify-between">
                         <div>
@@ -1150,7 +1241,7 @@ function SendMessageModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[480px] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[480px] bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden"
           >
             <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
               <div>
@@ -1790,7 +1881,7 @@ function PartnerEventsTab({
 
       {/* Create / Edit Form */}
       {showForm && (
-        <div className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] p-6 shadow-sm">
+        <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] p-6 shadow-sm">
           <h3 className="font-heading text-lg text-ansar-charcoal mb-4">
             {editingId ? "Edit Event" : "Create Event"}
           </h3>
@@ -1866,7 +1957,7 @@ function PartnerEventsTab({
 
       {/* Events List */}
       {events.length === 0 && !showForm ? (
-        <div className="bg-white rounded-xl p-12 shadow-sm text-center">
+        <div className="bg-white rounded-lg p-12 shadow-sm text-center">
           <Calendar className="w-12 h-12 text-ansar-muted/30 mx-auto mb-4" />
           <h3 className="font-heading text-lg text-ansar-charcoal mb-2">No events yet</h3>
           <p className="font-body text-sm text-ansar-muted max-w-sm mx-auto mb-6">
@@ -1896,7 +1987,7 @@ function PartnerEventsTab({
             return (
               <div
                 key={event._id}
-                className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] p-5 shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] p-5 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start gap-4">
                   {/* Date badge */}
@@ -1941,6 +2032,382 @@ function PartnerEventsTab({
               </div>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONTENT TAB — Videos, Articles & Links for Seekers
+// ═══════════════════════════════════════════════════════════════
+
+function PartnerContentTab({
+  resources,
+  seekers,
+  organizationId,
+  userId,
+}: {
+  resources: any[];
+  seekers: any[];
+  organizationId: Id<"organizations">;
+  userId: Id<"users">;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+  const [description, setDescription] = useState("");
+  const [type, setType] = useState<"video" | "article" | "link">("video");
+  const [targetType, setTargetType] = useState<"all" | "specific">("all");
+  const [targetSeekerId, setTargetSeekerId] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+  const [filter, setFilter] = useState<"all" | "video" | "article" | "link">("all");
+
+  const createResource = useMutation(api.hubResources.create);
+  const updateResource = useMutation(api.hubResources.update);
+  const removeResource = useMutation(api.hubResources.remove);
+
+  const resetForm = () => {
+    setTitle("");
+    setUrl("");
+    setDescription("");
+    setType("video");
+    setTargetType("all");
+    setTargetSeekerId("");
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const handleEdit = (resource: any) => {
+    setTitle(resource.title);
+    setUrl(resource.url);
+    setDescription(resource.description || "");
+    setType(resource.type);
+    setTargetType(resource.targetType);
+    setTargetSeekerId(resource.targetSeekerId || "");
+    setEditingId(resource._id);
+    setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!title.trim() || !url.trim()) return;
+    setSaving(true);
+    try {
+      if (editingId) {
+        await updateResource({
+          id: editingId as Id<"hub_resources">,
+          title: title.trim(),
+          url: url.trim(),
+          description: description.trim() || undefined,
+          type,
+          targetType,
+          targetSeekerId: targetType === "specific" && targetSeekerId
+            ? (targetSeekerId as Id<"intakes">)
+            : undefined,
+        });
+      } else {
+        await createResource({
+          title: title.trim(),
+          url: url.trim(),
+          description: description.trim() || undefined,
+          type,
+          targetType,
+          targetSeekerId: targetType === "specific" && targetSeekerId
+            ? (targetSeekerId as Id<"intakes">)
+            : undefined,
+          organizationId,
+          createdBy: userId,
+        });
+      }
+      resetForm();
+    } catch (err) {
+      console.error("Failed to save resource:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this resource? This cannot be undone.")) return;
+    try {
+      await removeResource({ id: id as Id<"hub_resources"> });
+    } catch (err) {
+      console.error("Failed to delete resource:", err);
+    }
+  };
+
+  const handleToggleActive = async (resource: any) => {
+    await updateResource({
+      id: resource._id as Id<"hub_resources">,
+      isActive: !resource.isActive,
+    });
+  };
+
+  const filteredResources = filter === "all"
+    ? resources
+    : resources.filter((r) => r.type === filter);
+
+  const stats: StatItem[] = [
+    { label: "Videos", value: resources.filter((r) => r.type === "video").length, icon: <Video className="w-4 h-4" />, accent: "sage" },
+    { label: "Articles", value: resources.filter((r) => r.type === "article").length, icon: <FileText className="w-4 h-4" />, accent: "ochre" },
+    { label: "Links", value: resources.filter((r) => r.type === "link").length, icon: <Globe className="w-4 h-4" />, accent: "terracotta" },
+    { label: "Active", value: resources.filter((r) => r.isActive).length, icon: <CheckCircle2 className="w-4 h-4" />, accent: "success" },
+  ];
+
+  const typeIcon = (t: string) => {
+    if (t === "video") return <Video className="w-4 h-4 text-ansar-sage-600" />;
+    if (t === "article") return <FileText className="w-4 h-4 text-ansar-ochre-600" />;
+    return <Globe className="w-4 h-4 text-ansar-terracotta-600" />;
+  };
+
+  return (
+    <div className="space-y-5">
+      <StatsRow stats={stats} />
+
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          {(["all", "video", "article", "link"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-body font-medium transition-colors ${
+                filter === f
+                  ? "bg-ansar-sage-600 text-white"
+                  : "bg-white text-ansar-muted border border-[rgba(61,61,61,0.10)] hover:bg-ansar-sage-50"
+              }`}
+            >
+              {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1) + "s"}
+            </button>
+          ))}
+        </div>
+        {!showForm && (
+          <button
+            onClick={() => { resetForm(); setShowForm(true); }}
+            className="inline-flex items-center gap-2 text-sm font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Content
+          </button>
+        )}
+      </div>
+
+      {/* Create / Edit Form */}
+      {showForm && (
+        <div className="bg-white rounded-lg border border-[rgba(61,61,61,0.08)] p-6 shadow-sm">
+          <h3 className="font-heading text-lg text-ansar-charcoal mb-4">
+            {editingId ? "Edit Content" : "Add Content"}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            {/* Type */}
+            <div>
+              <label className="block font-body text-xs text-ansar-muted mb-1">Type *</label>
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value as "video" | "article" | "link")}
+                className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200 bg-white"
+              >
+                <option value="video">YouTube Video</option>
+                <option value="article">Article</option>
+                <option value="link">Link / Resource</option>
+              </select>
+            </div>
+            {/* Target */}
+            <div>
+              <label className="block font-body text-xs text-ansar-muted mb-1">Who can see this?</label>
+              <select
+                value={targetType}
+                onChange={(e) => setTargetType(e.target.value as "all" | "specific")}
+                className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200 bg-white"
+              >
+                <option value="all">All Seekers in Hub</option>
+                <option value="specific">Specific Seeker</option>
+              </select>
+            </div>
+            {/* Specific seeker selector */}
+            {targetType === "specific" && (
+              <div className="sm:col-span-2">
+                <label className="block font-body text-xs text-ansar-muted mb-1">Select Seeker *</label>
+                <select
+                  value={targetSeekerId}
+                  onChange={(e) => setTargetSeekerId(e.target.value)}
+                  className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200 bg-white"
+                >
+                  <option value="">Choose a seeker...</option>
+                  {seekers.map((s: any) => (
+                    <option key={s._id} value={s._id}>{s.fullName} ({s.email})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {/* Title */}
+            <div className="sm:col-span-2">
+              <label className="block font-body text-xs text-ansar-muted mb-1">Title *</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={type === "video" ? "e.g. How to Pray — Beginners Guide" : "e.g. Understanding the Five Pillars"}
+                className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
+              />
+            </div>
+            {/* URL */}
+            <div className="sm:col-span-2">
+              <label className="block font-body text-xs text-ansar-muted mb-1">
+                {type === "video" ? "YouTube URL *" : "URL *"}
+              </label>
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder={type === "video" ? "https://www.youtube.com/watch?v=..." : "https://..."}
+                className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
+              />
+              {type === "video" && url && (
+                <p className="font-body text-[10px] text-ansar-muted mt-1">
+                  YouTube thumbnail and embed will be generated automatically.
+                </p>
+              )}
+            </div>
+            {/* Description */}
+            <div className="sm:col-span-2">
+              <label className="block font-body text-xs text-ansar-muted mb-1">Description (optional)</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Brief description of this resource..."
+                rows={2}
+                className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 resize-none focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSave}
+              disabled={!title.trim() || !url.trim() || saving || (targetType === "specific" && !targetSeekerId)}
+              className="inline-flex items-center gap-2 text-sm font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2 rounded-lg transition-colors"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {editingId ? "Update" : "Add Content"}
+            </button>
+            <button
+              onClick={resetForm}
+              className="text-sm font-body text-ansar-muted hover:text-ansar-charcoal px-4 py-2 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Resources List */}
+      {filteredResources.length === 0 && !showForm ? (
+        <div className="bg-white rounded-lg p-12 shadow-sm text-center">
+          <PlayCircle className="w-12 h-12 text-ansar-muted/30 mx-auto mb-4" />
+          <h3 className="font-heading text-lg text-ansar-charcoal mb-2">No content yet</h3>
+          <p className="font-body text-sm text-ansar-muted max-w-md mx-auto mb-6">
+            Add YouTube videos, articles, and links that will appear on your seekers&apos; Learn page. You can share content with all seekers or send specific resources to individual seekers.
+          </p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 text-sm font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-5 py-2.5 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Your First Content
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredResources.map((resource) => (
+            <div
+              key={resource._id}
+              className={`bg-white rounded-lg border border-[rgba(61,61,61,0.08)] p-4 shadow-sm hover:shadow-md transition-shadow ${
+                !resource.isActive ? "opacity-50" : ""
+              }`}
+            >
+              <div className="flex items-start gap-4">
+                {/* Thumbnail or icon */}
+                {resource.type === "video" && resource.thumbnailUrl ? (
+                  <div className="w-24 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    <img
+                      src={resource.thumbnailUrl}
+                      alt={resource.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    resource.type === "article" ? "bg-ansar-ochre-50" : "bg-ansar-terracotta-50"
+                  }`}>
+                    {typeIcon(resource.type)}
+                  </div>
+                )}
+
+                {/* Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h4 className="font-body font-semibold text-ansar-charcoal text-sm truncate">{resource.title}</h4>
+                    <span className={`text-[10px] font-body font-medium px-1.5 py-0.5 rounded ${
+                      resource.type === "video" ? "bg-ansar-sage-50 text-ansar-sage-700" :
+                      resource.type === "article" ? "bg-ansar-ochre-50 text-ansar-ochre-700" :
+                      "bg-ansar-terracotta-50 text-ansar-terracotta-700"
+                    }`}>
+                      {resource.type}
+                    </span>
+                  </div>
+                  <a
+                    href={resource.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-body text-xs text-ansar-sage-600 hover:underline truncate block"
+                  >
+                    {resource.url}
+                  </a>
+                  {resource.description && (
+                    <p className="font-body text-xs text-ansar-gray mt-1 line-clamp-1">{resource.description}</p>
+                  )}
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className="font-body text-[10px] text-ansar-muted">
+                      {resource.targetType === "all" ? "All seekers" : "Specific seeker"}
+                    </span>
+                    <span className="font-body text-[10px] text-ansar-muted">
+                      {resource.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => handleToggleActive(resource)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      resource.isActive
+                        ? "text-ansar-sage-600 hover:bg-ansar-sage-50"
+                        : "text-ansar-muted hover:bg-gray-50"
+                    }`}
+                    title={resource.isActive ? "Deactivate" : "Activate"}
+                  >
+                    {resource.isActive ? <Eye className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                  </button>
+                  <button
+                    onClick={() => handleEdit(resource)}
+                    className="p-2 text-ansar-muted hover:text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors"
+                    title="Edit"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(resource._id)}
+                    className="p-2 text-ansar-muted hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -2237,7 +2704,7 @@ function AddContactModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[520px] md:max-h-[85vh] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[520px] md:max-h-[85vh] bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden"
           >
             <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
               <h3 className="font-heading text-lg text-ansar-charcoal">Add Contact</h3>
@@ -2431,7 +2898,7 @@ function BulkEmailModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[560px] md:max-h-[85vh] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[560px] md:max-h-[85vh] bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden"
           >
             <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
               <div>

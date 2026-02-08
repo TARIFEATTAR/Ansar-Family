@@ -285,6 +285,45 @@ export const getWithDetails = query({
 });
 
 /**
+ * Gets a seeker's active pairing with full Ansar and Organization details.
+ * Used by the Seeker Portal to show who they're paired with.
+ */
+export const getBySeeker = query({
+  args: { seekerId: v.id("intakes") },
+  handler: async (ctx, args) => {
+    const pairing = await ctx.db
+      .query("pairings")
+      .withIndex("by_seeker", (q) => q.eq("seekerId", args.seekerId))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "pending_intro"),
+          q.eq(q.field("status"), "active")
+        )
+      )
+      .first();
+
+    if (!pairing) return null;
+
+    const ansar = await ctx.db.get(pairing.ansarId);
+    const organization = await ctx.db.get(pairing.organizationId);
+
+    return {
+      ...pairing,
+      ansar: ansar ? {
+        fullName: ansar.fullName,
+        email: ansar.email,
+        phone: ansar.phone,
+        city: ansar.city,
+      } : null,
+      organization: organization ? {
+        name: organization.name,
+        slug: organization.slug,
+      } : null,
+    };
+  },
+});
+
+/**
  * Gets pairing stats for an organization.
  */
 export const getOrgStats = query({

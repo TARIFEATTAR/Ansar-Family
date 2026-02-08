@@ -3,14 +3,17 @@
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { Loader2, Heart, BookOpen, Video, Users, ArrowRight, CheckCircle2 } from "lucide-react";
+import {
+  Loader2, Heart, BookOpen, Video, Users, ArrowRight, CheckCircle2,
+  Phone, Mail, MapPin, UserCircle, Building2, Clock,
+} from "lucide-react";
 import Link from "next/link";
 
 /**
- * SEEKER PORTAL — Resource Hub for New Muslims & Seekers
+ * SEEKER PORTAL — Dashboard for New Muslims & Seekers
  * 
- * Shows supportive resources while awaiting outreach from local community.
- * Displays journey status and provides educational content.
+ * Shows journey status, paired Ansar details, community info,
+ * and supportive resources.
  */
 
 export default function SeekerPortalPage() {
@@ -21,12 +24,18 @@ export default function SeekerPortalPage() {
     user?.id ? { clerkId: user.id } : "skip"
   );
 
-  // Get seeker's intake record by their email (efficient targeted query)
+  // Get seeker's intake record by their email
   const seekerIntake = useQuery(
     api.intakes.getByEmail,
     user?.primaryEmailAddress?.emailAddress
       ? { email: user.primaryEmailAddress.emailAddress }
       : "skip"
+  );
+
+  // Get seeker's active pairing (includes Ansar + Organization details)
+  const pairing = useQuery(
+    api.pairings.getBySeeker,
+    seekerIntake?._id ? { seekerId: seekerIntake._id } : "skip"
   );
 
   // Loading state
@@ -94,15 +103,19 @@ export default function SeekerPortalPage() {
             </div>
             <div className="flex-1">
               <h1 className="font-heading text-3xl text-ansar-charcoal mb-2">
-                Assalamu Alaikum, {firstName} 🌱
+                Assalamu Alaikum, {firstName}
               </h1>
               <p className="font-body text-ansar-gray text-lg">
-                Welcome to your New Muslim resource portal. We&apos;re so glad you&apos;re here.
+                Welcome to your journey portal. We&apos;re so glad you&apos;re here.
               </p>
             </div>
           </div>
 
-          {/* Status */}
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {/* JOURNEY STATUS TRACKER                                     */}
+          {/* ═══════════════════════════════════════════════════════════ */}
+
+          {/* No intake yet */}
           {!intakeExists && seekerIntake !== undefined && (
             <div className="bg-ansar-terracotta-50 border border-ansar-terracotta-200 rounded-xl p-6">
               <div className="flex items-start gap-3">
@@ -117,7 +130,7 @@ export default function SeekerPortalPage() {
                   </p>
                   <Link
                     href="/join"
-                    className="inline-flex items-center gap-2 text-sm font-body font-medium text-ansar-sage-600 hover:text-ansar-sage-700"
+                    className="inline-flex items-center gap-2 text-sm font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-4 py-2 rounded-lg transition-colors"
                   >
                     Complete Intake Form
                     <ArrowRight className="w-4 h-4" />
@@ -127,39 +140,49 @@ export default function SeekerPortalPage() {
             </div>
           )}
 
+          {/* Awaiting outreach — not yet assigned to any org */}
           {intakeExists && status === "awaiting_outreach" && (
             <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-6">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0" />
+                <Clock className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h3 className="font-body font-semibold text-ansar-charcoal mb-1">
                     Your Application Has Been Received
                   </h3>
                   <p className="font-body text-sm text-ansar-gray leading-relaxed">
-                    A local community member will reach out to you within 3-5 days to schedule a meeting.
-                    In the meantime, explore the resources below to begin your journey.
+                    We&apos;re reviewing your submission and matching you with a local community.
+                    Someone will reach out within 3-5 days. In the meantime, explore the resources below.
                   </p>
                 </div>
               </div>
             </div>
           )}
 
+          {/* Triaged — assigned to org, waiting to be paired with an Ansar */}
           {intakeExists && status === "triaged" && (
             <div className="bg-ansar-ochre-50 border border-ansar-ochre-200 rounded-xl p-6">
               <div className="flex items-start gap-3">
-                <Users className="w-5 h-5 text-ansar-ochre-600 mt-0.5 flex-shrink-0" />
+                <Building2 className="w-5 h-5 text-ansar-ochre-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <h3 className="font-body font-semibold text-ansar-charcoal mb-1">
-                    You&apos;ve Been Connected!
+                    You&apos;ve Been Matched with a Community
                   </h3>
-                  <p className="font-body text-sm text-ansar-gray leading-relaxed">
-                    A local community has been assigned to support you. They&apos;ll be reaching out soon to introduce themselves.
+                  <p className="font-body text-sm text-ansar-gray leading-relaxed mb-2">
+                    Your local community is finding the right companion (Ansar) for you.
+                    They&apos;ll reach out soon to introduce themselves.
                   </p>
+                  {/* Show org name if we know it */}
+                  {seekerIntake?.organizationId && (
+                    <p className="font-body text-sm text-ansar-ochre-700 font-medium">
+                      Community: {pairing?.organization?.name || "Your local hub"}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
           )}
 
+          {/* Connected / Active — paired with an Ansar! */}
           {intakeExists && (status === "connected" || status === "active") && (
             <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-6">
               <div className="flex items-start gap-3">
@@ -169,7 +192,7 @@ export default function SeekerPortalPage() {
                     You&apos;re Paired with an Ansar!
                   </h3>
                   <p className="font-body text-sm text-ansar-gray leading-relaxed">
-                    Your local mentor (Ansar) will be your guide on this journey. They&apos;ll check in regularly and answer your questions.
+                    Your local companion is here to support you on your journey. They&apos;ll check in regularly and answer your questions.
                   </p>
                 </div>
               </div>
@@ -177,7 +200,118 @@ export default function SeekerPortalPage() {
           )}
         </div>
 
-        {/* Resources Section */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* YOUR ANSAR — shown when paired                             */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+
+        {pairing && pairing.ansar && (
+          <div className="bg-white rounded-2xl p-8 mb-8 shadow-sm">
+            <h2 className="font-heading text-xl text-ansar-charcoal mb-6 flex items-center gap-2">
+              <UserCircle className="w-6 h-6 text-ansar-sage-600" />
+              Your Ansar (Companion)
+            </h2>
+            <div className="flex flex-col sm:flex-row items-start gap-6">
+              {/* Avatar / Name */}
+              <div className="w-20 h-20 bg-ansar-sage-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-2xl font-heading text-ansar-sage-700">
+                  {pairing.ansar.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                </span>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-heading text-2xl text-ansar-charcoal mb-1">
+                  {pairing.ansar.fullName}
+                </h3>
+                {pairing.organization && (
+                  <p className="font-body text-sm text-ansar-sage-600 mb-4 flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4" />
+                    {pairing.organization.name}
+                  </p>
+                )}
+
+                {/* Contact info */}
+                <div className="space-y-2">
+                  {pairing.ansar.phone && (
+                    <div className="flex items-center gap-3">
+                      <a
+                        href={`tel:${pairing.ansar.phone}`}
+                        className="inline-flex items-center gap-2 text-sm font-body text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-4 py-2 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
+                      >
+                        <Phone className="w-4 h-4 text-ansar-sage-600" />
+                        {pairing.ansar.phone}
+                      </a>
+                      <a
+                        href={`sms:${pairing.ansar.phone}`}
+                        className="inline-flex items-center gap-2 text-sm font-body text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-4 py-2 rounded-lg transition-colors"
+                      >
+                        <Phone className="w-4 h-4" />
+                        Text
+                      </a>
+                    </div>
+                  )}
+                  {pairing.ansar.email && (
+                    <a
+                      href={`mailto:${pairing.ansar.email}`}
+                      className="inline-flex items-center gap-2 text-sm font-body text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-4 py-2 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
+                    >
+                      <Mail className="w-4 h-4 text-ansar-sage-600" />
+                      {pairing.ansar.email}
+                    </a>
+                  )}
+                  {pairing.ansar.city && (
+                    <p className="flex items-center gap-2 text-sm font-body text-ansar-gray mt-2">
+                      <MapPin className="w-4 h-4 text-ansar-muted" />
+                      {pairing.ansar.city}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* JOURNEY PROGRESS                                           */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+
+        {intakeExists && (
+          <div className="bg-white rounded-2xl p-8 mb-8 shadow-sm">
+            <h2 className="font-heading text-xl text-ansar-charcoal mb-6">
+              Your Journey
+            </h2>
+            <div className="space-y-0">
+              {/* Step 1: Form submitted */}
+              <JourneyStep
+                step={1}
+                label="Form Submitted"
+                description="Your information has been received"
+                completed={true}
+                active={status === "awaiting_outreach"}
+              />
+              {/* Step 2: Matched with community */}
+              <JourneyStep
+                step={2}
+                label="Community Matched"
+                description={pairing?.organization?.name || seekerIntake?.organizationId ? "You've been assigned to a local community" : "Waiting to be matched"}
+                completed={status === "triaged" || status === "connected" || status === "active"}
+                active={status === "triaged"}
+              />
+              {/* Step 3: Paired with Ansar */}
+              <JourneyStep
+                step={3}
+                label="Paired with Ansar"
+                description={pairing?.ansar ? `Your companion: ${pairing.ansar.fullName}` : "Your personal companion will be assigned"}
+                completed={status === "connected" || status === "active"}
+                active={status === "connected" || status === "active"}
+                isLast
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* RESOURCES                                                  */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+
         <div className="space-y-6">
           <h2 className="font-heading text-2xl text-ansar-charcoal">
             Resources for Your Journey
@@ -197,30 +331,18 @@ export default function SeekerPortalPage() {
                   Short, practical videos to help you understand the basics of Islam.
                 </p>
                 <div className="space-y-3">
-                  <a
-                    href="https://www.youtube.com/watch?v=l6XQbQsNq04"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
-                  >
+                  <a href="https://www.youtube.com/watch?v=l6XQbQsNq04" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
                     <span>What is Islam?</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
-                  <a
-                    href="https://www.youtube.com/watch?v=fCkcr0kcWOE"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
-                  >
+                  <a href="https://www.youtube.com/watch?v=fCkcr0kcWOE" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
                     <span>How to Pray (Step by Step)</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
-                  <a
-                    href="https://www.youtube.com/watch?v=hzM3KN6j7kQ"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
-                  >
+                  <a href="https://www.youtube.com/watch?v=hzM3KN6j7kQ" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
                     <span>The Five Pillars of Islam</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
@@ -243,31 +365,19 @@ export default function SeekerPortalPage() {
                   Foundational texts and guides to deepen your understanding.
                 </p>
                 <div className="space-y-3">
-                  <a
-                    href="https://www.whyislam.org/intelligence-creation/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
-                  >
+                  <a href="https://www.whyislam.org/intelligence-creation/" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
                     <span>The Intelligence of Allah&apos;s Creations (WhyIslam)</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
-                  <a
-                    href="https://quran.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
-                  >
+                  <a href="https://quran.com" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
                     <span>Read the Quran (English Translation)</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
-                  <a
-                    href="https://www.islamreligion.com/articles/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
-                  >
-                    <span>Articles on Islamic Beliefs & Practices</span>
+                  <a href="https://www.islamreligion.com/articles/" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
+                    <span>Articles on Islamic Beliefs &amp; Practices</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
                 </div>
@@ -289,19 +399,13 @@ export default function SeekerPortalPage() {
                   While you wait for your local connection, these resources are available 24/7.
                 </p>
                 <div className="space-y-3">
-                  <a
-                    href="tel:1-877-949-4752"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
-                  >
+                  <a href="tel:1-877-949-4752"
+                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
                     <span>WhyIslam Hotline: 1-877-WHY-ISLAM</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
-                  <a
-                    href="https://www.whyislam.org/chat/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group"
-                  >
+                  <a href="https://www.whyislam.org/chat/" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
                     <span>Live Chat with a Muslim</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </a>
@@ -320,5 +424,55 @@ export default function SeekerPortalPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+/**
+ * Journey Step — visual progress indicator
+ */
+function JourneyStep({
+  step,
+  label,
+  description,
+  completed,
+  active,
+  isLast = false,
+}: {
+  step: number;
+  label: string;
+  description: string;
+  completed: boolean;
+  active: boolean;
+  isLast?: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-4">
+      {/* Vertical line + circle */}
+      <div className="flex flex-col items-center">
+        <div
+          className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-body font-semibold
+            ${completed
+              ? "bg-ansar-sage-600 text-white"
+              : active
+                ? "bg-ansar-ochre-400 text-white"
+                : "bg-gray-200 text-gray-400"
+            }`}
+        >
+          {completed ? <CheckCircle2 className="w-4 h-4" /> : step}
+        </div>
+        {!isLast && (
+          <div className={`w-0.5 h-8 ${completed ? "bg-ansar-sage-300" : "bg-gray-200"}`} />
+        )}
+      </div>
+      {/* Text */}
+      <div className="pb-6">
+        <p className={`font-body font-semibold text-sm ${completed || active ? "text-ansar-charcoal" : "text-gray-400"}`}>
+          {label}
+        </p>
+        <p className={`font-body text-xs ${completed || active ? "text-ansar-gray" : "text-gray-300"}`}>
+          {description}
+        </p>
+      </div>
+    </div>
   );
 }

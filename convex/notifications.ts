@@ -494,6 +494,63 @@ function getPairingSMS(firstName: string, ansarName: string, communityName: stri
   return `Great news ${firstName}! You've been paired with ${ansarName} from ${communityName}. They'll reach out soon to connect 🤝 - Ansar Family`;
 }
 
+function getPairingAnsarSMS(ansarFirstName: string, seekerFirstName: string, communityName: string, baseUrl: string): string {
+  return `Assalamu Alaikum ${ansarFirstName}! You've been paired with ${seekerFirstName} from ${communityName} 🤝 Sign in to see details: ${baseUrl}/sign-in — Ansar Family`;
+}
+
+function getPairingAnsarEmail(
+  ansarFirstName: string,
+  seekerFirstName: string,
+  communityName: string,
+  baseUrl: string
+): { subject: string; html: string } {
+  const seekerInitial = getInitial(seekerFirstName);
+
+  const content = `
+      <h2 style="font-family: Georgia, 'Times New Roman', serif; color: #3D3D3D; font-size: 24px; font-weight: 500; margin: 0 0 20px 0;">
+        Assalamu Alaikum, ${ansarFirstName} 🤝
+      </h2>
+      
+      <p style="font-size: 16px; line-height: 1.7; color: #5A5A5A; margin: 0 0 24px 0;">
+        You've been paired with a new seeker from your local community. This is a beautiful opportunity to walk alongside someone on their journey.
+      </p>
+      
+      <!-- Seeker Card -->
+      <div style="background: #E8ECE4; border-radius: 8px; padding: 24px; margin: 0 0 24px 0; text-align: center;">
+        <div style="width: 64px; height: 64px; background: #A8956A; border-radius: 50%; margin: 0 auto 16px; line-height: 64px;">
+          <span style="color: white; font-size: 24px; font-weight: bold;">${seekerInitial}</span>
+        </div>
+        <h3 style="font-family: Georgia, 'Times New Roman', serif; color: #3D3D3D; font-size: 20px; font-weight: 500; margin: 0 0 4px 0;">${seekerFirstName}</h3>
+        <p style="color: #5A5A5A; font-size: 14px; margin: 0;">Your new seeker at ${communityName}</p>
+      </div>
+      
+      <p style="font-size: 16px; line-height: 1.7; color: #5A5A5A; margin: 0 0 16px 0;">
+        <strong style="color: #3D3D3D;">Next steps:</strong> Please reach out to ${seekerFirstName} within the next 48 hours via text or call. Suggest a casual meetup — coffee, a meal, or a walk. Keep it light and welcoming.
+      </p>
+
+      <!-- CTA Button -->
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${baseUrl}/sign-in" 
+           style="display: inline-block; background: #7D8B6A; color: white; padding: 14px 32px; 
+                  border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
+          View Your Dashboard →
+        </a>
+      </div>
+
+      <!-- Reminder -->
+      <div style="border-left: 3px solid #7D8B6A; padding-left: 16px; margin: 24px 0;">
+        <p style="font-size: 14px; color: #5A5A5A; margin: 0; font-style: italic; line-height: 1.6;">
+          "The best of people are those who are most beneficial to others." — Prophet Muhammad ﷺ
+        </p>
+      </div>
+  `;
+
+  return {
+    subject: `You've been paired with a new seeker, ${ansarFirstName}! 🤝`,
+    html: emailWrapper(content),
+  };
+}
+
 // ═══════════════════════════════════════════════════════════════
 // SMS ACTIONS (Twilio)
 // ═══════════════════════════════════════════════════════════════
@@ -914,6 +971,311 @@ export const sendPairingEmail = internalAction({
       
       return { success: false, error: errorMessage };
     }
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// ANSAR PAIRING NOTIFICATIONS — Notify Ansar when paired with a seeker
+// ═══════════════════════════════════════════════════════════════
+
+export const sendPairingAnsarSMS = internalAction({
+  args: {
+    recipientId: v.string(),
+    phone: v.string(),
+    ansarFirstName: v.string(),
+    seekerFirstName: v.string(),
+    communityName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { recipientId, phone, ansarFirstName, seekerFirstName, communityName } = args;
+    
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+    
+    if (!accountSid || !authToken || !fromNumber) {
+      console.error("❌ Missing Twilio environment variables");
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "sms",
+        recipientId,
+        recipientPhone: phone,
+        template: "pairing_ansar",
+        status: "failed",
+        errorMessage: "Missing Twilio configuration",
+      });
+      return { success: false, error: "Missing Twilio configuration" };
+    }
+    
+    let normalizedPhone: string;
+    try {
+      normalizedPhone = normalizePhoneNumber(phone);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Invalid phone number format";
+      console.error(`❌ Invalid phone number format: ${phone}`, errorMessage);
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "sms",
+        recipientId,
+        recipientPhone: phone,
+        template: "pairing_ansar",
+        status: "failed",
+        errorMessage: `Phone number normalization failed: ${errorMessage}`,
+      });
+      return { success: false, error: errorMessage };
+    }
+    
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://ansar.family";
+    const message = getPairingAnsarSMS(ansarFirstName, seekerFirstName, communityName, baseUrl);
+    
+    try {
+      const response = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64"),
+          },
+          body: new URLSearchParams({
+            To: normalizedPhone,
+            From: fromNumber,
+            Body: message,
+          }),
+        }
+      );
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Twilio API error");
+      
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "sms",
+        recipientId,
+        recipientPhone: normalizedPhone,
+        template: "pairing_ansar",
+        status: "sent",
+        externalId: data.sid,
+      });
+      
+      console.log(`✅ Pairing Ansar SMS sent to ${normalizedPhone}, SID: ${data.sid}`);
+      return { success: true, sid: data.sid };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error(`❌ Pairing Ansar SMS failed to ${normalizedPhone}:`, errorMessage);
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "sms",
+        recipientId,
+        recipientPhone: normalizedPhone,
+        template: "pairing_ansar",
+        status: "failed",
+        errorMessage,
+      });
+      return { success: false, error: errorMessage };
+    }
+  },
+});
+
+export const sendPairingAnsarEmail = internalAction({
+  args: {
+    recipientId: v.string(),
+    email: v.string(),
+    ansarFirstName: v.string(),
+    seekerFirstName: v.string(),
+    communityName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { recipientId, email, ansarFirstName, seekerFirstName, communityName } = args;
+    
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.error("❌ Missing Resend API key");
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "email",
+        recipientId,
+        recipientEmail: email,
+        template: "pairing_ansar",
+        status: "failed",
+        errorMessage: "Missing Resend configuration",
+      });
+      return { success: false, error: "Missing Resend configuration" };
+    }
+    
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://ansar.family";
+    const emailContent = getPairingAnsarEmail(ansarFirstName, seekerFirstName, communityName, baseUrl);
+    
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          from: "Ansar Family <welcome@ansar.family>",
+          to: [email],
+          subject: emailContent.subject,
+          html: emailContent.html,
+        }),
+      });
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Resend API error");
+      
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "email",
+        recipientId,
+        recipientEmail: email,
+        template: "pairing_ansar",
+        subject: emailContent.subject,
+        status: "sent",
+        externalId: data.id,
+      });
+      
+      console.log(`✅ Pairing Ansar email sent to ${email}, ID: ${data.id}`);
+      return { success: true, id: data.id };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error(`❌ Pairing Ansar email failed to ${email}:`, errorMessage);
+      await ctx.runMutation(internal.messages.logMessage, {
+        type: "email",
+        recipientId,
+        recipientEmail: email,
+        template: "pairing_ansar",
+        subject: emailContent.subject,
+        status: "failed",
+        errorMessage,
+      });
+      return { success: false, error: errorMessage };
+    }
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// DIRECT MESSAGE — Send ad-hoc SMS/Email from Partner Lead dashboard
+// ═══════════════════════════════════════════════════════════════
+
+export const sendDirectMessage = internalAction({
+  args: {
+    recipientId: v.string(),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    message: v.string(),
+    senderName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { recipientId, phone, email, message, senderName } = args;
+    const results: { sms?: boolean; email?: boolean } = {};
+
+    // Send SMS if phone provided
+    if (phone) {
+      const accountSid = process.env.TWILIO_ACCOUNT_SID;
+      const authToken = process.env.TWILIO_AUTH_TOKEN;
+      const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+
+      if (accountSid && authToken && fromNumber) {
+        try {
+          const normalizedPhone = normalizePhoneNumber(phone);
+          const smsBody = `${message}\n\n— ${senderName}, Ansar Family`;
+          const response = await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64"),
+              },
+              body: new URLSearchParams({
+                To: normalizedPhone,
+                From: fromNumber,
+                Body: smsBody,
+              }),
+            }
+          );
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Twilio API error");
+
+          await ctx.runMutation(internal.messages.logMessage, {
+            type: "sms",
+            recipientId,
+            recipientPhone: normalizedPhone,
+            template: "direct_message",
+            status: "sent",
+            externalId: data.sid,
+          });
+          console.log(`✅ Direct SMS sent to ${normalizedPhone}, SID: ${data.sid}`);
+          results.sms = true;
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          console.error(`❌ Direct SMS failed:`, errorMessage);
+          await ctx.runMutation(internal.messages.logMessage, {
+            type: "sms",
+            recipientId,
+            recipientPhone: phone,
+            template: "direct_message",
+            status: "failed",
+            errorMessage,
+          });
+          results.sms = false;
+        }
+      }
+    }
+
+    // Send Email if address provided
+    if (email) {
+      const apiKey = process.env.RESEND_API_KEY;
+      if (apiKey) {
+        try {
+          const htmlBody = emailWrapper(`
+            <p style="font-size: 16px; line-height: 1.7; color: #5A5A5A; margin: 0 0 24px 0;">
+              ${message.replace(/\n/g, "<br>")}
+            </p>
+            <p style="font-size: 14px; color: #8A8A85; margin: 24px 0 0 0;">
+              — ${senderName}, Ansar Family
+            </p>
+          `);
+          const response = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              from: "Ansar Family <welcome@ansar.family>",
+              to: [email],
+              subject: `Message from ${senderName} — Ansar Family`,
+              html: htmlBody,
+            }),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Resend API error");
+
+          await ctx.runMutation(internal.messages.logMessage, {
+            type: "email",
+            recipientId,
+            recipientEmail: email,
+            template: "direct_message",
+            subject: `Message from ${senderName} — Ansar Family`,
+            status: "sent",
+            externalId: data.id,
+          });
+          console.log(`✅ Direct email sent to ${email}, ID: ${data.id}`);
+          results.email = true;
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          console.error(`❌ Direct email failed:`, errorMessage);
+          await ctx.runMutation(internal.messages.logMessage, {
+            type: "email",
+            recipientId,
+            recipientEmail: email,
+            template: "direct_message",
+            subject: `Message from ${senderName} — Ansar Family`,
+            status: "failed",
+            errorMessage,
+          });
+          results.email = false;
+        }
+      }
+    }
+
+    return results;
   },
 });
 

@@ -81,35 +81,58 @@ export const create = mutation({
     });
 
     // ═══════════════════════════════════════════════════════════
-    // TRIGGER PAIRING NOTIFICATIONS (SMS + Email to Seeker)
+    // TRIGGER PAIRING NOTIFICATIONS (SMS + Email to Seeker & Ansar)
     // ═══════════════════════════════════════════════════════════
     
     // Get organization details for community name
     const organization = await ctx.db.get(args.organizationId);
     const communityName = organization?.name || "your local community";
     
-    // Extract first name from seeker's full name
+    // Extract first names
     const seekerFirstName = seeker.fullName.split(" ")[0] || seeker.fullName;
+    const ansarFirstName = ansar.fullName.split(" ")[0] || ansar.fullName;
     
-    // Send Pairing SMS
-    await ctx.scheduler.runAfter(0, internal.notifications.sendPairingSMS, {
-      recipientId: args.seekerId.toString(),
-      phone: seeker.phone,
-      firstName: seekerFirstName,
-      ansarName: ansar.fullName,
-      communityName,
-    });
+    // --- Seeker notifications ---
+    try {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendPairingSMS, {
+        recipientId: args.seekerId.toString(),
+        phone: seeker.phone,
+        firstName: seekerFirstName,
+        ansarName: ansar.fullName,
+        communityName,
+      });
+    } catch (e) { console.error("⚠️ Seeker pairing SMS schedule failed:", e); }
     
-    // Send Pairing Email
-    await ctx.scheduler.runAfter(0, internal.notifications.sendPairingEmail, {
-      recipientId: args.seekerId.toString(),
-      email: seeker.email,
-      seekerFirstName,
-      ansarName: ansar.fullName,
-      communityName,
-      // Note: jumaTime and monthlyGathering can be added to organization schema later
-      // For now, these are optional and will be omitted
-    });
+    try {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendPairingEmail, {
+        recipientId: args.seekerId.toString(),
+        email: seeker.email,
+        seekerFirstName,
+        ansarName: ansar.fullName,
+        communityName,
+      });
+    } catch (e) { console.error("⚠️ Seeker pairing email schedule failed:", e); }
+    
+    // --- Ansar notifications ---
+    try {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendPairingAnsarSMS, {
+        recipientId: args.ansarId.toString(),
+        phone: ansar.phone,
+        ansarFirstName,
+        seekerFirstName,
+        communityName,
+      });
+    } catch (e) { console.error("⚠️ Ansar pairing SMS schedule failed:", e); }
+    
+    try {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendPairingAnsarEmail, {
+        recipientId: args.ansarId.toString(),
+        email: ansar.email,
+        ansarFirstName,
+        seekerFirstName,
+        communityName,
+      });
+    } catch (e) { console.error("⚠️ Ansar pairing email schedule failed:", e); }
 
     return pairingId;
   },

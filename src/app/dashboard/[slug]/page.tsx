@@ -11,6 +11,7 @@ import {
   LayoutDashboard, Loader2, Trash2, Eye, Check,
   UserPlus, Unlink, Send, Phone, Mail, MapPin, Clock,
   X as XIcon, BookUser, LogOut, Copy, CheckCheck, Share2, ExternalLink,
+  QrCode, ChevronDown, ChevronUp, Sparkles, CheckCircle2, Circle,
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/components/crm";
 import type { Tab, Column, StatItem } from "@/components/crm";
 import { AnimatePresence, motion } from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
 
 /**
  * PARTNER LEAD DASHBOARD — CRM-Style Organization View
@@ -117,6 +119,7 @@ function PartnerDashboard({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showQR, setShowQR] = useState(false);
 
   const hubUrl = typeof window !== "undefined"
     ? `${window.location.origin}/${organization.slug}`
@@ -149,6 +152,7 @@ function PartnerDashboard({
   const createContact = useMutation(api.contacts.create);
   const updateContact = useMutation(api.contacts.update);
   const deleteContact = useMutation(api.contacts.deleteContact);
+  const sendMessageMutation = useMutation(api.messages.sendMessage);
 
   // Org-scoped messages: filter messages where recipientId matches any seeker/ansar in this org
   const orgRecipientIds = useMemo(() => {
@@ -291,6 +295,13 @@ function PartnerDashboard({
                 </>
               )}
             </button>
+            <button
+              onClick={() => setShowQR(true)}
+              className="flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 hover:border-ansar-sage-300 transition-all shrink-0 bg-white"
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">QR Code</span>
+            </button>
             <Link
               href={`/${organization.slug}`}
               target="_blank"
@@ -321,6 +332,8 @@ function PartnerDashboard({
               pairingStats={pairingStats}
               readyToPair={readyToPair}
               orgMessages={orgMessages}
+              orgSlug={organization.slug}
+              hubUrl={hubUrl}
             />
           )}
           {activeTab === "seekers" && (
@@ -334,6 +347,8 @@ function PartnerDashboard({
               onPair={handleCreatePairing}
               onDelete={handleDeleteSeeker}
               onUpdate={updateIntake}
+              onSendMessage={sendMessageMutation}
+              senderName={currentUser?.name || "Partner Lead"}
             />
           )}
           {activeTab === "ansars" && (
@@ -384,7 +399,211 @@ function PartnerDashboard({
           )}
         </div>
       </div>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={showQR}
+        onClose={() => setShowQR(false)}
+        url={hubUrl}
+        orgName={organization.name}
+      />
     </main>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// QR CODE MODAL
+// ═══════════════════════════════════════════════════════════════
+
+function QRCodeModal({
+  isOpen, onClose, url, orgName,
+}: {
+  isOpen: boolean; onClose: () => void; url: string; orgName: string;
+}) {
+  const handlePrint = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    const svgEl = document.getElementById("hub-qr-code");
+    if (!svgEl) return;
+    const svgData = new XMLSerializer().serializeToString(svgEl);
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html><head><title>QR Code — ${orgName}</title>
+      <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: Georgia, serif; }
+        h2 { margin-bottom: 8px; color: #3D3D3D; }
+        p { color: #5A5A5A; font-size: 14px; margin-bottom: 24px; }
+      </style>
+      </head><body>
+      <h2>${orgName}</h2>
+      <p>${url}</p>
+      ${svgData}
+      <p style="margin-top: 24px; font-size: 12px; color: #8A8A85;">Scan to join our community</p>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[380px] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+          >
+            <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
+              <h3 className="font-heading text-lg text-ansar-charcoal">Hub QR Code</h3>
+              <button onClick={onClose} className="p-1 text-ansar-muted hover:text-ansar-charcoal rounded-lg transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 flex flex-col items-center gap-5">
+              <div className="bg-white p-4 rounded-xl border border-[rgba(61,61,61,0.08)]">
+                <QRCodeSVG
+                  id="hub-qr-code"
+                  value={url}
+                  size={200}
+                  bgColor="#FFFFFF"
+                  fgColor="#3D3D3D"
+                  level="M"
+                />
+              </div>
+              <div className="text-center">
+                <p className="font-heading text-sm text-ansar-charcoal">{orgName}</p>
+                <p className="font-body text-xs text-ansar-muted mt-1">{url}</p>
+              </div>
+              <p className="font-body text-xs text-ansar-muted text-center max-w-[280px]">
+                Print this QR code and display it at your masjid, events, or community spaces. Seekers can scan it to join through your hub.
+              </p>
+              <button
+                onClick={handlePrint}
+                className="btn-primary w-full text-sm py-2.5"
+              >
+                Print QR Code
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ONBOARDING CHECKLIST
+// ═══════════════════════════════════════════════════════════════
+
+function OnboardingChecklist({ orgSlug, hubUrl, seekerCount, ansarCount }: {
+  orgSlug: string; hubUrl: string; seekerCount: number; ansarCount: number;
+}) {
+  const storageKey = `ansar_onboarding_dismissed_${orgSlug}`;
+  const [dismissed, setDismissed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setDismissed(localStorage.getItem(storageKey) === "true");
+    }
+  }, [storageKey]);
+
+  if (dismissed) return null;
+
+  const steps = [
+    { label: "Share your hub link with seekers", done: seekerCount > 0 },
+    { label: "Review incoming seeker applications", done: seekerCount >= 2 },
+    { label: "Approve at least one Ansar volunteer", done: ansarCount > 0 },
+    { label: "Create your first seeker-Ansar pairing", done: false }, // Pairings not passed in, keep simple
+  ];
+
+  const completedCount = steps.filter((s) => s.done).length;
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    localStorage.setItem(storageKey, "true");
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-xl border border-ansar-sage-200 overflow-hidden"
+    >
+      <div className="px-5 py-4 flex items-center justify-between cursor-pointer" onClick={() => setCollapsed(!collapsed)}>
+        <div className="flex items-center gap-3">
+          <Sparkles className="w-4 h-4 text-ansar-sage-600" />
+          <h3 className="font-heading text-base text-ansar-charcoal">Getting Started</h3>
+          <span className="text-[10px] font-body font-medium text-ansar-sage-700 bg-ansar-sage-100 px-2 py-0.5 rounded-full">
+            {completedCount}/{steps.length} complete
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); handleDismiss(); }}
+            className="text-[11px] font-body text-ansar-muted hover:text-ansar-charcoal transition-colors"
+          >
+            Dismiss
+          </button>
+          {collapsed ? <ChevronDown className="w-4 h-4 text-ansar-muted" /> : <ChevronUp className="w-4 h-4 text-ansar-muted" />}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {!collapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-5 space-y-3">
+              {/* Progress bar */}
+              <div className="w-full bg-ansar-sage-100 rounded-full h-1.5">
+                <div
+                  className="bg-ansar-sage-600 h-1.5 rounded-full transition-all duration-500"
+                  style={{ width: `${(completedCount / steps.length) * 100}%` }}
+                />
+              </div>
+
+              {steps.map((step, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  {step.done ? (
+                    <CheckCircle2 className="w-4 h-4 text-ansar-sage-600 mt-0.5 shrink-0" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-ansar-muted mt-0.5 shrink-0" />
+                  )}
+                  <span className={`font-body text-sm ${step.done ? "text-ansar-muted line-through" : "text-ansar-charcoal"}`}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+
+              <div className="pt-2 flex items-center gap-3">
+                <Link
+                  href={`/${orgSlug}`}
+                  target="_blank"
+                  className="text-xs font-body font-medium text-ansar-sage-700 hover:text-ansar-sage-800 underline underline-offset-2"
+                >
+                  Preview your hub page
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
@@ -393,10 +612,11 @@ function PartnerDashboard({
 // ═══════════════════════════════════════════════════════════════
 
 function PartnerOverviewTab({
-  seekers, ansars, contacts, pairings, pairingStats, readyToPair, orgMessages,
+  seekers, ansars, contacts, pairings, pairingStats, readyToPair, orgMessages, orgSlug, hubUrl,
 }: {
   seekers: any[]; ansars: any[]; contacts: any[]; pairings: any[];
   pairingStats: any; readyToPair: any[]; orgMessages: any[];
+  orgSlug: string; hubUrl: string;
 }) {
   const stats: StatItem[] = [
     { label: "Seekers", value: seekers.length, icon: <Heart className="w-4 h-4" />, accent: "terracotta" },
@@ -413,6 +633,14 @@ function PartnerOverviewTab({
 
   return (
     <div className="space-y-8">
+      {/* Onboarding Checklist — shown for new hubs */}
+      <OnboardingChecklist
+        orgSlug={orgSlug}
+        hubUrl={hubUrl}
+        seekerCount={seekers.length}
+        ansarCount={ansars.length}
+      />
+
       <StatsRow stats={stats} />
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -482,7 +710,7 @@ function PartnerOverviewTab({
 
 function PartnerSeekersTab({
   seekers, availableAnsars, search, setSearch, statusFilter, setStatusFilter,
-  onPair, onDelete, onUpdate,
+  onPair, onDelete, onUpdate, onSendMessage, senderName,
 }: {
   seekers: any[]; availableAnsars: any[];
   search: string; setSearch: (v: string) => void;
@@ -490,9 +718,12 @@ function PartnerSeekersTab({
   onPair: (seekerId: Id<"intakes">, ansarId: Id<"ansars">) => void;
   onDelete: (id: Id<"intakes">) => void;
   onUpdate: (args: any) => Promise<any>;
+  onSendMessage: (args: any) => Promise<any>;
+  senderName: string;
 }) {
   const [selectedSeeker, setSelectedSeeker] = useState<any>(null);
   const [pairingSeeker, setPairingSeeker] = useState<Id<"intakes"> | null>(null);
+  const [showMessageModal, setShowMessageModal] = useState<any>(null);
 
   const filtered = useMemo(() => {
     let result = seekers;
@@ -571,10 +802,51 @@ function PartnerSeekersTab({
         onClose={() => setSelectedSeeker(null)}
         title={selectedSeeker?.fullName}
         subtitle={selectedSeeker ? `${selectedSeeker.city} • ${selectedSeeker.journeyType?.replace("_", " ")}` : ""}
+        actions={
+          selectedSeeker && (
+            <button
+              onClick={() => setShowMessageModal(selectedSeeker)}
+              className="flex items-center gap-1.5 text-xs font-body font-medium text-ansar-sage-700 bg-ansar-sage-50 hover:bg-ansar-sage-100 px-3 py-1.5 rounded-lg border border-ansar-sage-200 transition-colors"
+            >
+              <Send className="w-3 h-3" />
+              Message
+            </button>
+          )
+        }
       >
         {selectedSeeker && (
           <dl className="space-y-0">
             <DetailField label="Status"><StatusBadge status={selectedSeeker.status} size="md" /></DetailField>
+
+            {/* Quick contact buttons */}
+            <div className="px-5 py-3 flex items-center gap-2 border-b border-[rgba(61,61,61,0.04)]">
+              {selectedSeeker.phone && (
+                <a
+                  href={`sms:${selectedSeeker.phone}`}
+                  className="flex items-center gap-1.5 text-xs font-body font-medium text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
+                >
+                  <Phone className="w-3 h-3" />
+                  SMS
+                </a>
+              )}
+              {selectedSeeker.email && (
+                <a
+                  href={`mailto:${selectedSeeker.email}`}
+                  className="flex items-center gap-1.5 text-xs font-body font-medium text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
+                >
+                  <Mail className="w-3 h-3" />
+                  Email
+                </a>
+              )}
+              <button
+                onClick={() => setShowMessageModal(selectedSeeker)}
+                className="flex items-center gap-1.5 text-xs font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Send className="w-3 h-3" />
+                Send via Platform
+              </button>
+            </div>
+
             <EditableField
               label="Full Name"
               value={selectedSeeker.fullName}
@@ -633,6 +905,18 @@ function PartnerSeekersTab({
           </dl>
         )}
       </DetailPanel>
+
+      {/* Send Message Modal */}
+      <SendMessageModal
+        isOpen={!!showMessageModal}
+        onClose={() => setShowMessageModal(null)}
+        recipientName={showMessageModal?.fullName || ""}
+        recipientId={showMessageModal?._id || ""}
+        recipientPhone={showMessageModal?.phone}
+        recipientEmail={showMessageModal?.email}
+        senderName={senderName}
+        onSend={onSendMessage}
+      />
 
       {/* Pairing Modal */}
       <PairingModal
@@ -711,6 +995,168 @@ function PairingModal({
                 </div>
               )}
             </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEND MESSAGE MODAL
+// ═══════════════════════════════════════════════════════════════
+
+function SendMessageModal({
+  isOpen, onClose, recipientName, recipientId, recipientPhone, recipientEmail, senderName, onSend,
+}: {
+  isOpen: boolean; onClose: () => void;
+  recipientName: string; recipientId: string;
+  recipientPhone?: string; recipientEmail?: string;
+  senderName: string;
+  onSend: (args: any) => Promise<any>;
+}) {
+  const [message, setMessage] = useState("");
+  const [sendViaSMS, setSendViaSMS] = useState(!!recipientPhone);
+  const [sendViaEmail, setSendViaEmail] = useState(!!recipientEmail);
+  const [isSending, setIsSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setMessage("");
+      setSendViaSMS(!!recipientPhone);
+      setSendViaEmail(!!recipientEmail);
+      setIsSending(false);
+      setSent(false);
+    }
+  }, [isOpen, recipientPhone, recipientEmail]);
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    if (!sendViaSMS && !sendViaEmail) return;
+
+    setIsSending(true);
+    try {
+      await onSend({
+        recipientId,
+        phone: sendViaSMS ? recipientPhone : undefined,
+        email: sendViaEmail ? recipientEmail : undefined,
+        message: message.trim(),
+        senderName,
+      });
+      setSent(true);
+      setTimeout(() => onClose(), 1500);
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[480px] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+          >
+            <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
+              <div>
+                <h3 className="font-heading text-lg text-ansar-charcoal">Message {recipientName}</h3>
+                <p className="font-body text-xs text-ansar-muted mt-0.5">Send via SMS and/or Email</p>
+              </div>
+              <button onClick={onClose} className="p-1 text-ansar-muted hover:text-ansar-charcoal rounded-lg transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            {sent ? (
+              <div className="p-8 text-center">
+                <CheckCircle2 className="w-10 h-10 text-ansar-sage-600 mx-auto mb-3" />
+                <p className="font-heading text-lg text-ansar-charcoal">Message Sent</p>
+                <p className="font-body text-sm text-ansar-muted mt-1">
+                  Your message to {recipientName} has been queued.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="p-6 space-y-4">
+                  {/* Channel selectors */}
+                  <div className="flex items-center gap-3">
+                    {recipientPhone && (
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={sendViaSMS}
+                          onChange={(e) => setSendViaSMS(e.target.checked)}
+                          className="rounded border-gray-300 text-ansar-sage-600 focus:ring-ansar-sage-500"
+                        />
+                        <Phone className="w-3.5 h-3.5 text-ansar-muted" />
+                        <span className="font-body text-xs text-ansar-charcoal">SMS ({recipientPhone})</span>
+                      </label>
+                    )}
+                    {recipientEmail && (
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={sendViaEmail}
+                          onChange={(e) => setSendViaEmail(e.target.checked)}
+                          className="rounded border-gray-300 text-ansar-sage-600 focus:ring-ansar-sage-500"
+                        />
+                        <Mail className="w-3.5 h-3.5 text-ansar-muted" />
+                        <span className="font-body text-xs text-ansar-charcoal">Email</span>
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Message body */}
+                  <div>
+                    <label className="block font-body text-sm font-medium text-ansar-charcoal mb-1.5">
+                      Message
+                    </label>
+                    <textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder={`Write a message to ${recipientName}...`}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-400 resize-none"
+                    />
+                    <p className="font-body text-[10px] text-ansar-muted mt-1">
+                      Will be signed as &quot;— {senderName}, Ansar Family&quot;
+                    </p>
+                  </div>
+                </div>
+
+                <div className="px-6 py-4 border-t border-[rgba(61,61,61,0.08)] flex items-center justify-end gap-3">
+                  <button onClick={onClose} className="btn-outline text-sm py-2 px-4" disabled={isSending}>
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSend}
+                    disabled={isSending || !message.trim() || (!sendViaSMS && !sendViaEmail)}
+                    className="btn-primary text-sm py-2 px-5 disabled:opacity-50"
+                  >
+                    {isSending ? (
+                      <span className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Sending...</span>
+                    ) : (
+                      <span className="flex items-center gap-2"><Send className="w-3.5 h-3.5" /> Send Message</span>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </motion.div>
         </>
       )}

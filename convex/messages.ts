@@ -1,5 +1,6 @@
-import { internalMutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 /**
  * MESSAGES — Audit Log for Notifications
@@ -84,5 +85,38 @@ export const updateMessageStatus = internalMutation({
       externalId: args.externalId,
       errorMessage: args.errorMessage,
     });
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════
+// DIRECT MESSAGE — Send ad-hoc SMS / Email from Partner Lead dashboard
+// ═══════════════════════════════════════════════════════════════
+
+export const sendMessage = mutation({
+  args: {
+    recipientId: v.string(),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    message: v.string(),
+    senderName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (!args.phone && !args.email) {
+      throw new Error("At least one of phone or email is required");
+    }
+    if (!args.message.trim()) {
+      throw new Error("Message cannot be empty");
+    }
+
+    // Schedule the internal action to send SMS/Email
+    await ctx.scheduler.runAfter(0, internal.notifications.sendDirectMessage, {
+      recipientId: args.recipientId,
+      phone: args.phone,
+      email: args.email,
+      message: args.message.trim(),
+      senderName: args.senderName,
+    });
+
+    return { scheduled: true };
   },
 });

@@ -9,11 +9,14 @@ import {
   ArrowLeft, Heart, Users, Link2, LayoutDashboard, Loader2,
   CheckCircle2, Clock, MapPin, Phone, Mail, Calendar,
   Sparkles, BookOpen, Eye, LogOut, Copy, CheckCheck, Share2, ExternalLink,
+  QrCode, X as XIcon,
 } from "lucide-react";
 import {
   TabNav, StatsRow, StatusBadge, DetailPanel, DetailField,
 } from "@/components/crm";
 import type { Tab, StatItem } from "@/components/crm";
+import { AnimatePresence, motion } from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
 
 /**
  * ANSAR VOLUNTEER DASHBOARD — Personal view for approved Ansars
@@ -115,6 +118,7 @@ function AnsarDashboard({
 }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showQR, setShowQR] = useState(false);
   const firstName = currentUser?.name?.split(" ")[0] ?? "Ansar";
 
   // Get pairings for this ansar
@@ -241,6 +245,13 @@ function AnsarDashboard({
                   </>
                 )}
               </button>
+              <button
+                onClick={() => setShowQR(true)}
+                className="flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50 hover:border-ansar-sage-300 transition-all shrink-0 bg-white"
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">QR Code</span>
+              </button>
               <Link
                 href={`/${organization!.slug}`}
                 target="_blank"
@@ -284,7 +295,104 @@ function AnsarDashboard({
           )}
         </div>
       </div>
+
+      {/* QR Code Modal */}
+      {hubUrl && (
+        <AnsarQRCodeModal
+          isOpen={showQR}
+          onClose={() => setShowQR(false)}
+          url={hubUrl}
+          orgName={organization?.name || "Community"}
+        />
+      )}
     </main>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// QR CODE MODAL (Ansar)
+// ═══════════════════════════════════════════════════════════════
+
+function AnsarQRCodeModal({
+  isOpen, onClose, url, orgName,
+}: {
+  isOpen: boolean; onClose: () => void; url: string; orgName: string;
+}) {
+  const handlePrint = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    const svgEl = document.getElementById("ansar-hub-qr-code");
+    if (!svgEl) return;
+    const svgData = new XMLSerializer().serializeToString(svgEl);
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html><head><title>QR Code — ${orgName}</title>
+      <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: Georgia, serif; }
+        h2 { margin-bottom: 8px; color: #3D3D3D; }
+        p { color: #5A5A5A; font-size: 14px; margin-bottom: 24px; }
+      </style>
+      </head><body>
+      <h2>${orgName}</h2>
+      <p>${url}</p>
+      ${svgData}
+      <p style="margin-top: 24px; font-size: 12px; color: #8A8A85;">Scan to join our community</p>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[380px] bg-white rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden"
+          >
+            <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
+              <h3 className="font-heading text-lg text-ansar-charcoal">Hub QR Code</h3>
+              <button onClick={onClose} className="p-1 text-ansar-muted hover:text-ansar-charcoal rounded-lg transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 flex flex-col items-center gap-5">
+              <div className="bg-white p-4 rounded-xl border border-[rgba(61,61,61,0.08)]">
+                <QRCodeSVG
+                  id="ansar-hub-qr-code"
+                  value={url}
+                  size={200}
+                  bgColor="#FFFFFF"
+                  fgColor="#3D3D3D"
+                  level="M"
+                />
+              </div>
+              <div className="text-center">
+                <p className="font-heading text-sm text-ansar-charcoal">{orgName}</p>
+                <p className="font-body text-xs text-ansar-muted mt-1">{url}</p>
+              </div>
+              <p className="font-body text-xs text-ansar-muted text-center max-w-[280px]">
+                Print this QR code and share it with seekers. They can scan it to join through your community hub.
+              </p>
+              <button onClick={handlePrint} className="btn-primary w-full text-sm py-2.5">
+                Print QR Code
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 

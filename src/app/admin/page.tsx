@@ -1821,8 +1821,6 @@ function AdminEventsTab({
         value={search}
         onChange={setSearch}
         placeholder="Search events by title, location, or hub..."
-        count={filteredEvents.length}
-        label="events"
       />
 
       {filteredEvents.length === 0 ? (

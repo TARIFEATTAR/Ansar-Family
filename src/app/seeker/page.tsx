@@ -42,6 +42,30 @@ export default function SeekerPortalPage() {
     seekerIntake?._id ? { seekerId: seekerIntake._id } : "skip"
   );
 
+  // Inbox — all hooks must be called before any conditional returns
+  const seekerUserId = currentUser?._id as Id<"users"> | undefined;
+  const inbox = useQuery(
+    api.inbox.getInbox,
+    seekerUserId ? { userId: seekerUserId } : "skip"
+  ) ?? [];
+  const inboxUnread = useQuery(
+    api.inbox.getUnreadTotal,
+    seekerUserId ? { userId: seekerUserId } : "skip"
+  ) ?? 0;
+
+  // Get the most recent conversation (seeker usually has one — with their Ansar)
+  const latestConvoId = inbox.length > 0 ? inbox[0].conversationId : undefined;
+  const latestConversation = useQuery(
+    api.inbox.getConversation,
+    latestConvoId && seekerUserId
+      ? { conversationId: latestConvoId, userId: seekerUserId }
+      : "skip"
+  );
+
+  const markAsRead = useMutation(api.inbox.markAsRead);
+  const replyToConversation = useMutation(api.inbox.replyToConversation);
+  const startConversation = useMutation(api.inbox.startConversation);
+
   // Loading state
   if (!isLoaded || currentUser === undefined) {
     return (
@@ -67,30 +91,6 @@ export default function SeekerPortalPage() {
       </main>
     );
   }
-
-  // Inbox
-  const seekerUserId = currentUser?._id as Id<"users"> | undefined;
-  const inbox = useQuery(
-    api.inbox.getInbox,
-    seekerUserId ? { userId: seekerUserId } : "skip"
-  ) ?? [];
-  const inboxUnread = useQuery(
-    api.inbox.getUnreadTotal,
-    seekerUserId ? { userId: seekerUserId } : "skip"
-  ) ?? 0;
-
-  // Get the most recent conversation (seeker usually has one — with their Ansar)
-  const latestConvoId = inbox.length > 0 ? inbox[0].conversationId : undefined;
-  const latestConversation = useQuery(
-    api.inbox.getConversation,
-    latestConvoId && seekerUserId
-      ? { conversationId: latestConvoId, userId: seekerUserId }
-      : "skip"
-  );
-
-  const markAsRead = useMutation(api.inbox.markAsRead);
-  const replyToConversation = useMutation(api.inbox.replyToConversation);
-  const startConversation = useMutation(api.inbox.startConversation);
 
   const firstName = currentUser.name.split(" ")[0];
   const intakeExists = seekerIntake !== null && seekerIntake !== undefined;

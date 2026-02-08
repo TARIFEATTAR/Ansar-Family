@@ -5,7 +5,8 @@ import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
 import { useParams, notFound } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Heart, Users, Building2, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Heart, Users, Building2, Loader2, LayoutDashboard } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 
 /**
  * PARTNER LANDING PAGE — Partner-Specific Entry Point
@@ -33,6 +34,7 @@ const fadeInUp = {
 export default function PartnerLandingPage() {
   const params = useParams();
   const slug = params.slug as string;
+  const { isSignedIn } = useUser();
 
   const organization = useQuery(api.organizations.getBySlug, { slug });
 
@@ -64,6 +66,15 @@ export default function PartnerLandingPage() {
       <header className="fixed top-0 left-0 right-0 z-50 px-6 md:px-12 py-6 bg-ansar-cream/90 backdrop-blur-sm">
         <nav className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
+            {isSignedIn && (
+              <Link
+                href={`/dashboard/${slug}`}
+                className="flex items-center gap-1.5 font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-800 transition-colors mr-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Dashboard</span>
+              </Link>
+            )}
             <Building2 className="w-5 h-5 text-ansar-sage-600" />
             <span className="font-heading text-xl text-ansar-sage-800 tracking-tight">
               {organization.name}
@@ -73,12 +84,22 @@ export default function PartnerLandingPage() {
             <Link href="/" className="font-body text-sm text-ansar-gray hover:text-ansar-charcoal transition-colors">
               Ansar Family Network
             </Link>
-            <Link
-              href="/sign-in"
-              className="font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors flex items-center gap-1.5"
-            >
-              Partner Login →
-            </Link>
+            {isSignedIn ? (
+              <Link
+                href={`/dashboard/${slug}`}
+                className="font-body text-sm font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/sign-in"
+                className="font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors flex items-center gap-1.5"
+              >
+                Partner Login →
+              </Link>
+            )}
           </div>
         </nav>
       </header>

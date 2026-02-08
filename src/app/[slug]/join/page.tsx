@@ -180,7 +180,7 @@ export default function PartnerJoinPage() {
         return;
       }
 
-      // Step 2: Create intake with real clerkId
+      // Step 2: Create intake with real clerkId, linked to this organization
       const intakeId = await createIntake({
         fullName: formData.fullName,
         phone: formData.phone,
@@ -197,6 +197,7 @@ export default function PartnerJoinPage() {
         consentGiven: formData.consentGiven,
         source: "partner_specific",
         partnerId: organization._id,
+        organizationId: organization._id,
         clerkId: authData.clerkUserId,
       });
 

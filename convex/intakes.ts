@@ -46,11 +46,17 @@ export const create = mutation({
 
     // Clerk user ID — provided by the API route after Clerk account creation
     clerkId: v.optional(v.string()),
+
+    // Organization ID — provided when signing up through a partner hub link
+    organizationId: v.optional(v.id("organizations")),
   },
   handler: async (ctx, args) => {
     const email = args.email.toLowerCase();
 
-    // Insert the intake with awaiting_outreach status
+    // When signing up through a partner hub, auto-link to the org and set triaged
+    const isPartnerSignup = args.source === "partner_specific" && args.organizationId;
+
+    // Insert the intake
     const intakeId = await ctx.db.insert("intakes", {
       fullName: args.fullName,
       phone: args.phone,
@@ -65,9 +71,10 @@ export const create = mutation({
       supportAreas: args.supportAreas,
       otherDetails: args.otherDetails,
       consentGiven: args.consentGiven,
-      status: "awaiting_outreach",
+      status: isPartnerSignup ? "triaged" : "awaiting_outreach",
       source: args.source ?? "general",
       partnerId: args.partnerId,
+      organizationId: args.organizationId,
     });
 
     // ═══════════════════════════════════════════════════════════

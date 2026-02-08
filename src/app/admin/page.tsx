@@ -136,6 +136,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
   const approvePartner = useMutation(api.partners.approveAndCreateOrg);
   const updatePartner = useMutation(api.partners.update);
   const deleteIntake = useMutation(api.intakes.deleteIntake);
+  const assignIntakeToOrg = useMutation(api.intakes.assignToOrganization);
   const deleteAnsar = useMutation(api.ansars.deleteAnsar);
   const deletePartner = useMutation(api.partners.deletePartner);
   const rejectPartner = useMutation(api.partners.rejectPartner);
@@ -439,6 +440,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
                 onTriage={handleTriageSeeker}
                 onDelete={handleDeleteIntake}
                 onUpdate={updateIntake}
+                onAssignToOrg={assignIntakeToOrg}
               />
             )}
             {activeTab === "ansars" && (
@@ -686,12 +688,13 @@ function OverviewTab({
 // ═══════════════════════════════════════════════════════════════
 
 function SeekersTab({
-  intakes, organizations, search, setSearch, statusFilter, setStatusFilter, onTriage, onDelete, onUpdate,
+  intakes, organizations, search, setSearch, statusFilter, setStatusFilter, onTriage, onDelete, onUpdate, onAssignToOrg,
 }: {
   intakes: any[]; organizations: any[]; search: string; setSearch: (v: string) => void;
   statusFilter: string; setStatusFilter: (v: string) => void;
   onTriage: (id: Id<"intakes">) => void; onDelete: (id: Id<"intakes">) => void;
   onUpdate: (args: any) => Promise<any>;
+  onAssignToOrg: (args: { id: Id<"intakes">; organizationId: Id<"organizations"> }) => Promise<any>;
 }) {
   const [selectedSeeker, setSelectedSeeker] = useState<any>(null);
 
@@ -718,11 +721,14 @@ function SeekersTab({
     return result;
   }, [intakes, search, statusFilter, orgMap]);
 
+  const unassignedCount = intakes.filter((i: any) => !i.organizationId).length;
+
   const stats: StatItem[] = [
     { label: "Total", value: intakes.length, accent: "sage" },
-    { label: "Awaiting Outreach", value: intakes.filter((i) => i.status === "awaiting_outreach" || i.status === "disconnected").length, accent: "terracotta" },
-    { label: "Triaged", value: intakes.filter((i) => i.status === "triaged").length, accent: "ochre" },
-    { label: "Connected", value: intakes.filter((i) => i.status === "connected" || i.status === "active").length, accent: "success" },
+    { label: "Unassigned", value: unassignedCount, accent: unassignedCount > 0 ? "terracotta" : "sage" },
+    { label: "Awaiting Outreach", value: intakes.filter((i: any) => i.status === "awaiting_outreach" || i.status === "disconnected").length, accent: "terracotta" },
+    { label: "Triaged", value: intakes.filter((i: any) => i.status === "triaged").length, accent: "ochre" },
+    { label: "Connected", value: intakes.filter((i: any) => i.status === "connected" || i.status === "active").length, accent: "success" },
   ];
 
   const columns: Column<any>[] = [
@@ -769,6 +775,11 @@ function SeekersTab({
         emptyIcon={<Heart className="w-12 h-12" />}
         actions={(row) => (
           <div className="flex items-center gap-1">
+            {!row.organizationId && (
+              <button onClick={() => setSelectedSeeker(row)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Assign to Organization">
+                <Building2 className="w-3.5 h-3.5" />
+              </button>
+            )}
             {(row.status === "awaiting_outreach" || row.status === "disconnected") && (
               <button onClick={() => onTriage(row._id)} className="p-1.5 text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Triage">
                 <Check className="w-3.5 h-3.5" />
@@ -793,28 +804,62 @@ function SeekersTab({
         {selectedSeeker && (
           <dl className="space-y-0">
             <DetailField label="Status"><StatusBadge status={selectedSeeker.status} size="md" /></DetailField>
+
+            {/* Organization Assignment — the key field for routing seekers */}
+            {selectedSeeker.organizationId && orgMap[selectedSeeker.organizationId] ? (
+              <DetailField label="Partner Hub">
+                <div className="flex items-center gap-2">
+                  <Link href={`/dashboard/${orgMap[selectedSeeker.organizationId].slug}`} className="inline-flex items-center gap-1.5 text-sm text-ansar-sage-600 hover:text-ansar-sage-800 underline underline-offset-2">
+                    <Building2 className="w-4 h-4" />
+                    {orgMap[selectedSeeker.organizationId].name}
+                  </Link>
+                </div>
+              </DetailField>
+            ) : (
+              <DetailField label="Partner Hub">
+                <div className="space-y-2">
+                  <span className="inline-flex items-center gap-1.5 text-sm text-amber-700 bg-amber-50 px-2 py-1 rounded-md">
+                    <Building2 className="w-4 h-4" />
+                    Not assigned — seeker won&apos;t appear in any Partner Lead dashboard
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <select
+                      id="assign-org-select"
+                      className="flex-1 px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:ring-2 focus:ring-ansar-sage-400"
+                      defaultValue=""
+                      onChange={async (e) => {
+                        if (!e.target.value) return;
+                        try {
+                          await onAssignToOrg({
+                            id: selectedSeeker._id,
+                            organizationId: e.target.value as Id<"organizations">,
+                          });
+                          // Refresh the selected seeker with updated data
+                          const updated = intakes.find((i: any) => i._id === selectedSeeker._id);
+                          if (updated) setSelectedSeeker({ ...updated, organizationId: e.target.value, status: "triaged" });
+                        } catch (err) {
+                          console.error("Failed to assign:", err);
+                        }
+                      }}
+                    >
+                      <option value="">Select an organization...</option>
+                      {organizations.map((org: any) => (
+                        <option key={org._id} value={org._id}>{org.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </DetailField>
+            )}
+
             <DetailField label="Source">
               {selectedSeeker.source === "partner_specific" ? (
-                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-ansar-sage-700">
-                  <Building2 className="w-4 h-4" />
-                  {selectedSeeker.organizationId && orgMap[selectedSeeker.organizationId]
-                    ? orgMap[selectedSeeker.organizationId].name
-                    : selectedSeeker.partnerId && orgMap[selectedSeeker.partnerId]
-                      ? orgMap[selectedSeeker.partnerId].name
-                      : "Partner Hub (unlinked)"}
-                </span>
+                <span className="text-sm text-ansar-sage-700">Partner Hub Link</span>
               ) : (
                 <span className="text-ansar-gray text-sm">General Sign-Up</span>
               )}
             </DetailField>
-            {selectedSeeker.organizationId && orgMap[selectedSeeker.organizationId] && (
-              <DetailField label="Partner Hub">
-                <Link href={`/dashboard/${orgMap[selectedSeeker.organizationId].slug}`} className="inline-flex items-center gap-1.5 text-sm text-ansar-sage-600 hover:text-ansar-sage-800 underline underline-offset-2">
-                  <Building2 className="w-4 h-4" />
-                  {orgMap[selectedSeeker.organizationId].name}
-                </Link>
-              </DetailField>
-            )}
+
             <EditableField label="Full Name" value={selectedSeeker.fullName} onSave={(v) => onUpdate({ id: selectedSeeker._id, fullName: v })} />
             <EditableField label="Email" type="email" value={selectedSeeker.email} onSave={(v) => onUpdate({ id: selectedSeeker._id, email: v })} />
             <EditableField label="Phone" type="tel" value={selectedSeeker.phone} onSave={(v) => onUpdate({ id: selectedSeeker._id, phone: v })} />

@@ -121,6 +121,9 @@ function AnsarDashboard({
   const [showQR, setShowQR] = useState(false);
   const firstName = currentUser?.name?.split(" ")[0] ?? "Ansar";
 
+  // Mutations
+  const markIntroSent = useMutation(api.pairings.markIntroSent);
+
   // Get pairings for this ansar
   const pairings = useQuery(
     api.pairings.listByAnsar,
@@ -288,6 +291,7 @@ function AnsarDashboard({
             <PairingsTab
               pairings={pairings}
               seekerMap={seekerMap}
+              onMarkIntroSent={markIntroSent}
             />
           )}
           {activeTab === "profile" && (
@@ -563,9 +567,11 @@ function OverviewTab({
 function PairingsTab({
   pairings,
   seekerMap,
+  onMarkIntroSent,
 }: {
   pairings: any[];
   seekerMap: Record<string, any>;
+  onMarkIntroSent: (args: { id: any }) => Promise<any>;
 }) {
   const [selectedPairing, setSelectedPairing] = useState<any>(null);
 
@@ -624,33 +630,56 @@ function PairingsTab({
         ) : (
           <div className="grid gap-3">
             {active.map((p) => (
-              <button
+              <div
                 key={p._id}
-                onClick={() => setSelectedPairing(p)}
-                className="w-full text-left bg-white rounded-xl border border-[rgba(61,61,61,0.08)] p-5 hover:border-ansar-sage-300 hover:shadow-sm transition-all group"
+                className="bg-white rounded-xl border border-[rgba(61,61,61,0.08)] p-5 hover:border-ansar-sage-300 hover:shadow-sm transition-all"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-ansar-terracotta-50 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Heart className="w-5 h-5 text-ansar-terracotta-500" />
+                <button
+                  onClick={() => setSelectedPairing(p)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-ansar-terracotta-50 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Heart className="w-5 h-5 text-ansar-terracotta-500" />
+                      </div>
+                      <div>
+                        <p className="font-body text-sm text-ansar-charcoal font-medium">
+                          {p.seekerName}
+                        </p>
+                        <p className="font-body text-xs text-ansar-muted mt-0.5">
+                          {p.seeker?.city || "—"} &middot;{" "}
+                          {p.seeker?.journeyType?.replace("_", " ") || "—"} &middot; Paired{" "}
+                          {new Date(p.pairedAt).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-body text-sm text-ansar-charcoal font-medium">
-                        {p.seekerName}
-                      </p>
-                      <p className="font-body text-xs text-ansar-muted mt-0.5">
-                        {p.seeker?.city || "—"} &middot;{" "}
-                        {p.seeker?.journeyType?.replace("_", " ") || "—"} &middot; Paired{" "}
-                        {new Date(p.pairedAt).toLocaleDateString()}
-                      </p>
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={p.status} />
+                      <Eye className="w-4 h-4 text-ansar-sage-300 group-hover:text-ansar-sage-600 transition-colors" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={p.status} />
-                    <Eye className="w-4 h-4 text-ansar-sage-300 group-hover:text-ansar-sage-600 transition-colors" />
+                </button>
+                {/* Action: Confirm Introduction for pending_intro */}
+                {p.status === "pending_intro" && (
+                  <div className="mt-4 pt-4 border-t border-[rgba(61,61,61,0.06)] flex items-center gap-3">
+                    <div className="flex-1">
+                      <p className="font-body text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
+                        Please reach out to {p.seekerName.split(" ")[0]} to introduce yourself, then confirm below.
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        await onMarkIntroSent({ id: p._id });
+                      }}
+                      className="flex items-center gap-1.5 text-sm font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-4 py-2 rounded-lg transition-colors shrink-0"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      Confirm Introduction
+                    </button>
                   </div>
-                </div>
-              </button>
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -701,7 +730,21 @@ function PairingsTab({
         {selectedPairing?.seeker && (
           <dl className="space-y-0">
             <DetailField label="Status">
-              <StatusBadge status={selectedPairing.status} size="md" />
+              <div className="flex items-center gap-3">
+                <StatusBadge status={selectedPairing.status} size="md" />
+                {selectedPairing.status === "pending_intro" && (
+                  <button
+                    onClick={async () => {
+                      await onMarkIntroSent({ id: selectedPairing._id });
+                      setSelectedPairing({ ...selectedPairing, status: "active" });
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Confirm Introduction
+                  </button>
+                )}
+              </div>
             </DetailField>
             <DetailField label="Full Name">
               {selectedPairing.seeker.fullName}

@@ -341,6 +341,22 @@ export default defineSchema({
     .index("by_conversation", ["conversationId", "sentAt"]),
 
   // ═══════════════════════════════════════════════════════════════
+  // EVENTS — Community events created by partner hubs
+  // ═══════════════════════════════════════════════════════════════
+  events: defineTable({
+    title: v.string(),
+    description: v.optional(v.string()),
+    date: v.string(),          // ISO date string (e.g. "2026-03-15")
+    time: v.optional(v.string()),  // Display time (e.g. "6:00 PM")
+    location: v.optional(v.string()),
+    organizationId: v.id("organizations"),
+    createdBy: v.id("users"),
+    isActive: v.boolean(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_date", ["date"]),
+
+  // ═══════════════════════════════════════════════════════════════
   // CONTACTS — CRM contacts for community members
   // ═══════════════════════════════════════════════════════════════
   contacts: defineTable({

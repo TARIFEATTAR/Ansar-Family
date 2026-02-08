@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useUser, SignOutButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -9,19 +9,42 @@ import Link from "next/link";
 import {
   Loader2, Heart, BookOpen, Video, Users, ArrowRight, CheckCircle2,
   Phone, Mail, MapPin, UserCircle, Building2, Clock,
-  MessageSquare, Send, Inbox as InboxIcon,
+  MessageSquare, Send, Inbox as InboxIcon, Home, PlayCircle,
+  Calendar, LifeBuoy, ExternalLink,
 } from "lucide-react";
+import { DashboardSidebar, SidebarNavItem } from "@/components/crm";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
 
 /**
- * SEEKER PORTAL — Dashboard for New Muslims & Seekers
- * 
- * Shows journey status, paired Ansar details, community info,
- * and supportive resources.
+ * SEEKER PORTAL — Redesigned dashboard for New Muslims & Seekers
+ *
+ * Sidebar navigation with tabs:
+ *  - Home: Welcome, status, quick actions, events, video carousel
+ *  - Messages: Inbox with Ansar
+ *  - My Journey: Progress tracker + Ansar card
+ *  - Learn: Video carousel + reading resources
+ *  - Support: Hotline, live chat, community links
  */
+
+// ═══════════════════════════════════════════════════════════════
+// VIDEO DATA (placeholder — swap YouTube IDs later)
+// ═══════════════════════════════════════════════════════════════
+
+const ONBOARDING_VIDEOS = [
+  { id: "l6XQbQsNq04", title: "What is Islam?", duration: "8 min" },
+  { id: "fCkcr0kcWOE", title: "How to Pray", duration: "12 min" },
+  { id: "hzM3KN6j7kQ", title: "Five Pillars", duration: "6 min" },
+  { id: "ZIqMi8onVtY", title: "Reading the Quran", duration: "10 min" },
+  { id: "1cMTLSqD6cQ", title: "New Muslim Guide", duration: "15 min" },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════
 
 export default function SeekerPortalPage() {
   const { user, isLoaded } = useUser();
+  const [activeTab, setActiveTab] = useState("home");
 
   // Self-heal: ensure user record exists in Convex (same as dashboard gateway)
   const upsertUser = useMutation(api.users.upsertFromClerk);
@@ -47,7 +70,7 @@ export default function SeekerPortalPage() {
     user?.id ? { clerkId: user.id } : "skip"
   );
 
-  // Get seeker's intake record by their email (normalized to lowercase)
+  // Get seeker's intake record by email (normalized)
   const seekerEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
   const seekerIntake = useQuery(
     api.intakes.getByEmail,
@@ -60,7 +83,14 @@ export default function SeekerPortalPage() {
     seekerIntake?._id ? { seekerId: seekerIntake._id } : "skip"
   );
 
-  // Inbox — all hooks must be called before any conditional returns
+  // Get upcoming events for the seeker's organization
+  const orgId = seekerIntake?.organizationId;
+  const events = useQuery(
+    api.events.getByOrganization,
+    orgId ? { organizationId: orgId } : "skip"
+  ) ?? [];
+
+  // Inbox
   const seekerUserId = currentUser?._id as Id<"users"> | undefined;
   const inbox = useQuery(
     api.inbox.getInbox,
@@ -71,7 +101,6 @@ export default function SeekerPortalPage() {
     seekerUserId ? { userId: seekerUserId } : "skip"
   ) ?? 0;
 
-  // Get the most recent conversation (seeker usually has one — with their Ansar)
   const latestConvoId = inbox.length > 0 ? inbox[0].conversationId : undefined;
   const latestConversation = useQuery(
     api.inbox.getConversation,
@@ -82,12 +111,8 @@ export default function SeekerPortalPage() {
 
   const markAsRead = useMutation(api.inbox.markAsRead);
   const replyToConversation = useMutation(api.inbox.replyToConversation);
-  const startConversation = useMutation(api.inbox.startConversation);
 
-  // Loading state — wait for both Clerk auth and Convex user record
-  // `currentUser === undefined` means the query is still loading
-  // `currentUser === null` means the query returned nothing (record doesn't exist yet)
-  // After upsert attempt, if still null, the reactive query should pick it up shortly
+  // ── Loading states ────────────────────────────────────────────
   if (!isLoaded || currentUser === undefined || (currentUser === null && !upsertAttempted)) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
@@ -99,411 +124,284 @@ export default function SeekerPortalPage() {
     );
   }
 
-  // User record still not found even after upsert — likely a data issue
   if (currentUser === null) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
         <div className="text-center max-w-md mx-auto px-6">
           <Loader2 className="w-8 h-8 text-ansar-sage-600 animate-spin mx-auto mb-4" />
           <p className="font-body text-ansar-gray mb-2">Setting up your account...</p>
-          <p className="font-body text-sm text-ansar-gray/60">This usually takes just a moment. If this persists, try refreshing the page.</p>
+          <p className="font-body text-sm text-ansar-gray/60">This usually takes just a moment.</p>
         </div>
       </main>
     );
   }
 
-  // Not a seeker
   if (currentUser.role !== "seeker") {
     return (
       <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
         <div className="text-center max-w-md mx-auto px-6">
           <p className="font-body text-ansar-gray">This page is for seekers only.</p>
           <Link href="/dashboard" className="text-ansar-sage-600 font-body hover:underline mt-4 block">
-            ← Return to Dashboard
+            &larr; Return to Dashboard
           </Link>
         </div>
       </main>
     );
   }
 
+  // ── Derived state ─────────────────────────────────────────────
   const firstName = currentUser.name.split(" ")[0];
   const intakeExists = seekerIntake !== null && seekerIntake !== undefined;
   const status = seekerIntake?.status || "awaiting_outreach";
 
+  // ── Sidebar nav items ─────────────────────────────────────────
+  const navItems: SidebarNavItem[] = [
+    { id: "home", label: "Home", icon: <Home className="w-4 h-4" />, description: `Welcome back, ${firstName}` },
+    { id: "messages", label: "Messages", icon: <MessageSquare className="w-4 h-4" />, badge: inboxUnread, description: "Conversations with your community" },
+    { id: "journey", label: "My Journey", icon: <CheckCircle2 className="w-4 h-4" />, description: "Your progress and companion" },
+    { id: "learn", label: "Learn", icon: <PlayCircle className="w-4 h-4" />, description: "Videos, reading, and guides" },
+    { id: "support", label: "Support", icon: <LifeBuoy className="w-4 h-4" />, description: "Get help anytime" },
+  ];
+
   return (
-    <main className="min-h-screen bg-ansar-cream">
-      {/* Header */}
-      <header className="bg-white border-b border-[rgba(61,61,61,0.08)]">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="font-heading text-xl text-ansar-charcoal">
-              Ansar Family
-            </Link>
-            <span className="text-[10px] font-body font-medium uppercase tracking-wider text-ansar-sage-600 bg-ansar-sage-50 px-2 py-0.5 rounded-full">
-              Seeker Portal
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="font-body text-xs text-ansar-muted hidden sm:inline">
-              {currentUser.email}
-            </span>
-            <SignOutButton>
-              <button className="text-sm font-body text-ansar-muted hover:text-ansar-charcoal">
-                Sign Out
-              </button>
-            </SignOutButton>
-          </div>
-        </div>
-      </header>
+    <DashboardSidebar
+      brandIcon={<Heart className="w-4 h-4 text-white" />}
+      brandTitle="Ansar Family"
+      brandSubtitle="Your Journey Portal"
+      navItems={navItems}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userName={currentUser.name}
+      userRoleLabel="Seeker"
+      accentColor="sage"
+    >
+      {/* ═══════ HOME TAB ═══════ */}
+      {activeTab === "home" && (
+        <HomeTab
+          firstName={firstName}
+          intakeExists={intakeExists}
+          status={status}
+          seekerIntake={seekerIntake}
+          pairing={pairing}
+          events={events}
+          inboxUnread={inboxUnread}
+          onNavigate={setActiveTab}
+        />
+      )}
 
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        {/* Welcome Section */}
-        <div className="bg-white rounded-2xl p-8 mb-8 shadow-sm">
-          <div className="flex items-start gap-4 mb-6">
-            <div className="w-12 h-12 bg-ansar-sage-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Heart className="w-6 h-6 text-ansar-sage-600" />
-            </div>
-            <div className="flex-1">
-              <h1 className="font-heading text-3xl text-ansar-charcoal mb-2">
-                Assalamu Alaikum, {firstName}
-              </h1>
-              <p className="font-body text-ansar-gray text-lg">
-                Welcome to your journey portal. We&apos;re so glad you&apos;re here.
-              </p>
-            </div>
-          </div>
+      {/* ═══════ MESSAGES TAB ═══════ */}
+      {activeTab === "messages" && seekerUserId && (
+        <MessagesTab
+          seekerUserId={seekerUserId}
+          seekerName={currentUser.name}
+          inbox={inbox}
+          inboxUnread={inboxUnread}
+          latestConversation={latestConversation}
+          markAsRead={markAsRead}
+          replyToConversation={replyToConversation}
+          pairing={pairing}
+        />
+      )}
 
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {/* JOURNEY STATUS TRACKER                                     */}
-          {/* ═══════════════════════════════════════════════════════════ */}
+      {/* ═══════ JOURNEY TAB ═══════ */}
+      {activeTab === "journey" && (
+        <JourneyTab
+          intakeExists={intakeExists}
+          status={status}
+          seekerIntake={seekerIntake}
+          pairing={pairing}
+        />
+      )}
 
-          {/* Intake record still loading or not yet propagated */}
-          {!intakeExists && seekerIntake !== undefined && (
-            <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-6">
-              <div className="flex items-start gap-3">
-                <Loader2 className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0 animate-spin" />
-                <div>
-                  <h3 className="font-body font-semibold text-ansar-charcoal mb-1">
-                    We&apos;re getting things ready
-                  </h3>
-                  <p className="font-body text-sm text-ansar-gray leading-relaxed">
-                    Your information is being set up. This usually takes just a moment.
-                    If this message persists, try refreshing the page.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+      {/* ═══════ LEARN TAB ═══════ */}
+      {activeTab === "learn" && <LearnTab />}
 
-          {/* Awaiting outreach — not yet assigned to any org */}
-          {intakeExists && status === "awaiting_outreach" && (
-            <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-6">
-              <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h3 className="font-body font-semibold text-ansar-charcoal mb-1">
-                    Your Application Has Been Received
-                  </h3>
-                  <p className="font-body text-sm text-ansar-gray leading-relaxed">
-                    We&apos;re reviewing your submission and matching you with a local community.
-                    Someone will reach out within 3-5 days. In the meantime, explore the resources below.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Triaged — assigned to org, waiting to be paired with an Ansar */}
-          {intakeExists && status === "triaged" && (
-            <div className="bg-ansar-ochre-50 border border-ansar-ochre-200 rounded-xl p-6">
-              <div className="flex items-start gap-3">
-                <Building2 className="w-5 h-5 text-ansar-ochre-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h3 className="font-body font-semibold text-ansar-charcoal mb-1">
-                    You&apos;ve Been Matched with a Community
-                  </h3>
-                  <p className="font-body text-sm text-ansar-gray leading-relaxed mb-2">
-                    Your local community is finding the right companion (Ansar) for you.
-                    They&apos;ll reach out soon to introduce themselves.
-                  </p>
-                  {/* Show org name if we know it */}
-                  {seekerIntake?.organizationId && (
-                    <p className="font-body text-sm text-ansar-ochre-700 font-medium">
-                      Community: {pairing?.organization?.name || "Your local hub"}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Connected / Active — paired with an Ansar! */}
-          {intakeExists && (status === "connected" || status === "active") && (
-            <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-6">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h3 className="font-body font-semibold text-ansar-charcoal mb-1">
-                    You&apos;re Paired with an Ansar!
-                  </h3>
-                  <p className="font-body text-sm text-ansar-gray leading-relaxed">
-                    Your local companion is here to support you on your journey. They&apos;ll check in regularly and answer your questions.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ═══════════════════════════════════════════════════════════ */}
-        {/* YOUR ANSAR — shown when paired                             */}
-        {/* ═══════════════════════════════════════════════════════════ */}
-
-        {pairing && pairing.ansar && (
-          <div className="bg-white rounded-2xl p-8 mb-8 shadow-sm">
-            <h2 className="font-heading text-xl text-ansar-charcoal mb-6 flex items-center gap-2">
-              <UserCircle className="w-6 h-6 text-ansar-sage-600" />
-              Your Ansar (Companion)
-            </h2>
-            <div className="flex flex-col sm:flex-row items-start gap-6">
-              {/* Avatar / Name */}
-              <div className="w-20 h-20 bg-ansar-sage-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-2xl font-heading text-ansar-sage-700">
-                  {pairing.ansar.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-                </span>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-heading text-2xl text-ansar-charcoal mb-1">
-                  {pairing.ansar.fullName}
-                </h3>
-                {pairing.organization && (
-                  <p className="font-body text-sm text-ansar-sage-600 mb-4 flex items-center gap-1.5">
-                    <Building2 className="w-4 h-4" />
-                    {pairing.organization.name}
-                  </p>
-                )}
-
-                {/* Contact info */}
-                <div className="space-y-2">
-                  {pairing.ansar.phone && (
-                    <div className="flex items-center gap-3">
-                      <a
-                        href={`tel:${pairing.ansar.phone}`}
-                        className="inline-flex items-center gap-2 text-sm font-body text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-4 py-2 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
-                      >
-                        <Phone className="w-4 h-4 text-ansar-sage-600" />
-                        {pairing.ansar.phone}
-                      </a>
-                      <a
-                        href={`sms:${pairing.ansar.phone}`}
-                        className="inline-flex items-center gap-2 text-sm font-body text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-4 py-2 rounded-lg transition-colors"
-                      >
-                        <Phone className="w-4 h-4" />
-                        Text
-                      </a>
-                    </div>
-                  )}
-                  {pairing.ansar.email && (
-                    <a
-                      href={`mailto:${pairing.ansar.email}`}
-                      className="inline-flex items-center gap-2 text-sm font-body text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-4 py-2 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
-                    >
-                      <Mail className="w-4 h-4 text-ansar-sage-600" />
-                      {pairing.ansar.email}
-                    </a>
-                  )}
-                  {pairing.ansar.city && (
-                    <p className="flex items-center gap-2 text-sm font-body text-ansar-gray mt-2">
-                      <MapPin className="w-4 h-4 text-ansar-muted" />
-                      {pairing.ansar.city}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ═══════════════════════════════════════════════════════════ */}
-        {/* MESSAGES — shown when paired or has conversations           */}
-        {/* ═══════════════════════════════════════════════════════════ */}
-
-        {seekerUserId && (
-          <SeekerMessagesCard
-            seekerUserId={seekerUserId}
-            seekerName={currentUser.name}
-            inbox={inbox}
-            inboxUnread={inboxUnread}
-            latestConversation={latestConversation}
-            markAsRead={markAsRead}
-            replyToConversation={replyToConversation}
-            startConversation={startConversation}
-            pairing={pairing}
-          />
-        )}
-
-        {/* ═══════════════════════════════════════════════════════════ */}
-        {/* JOURNEY PROGRESS                                           */}
-        {/* ═══════════════════════════════════════════════════════════ */}
-
-        {intakeExists && (
-          <div className="bg-white rounded-2xl p-8 mb-8 shadow-sm">
-            <h2 className="font-heading text-xl text-ansar-charcoal mb-6">
-              Your Journey
-            </h2>
-            <div className="space-y-0">
-              {/* Step 1: Form submitted */}
-              <JourneyStep
-                step={1}
-                label="Form Submitted"
-                description="Your information has been received"
-                completed={true}
-                active={status === "awaiting_outreach"}
-              />
-              {/* Step 2: Matched with community */}
-              <JourneyStep
-                step={2}
-                label="Community Matched"
-                description={pairing?.organization?.name || seekerIntake?.organizationId ? "You've been assigned to a local community" : "Waiting to be matched"}
-                completed={status === "triaged" || status === "connected" || status === "active"}
-                active={status === "triaged"}
-              />
-              {/* Step 3: Paired with Ansar */}
-              <JourneyStep
-                step={3}
-                label="Paired with Ansar"
-                description={pairing?.ansar ? `Your companion: ${pairing.ansar.fullName}` : "Your personal companion will be assigned"}
-                completed={status === "connected" || status === "active"}
-                active={status === "connected" || status === "active"}
-                isLast
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ═══════════════════════════════════════════════════════════ */}
-        {/* RESOURCES                                                  */}
-        {/* ═══════════════════════════════════════════════════════════ */}
-
-        <div className="space-y-6">
-          <h2 className="font-heading text-2xl text-ansar-charcoal">
-            Resources for Your Journey
-          </h2>
-
-          {/* Video Resources */}
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-ansar-terracotta-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Video className="w-6 h-6 text-ansar-terracotta-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-body font-semibold text-ansar-charcoal text-lg mb-2">
-                  Getting Started Videos
-                </h3>
-                <p className="font-body text-ansar-gray text-sm mb-4">
-                  Short, practical videos to help you understand the basics of Islam.
-                </p>
-                <div className="space-y-3">
-                  <a href="https://www.youtube.com/watch?v=l6XQbQsNq04" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
-                    <span>What is Islam?</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                  <a href="https://www.youtube.com/watch?v=fCkcr0kcWOE" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
-                    <span>How to Pray (Step by Step)</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                  <a href="https://www.youtube.com/watch?v=hzM3KN6j7kQ" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
-                    <span>The Five Pillars of Islam</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Reading Resources */}
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-ansar-ochre-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-6 h-6 text-ansar-ochre-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-body font-semibold text-ansar-charcoal text-lg mb-2">
-                  Essential Reading
-                </h3>
-                <p className="font-body text-ansar-gray text-sm mb-4">
-                  Foundational texts and guides to deepen your understanding.
-                </p>
-                <div className="space-y-3">
-                  <a href="https://www.whyislam.org/intelligence-creation/" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
-                    <span>The Intelligence of Allah&apos;s Creations (WhyIslam)</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                  <a href="https://quran.com" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
-                    <span>Read the Quran (English Translation)</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                  <a href="https://www.islamreligion.com/articles/" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
-                    <span>Articles on Islamic Beliefs &amp; Practices</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Community Support */}
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-ansar-sage-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Users className="w-6 h-6 text-ansar-sage-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-body font-semibold text-ansar-charcoal text-lg mb-2">
-                  Need Immediate Support?
-                </h3>
-                <p className="font-body text-ansar-gray text-sm mb-4">
-                  While you wait for your local connection, these resources are available 24/7.
-                </p>
-                <div className="space-y-3">
-                  <a href="tel:1-877-949-4752"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
-                    <span>WhyIslam Hotline: 1-877-WHY-ISLAM</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                  <a href="https://www.whyislam.org/chat/" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-ansar-sage-600 hover:text-ansar-sage-700 font-body text-sm group">
-                    <span>Live Chat with a Muslim</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quote */}
-        <div className="mt-12 border-l-4 border-ansar-sage-400 pl-6 py-2">
-          <p className="font-body text-ansar-gray italic text-lg leading-relaxed">
-            &quot;These resources are just to get your feet wet. True Islam is lived with people, not just watched.
-            Real growth happens in community.&quot;
-          </p>
-        </div>
-      </div>
-    </main>
+      {/* ═══════ SUPPORT TAB ═══════ */}
+      {activeTab === "support" && <SupportTab />}
+    </DashboardSidebar>
   );
 }
 
-/**
- * Seeker Messages Card — inline conversation view
- */
-function SeekerMessagesCard({
+// ═══════════════════════════════════════════════════════════════
+// HOME TAB
+// ═══════════════════════════════════════════════════════════════
+
+function HomeTab({
+  firstName,
+  intakeExists,
+  status,
+  seekerIntake,
+  pairing,
+  events,
+  inboxUnread,
+  onNavigate,
+}: {
+  firstName: string;
+  intakeExists: boolean;
+  status: string;
+  seekerIntake: any;
+  pairing: any;
+  events: any[];
+  inboxUnread: number;
+  onNavigate: (tab: string) => void;
+}) {
+  return (
+    <>
+      {/* Welcome + Status Banner */}
+      <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+        <div className="flex items-start gap-4 mb-5">
+          <div className="w-12 h-12 bg-ansar-sage-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <Heart className="w-6 h-6 text-ansar-sage-600" />
+          </div>
+          <div className="flex-1">
+            <h1 className="font-heading text-2xl lg:text-3xl text-ansar-charcoal mb-1">
+              Assalamu Alaikum, {firstName}
+            </h1>
+            <p className="font-body text-ansar-gray">
+              Welcome to your journey portal. We&apos;re so glad you&apos;re here.
+            </p>
+          </div>
+        </div>
+
+        {/* Status Banner */}
+        <StatusBanner
+          intakeExists={intakeExists}
+          status={status}
+          seekerIntake={seekerIntake}
+          pairing={pairing}
+        />
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <QuickAction
+          icon={<MessageSquare className="w-5 h-5" />}
+          label="Messages"
+          badge={inboxUnread}
+          onClick={() => onNavigate("messages")}
+        />
+        <QuickAction
+          icon={<PlayCircle className="w-5 h-5" />}
+          label="Watch & Learn"
+          onClick={() => onNavigate("learn")}
+        />
+        <QuickAction
+          icon={<Calendar className="w-5 h-5" />}
+          label="Events"
+          badge={events.length}
+          onClick={() => {
+            const el = document.getElementById("events-section");
+            el?.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
+        <QuickAction
+          icon={<LifeBuoy className="w-5 h-5" />}
+          label="Get Support"
+          onClick={() => onNavigate("support")}
+        />
+      </div>
+
+      {/* Two-column layout: Events + Ansar/Journey */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Left column (3/5): Events + Videos */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Upcoming Events */}
+          <div id="events-section" className="bg-white rounded-2xl p-6 shadow-sm">
+            <h2 className="font-heading text-lg text-ansar-charcoal mb-4 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-ansar-sage-600" />
+              Upcoming Events
+            </h2>
+            {events.length === 0 ? (
+              <div className="text-center py-6">
+                <Calendar className="w-8 h-8 text-ansar-muted/30 mx-auto mb-2" />
+                <p className="font-body text-sm text-ansar-muted">
+                  No upcoming events yet. Your community will post events here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {events.slice(0, 3).map((event) => (
+                  <EventCard key={event._id} event={event} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Video Carousel Preview */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading text-lg text-ansar-charcoal flex items-center gap-2">
+                <PlayCircle className="w-5 h-5 text-ansar-sage-600" />
+                Start Learning
+              </h2>
+              <button
+                onClick={() => onNavigate("learn")}
+                className="text-xs font-body text-ansar-sage-600 hover:text-ansar-sage-700 flex items-center gap-1"
+              >
+                View all <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <VideoCarousel videos={ONBOARDING_VIDEOS.slice(0, 5)} />
+          </div>
+        </div>
+
+        {/* Right column (2/5): Ansar + Journey */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Ansar Card */}
+          {pairing && pairing.ansar ? (
+            <AnsarCard pairing={pairing} />
+          ) : (
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h3 className="font-heading text-lg text-ansar-charcoal mb-3 flex items-center gap-2">
+                <UserCircle className="w-5 h-5 text-ansar-sage-600" />
+                Your Ansar
+              </h3>
+              <div className="text-center py-4">
+                <UserCircle className="w-10 h-10 text-ansar-muted/30 mx-auto mb-2" />
+                <p className="font-body text-sm text-ansar-muted">
+                  Your personal companion will be assigned soon.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Mini Journey Tracker */}
+          {intakeExists && (
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-heading text-lg text-ansar-charcoal">Your Journey</h3>
+                <button
+                  onClick={() => onNavigate("journey")}
+                  className="text-xs font-body text-ansar-sage-600 hover:text-ansar-sage-700 flex items-center gap-1"
+                >
+                  Details <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="space-y-0">
+                <JourneyStep step={1} label="Form Submitted" completed={true} active={status === "awaiting_outreach"} />
+                <JourneyStep step={2} label="Community Matched" completed={status === "triaged" || status === "connected" || status === "active"} active={status === "triaged"} />
+                <JourneyStep step={3} label="Paired with Ansar" completed={status === "connected" || status === "active"} active={status === "connected" || status === "active"} isLast />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Inspirational Quote */}
+      <div className="border-l-4 border-ansar-sage-400 pl-6 py-2">
+        <p className="font-body text-ansar-gray italic leading-relaxed">
+          &quot;True Islam is lived with people, not just watched. Real growth happens in community.&quot;
+        </p>
+      </div>
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MESSAGES TAB
+// ═══════════════════════════════════════════════════════════════
+
+function MessagesTab({
   seekerUserId,
   seekerName,
   inbox,
@@ -511,7 +409,6 @@ function SeekerMessagesCard({
   latestConversation,
   markAsRead,
   replyToConversation,
-  startConversation,
   pairing,
 }: {
   seekerUserId: Id<"users">;
@@ -521,22 +418,18 @@ function SeekerMessagesCard({
   latestConversation: any;
   markAsRead: any;
   replyToConversation: any;
-  startConversation: any;
   pairing: any;
 }) {
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
-  const [firstMessage, setFirstMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Mark as read when conversation is viewed
   useEffect(() => {
     if (latestConversation && inboxUnread > 0) {
       markAsRead({ conversationId: latestConversation._id, userId: seekerUserId });
     }
   }, [latestConversation, inboxUnread, markAsRead, seekerUserId]);
 
-  // Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [latestConversation?.messages?.length]);
@@ -560,95 +453,53 @@ function SeekerMessagesCard({
     }
   };
 
-  const handleSendFirst = async () => {
-    if (!firstMessage.trim() || sending || !pairing?.ansar) return;
-    // Find the ansar's user account
-    const ansarName = pairing.ansar.fullName;
-    // We need the ansar's userId — query available recipients
-    setSending(true);
-    try {
-      // Use startConversation — we need the recipient userId
-      // The available recipients query will have the ansar's user
-      // For now, try to find via the inbox recipients
-      const recipients = await fetch(""); // We can't call query from here
-      // Actually, startConversation needs a userId. Let's check if we have it.
-      // The seeker can't easily get the ansar's userId from pairing data alone.
-      // Let's skip the "start first message" for now — messages will come from Ansar side.
-      console.log("First message from seeker not yet supported — Ansar initiates");
-    } catch (error) {
-      console.error("Failed to send:", error);
-    } finally {
-      setSending(false);
-    }
-  };
-
-  // No conversations yet
   if (inbox.length === 0) {
     return (
-      <div className="bg-white rounded-2xl p-8 mb-8 shadow-sm">
-        <h2 className="font-heading text-xl text-ansar-charcoal mb-4 flex items-center gap-2">
-          <MessageSquare className="w-6 h-6 text-ansar-sage-600" />
-          Messages
-          {inboxUnread > 0 && (
-            <span className="bg-ansar-sage-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-              {inboxUnread}
-            </span>
-          )}
-        </h2>
-        <div className="text-center py-8">
-          <InboxIcon className="w-10 h-10 text-ansar-muted/30 mx-auto mb-3" />
-          <p className="font-body text-sm text-ansar-muted">
-            No messages yet. Once you&apos;re paired with an Ansar companion,
-            you&apos;ll be able to message them here.
+      <div className="bg-white rounded-2xl p-8 shadow-sm">
+        <div className="text-center py-12">
+          <InboxIcon className="w-12 h-12 text-ansar-muted/30 mx-auto mb-4" />
+          <h3 className="font-heading text-lg text-ansar-charcoal mb-2">No messages yet</h3>
+          <p className="font-body text-sm text-ansar-muted max-w-sm mx-auto">
+            Once you&apos;re paired with an Ansar companion, you&apos;ll be able to message them here.
           </p>
         </div>
       </div>
     );
   }
 
-  // Has conversation — show messages
   return (
-    <div className="bg-white rounded-2xl mb-8 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col" style={{ minHeight: "500px" }}>
       {/* Header */}
-      <div className="px-8 py-5 border-b border-[rgba(61,61,61,0.08)]">
-        <h2 className="font-heading text-xl text-ansar-charcoal flex items-center gap-2">
-          <MessageSquare className="w-6 h-6 text-ansar-sage-600" />
-          Messages
-          {inboxUnread > 0 && (
-            <span className="bg-ansar-sage-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-              {inboxUnread}
-            </span>
-          )}
-        </h2>
+      <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)]">
         {latestConversation && (
-          <p className="font-body text-xs text-ansar-muted mt-1">
+          <p className="font-body text-sm text-ansar-muted">
             Conversation with{" "}
-            {latestConversation.participants
-              ?.filter((p: any) => p.userId !== seekerUserId)
-              .map((p: any) => p.userName)
-              .join(", ")}
+            <span className="text-ansar-charcoal font-medium">
+              {latestConversation.participants
+                ?.filter((p: any) => p.userId !== seekerUserId)
+                .map((p: any) => p.userName)
+                .join(", ")}
+            </span>
           </p>
         )}
       </div>
 
       {/* Messages */}
-      {latestConversation?.messages && (
-        <div className="px-6 py-4 space-y-4 max-h-96 overflow-y-auto bg-[#FAFAF8]">
-          {latestConversation.messages.map((msg: any) => (
-            <MessageBubble
-              key={msg._id}
-              senderName={msg.senderName}
-              senderRole={msg.senderRole}
-              body={msg.body}
-              sentAt={msg.sentAt}
-              isMine={msg.senderId === seekerUserId}
-            />
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-      )}
+      <div className="flex-1 px-6 py-4 space-y-4 overflow-y-auto bg-[#FAFAF8]">
+        {latestConversation?.messages?.map((msg: any) => (
+          <MessageBubble
+            key={msg._id}
+            senderName={msg.senderName}
+            senderRole={msg.senderRole}
+            body={msg.body}
+            sentAt={msg.sentAt}
+            isMine={msg.senderId === seekerUserId}
+          />
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
 
-      {/* Reply input */}
+      {/* Reply */}
       <div className="px-6 py-4 border-t border-[rgba(61,61,61,0.08)]">
         <div className="flex items-end gap-2">
           <textarea
@@ -670,11 +521,7 @@ function SeekerMessagesCard({
             disabled={!replyText.trim() || sending}
             className="flex items-center justify-center w-9 h-9 rounded-lg bg-ansar-sage-600 text-white hover:bg-ansar-sage-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
           >
-            {sending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
+            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -682,9 +529,528 @@ function SeekerMessagesCard({
   );
 }
 
-/**
- * Journey Step — visual progress indicator
- */
+// ═══════════════════════════════════════════════════════════════
+// JOURNEY TAB
+// ═══════════════════════════════════════════════════════════════
+
+function JourneyTab({
+  intakeExists,
+  status,
+  seekerIntake,
+  pairing,
+}: {
+  intakeExists: boolean;
+  status: string;
+  seekerIntake: any;
+  pairing: any;
+}) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Journey Progress */}
+      <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+        <h2 className="font-heading text-xl text-ansar-charcoal mb-6">Your Journey</h2>
+        {intakeExists ? (
+          <div className="space-y-0">
+            <JourneyStep
+              step={1}
+              label="Form Submitted"
+              description="Your information has been received"
+              completed={true}
+              active={status === "awaiting_outreach"}
+            />
+            <JourneyStep
+              step={2}
+              label="Community Matched"
+              description={
+                pairing?.organization?.name || seekerIntake?.organizationId
+                  ? "You've been assigned to a local community"
+                  : "Waiting to be matched"
+              }
+              completed={status === "triaged" || status === "connected" || status === "active"}
+              active={status === "triaged"}
+            />
+            <JourneyStep
+              step={3}
+              label="Paired with Ansar"
+              description={
+                pairing?.ansar
+                  ? `Your companion: ${pairing.ansar.fullName}`
+                  : "Your personal companion will be assigned"
+              }
+              completed={status === "connected" || status === "active"}
+              active={status === "connected" || status === "active"}
+              isLast
+            />
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Loader2 className="w-8 h-8 text-ansar-sage-600 animate-spin mx-auto mb-3" />
+            <p className="font-body text-sm text-ansar-muted">Setting up your journey...</p>
+          </div>
+        )}
+      </div>
+
+      {/* Ansar Card */}
+      <div className="space-y-6">
+        {pairing && pairing.ansar ? (
+          <AnsarCard pairing={pairing} />
+        ) : (
+          <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+            <h2 className="font-heading text-xl text-ansar-charcoal mb-6 flex items-center gap-2">
+              <UserCircle className="w-6 h-6 text-ansar-sage-600" />
+              Your Ansar (Companion)
+            </h2>
+            <div className="text-center py-8">
+              <UserCircle className="w-14 h-14 text-ansar-muted/20 mx-auto mb-3" />
+              <p className="font-body text-ansar-muted">
+                Your personal companion will be assigned once you&apos;re matched with a community.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Status detail */}
+        <StatusBanner
+          intakeExists={intakeExists}
+          status={status}
+          seekerIntake={seekerIntake}
+          pairing={pairing}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LEARN TAB
+// ═══════════════════════════════════════════════════════════════
+
+function LearnTab() {
+  const [playingId, setPlayingId] = useState<string | null>(null);
+
+  return (
+    <>
+      {/* Video Section */}
+      <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+        <h2 className="font-heading text-xl text-ansar-charcoal mb-2">Getting Started Videos</h2>
+        <p className="font-body text-sm text-ansar-gray mb-6">
+          Short, practical videos to help you understand the basics of Islam.
+        </p>
+
+        {/* Playing video */}
+        {playingId && (
+          <div className="mb-6">
+            <div className="relative w-full rounded-xl overflow-hidden bg-black" style={{ paddingBottom: "56.25%" }}>
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src={`https://www.youtube.com/embed/${playingId}?autoplay=1&rel=0`}
+                title="Video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+            <button
+              onClick={() => setPlayingId(null)}
+              className="mt-3 text-xs font-body text-ansar-muted hover:text-ansar-charcoal"
+            >
+              Close video
+            </button>
+          </div>
+        )}
+
+        {/* Video grid */}
+        <VideoCarousel videos={ONBOARDING_VIDEOS} onPlay={setPlayingId} activeId={playingId} />
+      </div>
+
+      {/* Reading Resources */}
+      <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+        <h2 className="font-heading text-xl text-ansar-charcoal mb-2 flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-ansar-ochre-600" />
+          Essential Reading
+        </h2>
+        <p className="font-body text-sm text-ansar-gray mb-6">
+          Foundational texts and guides to deepen your understanding.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <ResourceLink
+            title="The Intelligence of Allah's Creations"
+            source="WhyIslam"
+            href="https://www.whyislam.org/intelligence-creation/"
+          />
+          <ResourceLink
+            title="Read the Quran"
+            source="English Translation"
+            href="https://quran.com"
+          />
+          <ResourceLink
+            title="Articles on Beliefs & Practices"
+            source="IslamReligion.com"
+            href="https://www.islamreligion.com/articles/"
+          />
+          <ResourceLink
+            title="New Muslim Academy"
+            source="Free Courses"
+            href="https://newmuslimacademy.org/"
+          />
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUPPORT TAB
+// ═══════════════════════════════════════════════════════════════
+
+function SupportTab() {
+  return (
+    <>
+      <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm">
+        <h2 className="font-heading text-xl text-ansar-charcoal mb-2">Need Help?</h2>
+        <p className="font-body text-sm text-ansar-gray mb-6">
+          These resources are available 24/7. You&apos;re never alone on this journey.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <a
+            href="tel:1-877-949-4752"
+            className="flex items-center gap-4 bg-ansar-sage-50 hover:bg-ansar-sage-100 border border-ansar-sage-200 rounded-xl p-5 transition-colors group"
+          >
+            <div className="w-12 h-12 bg-ansar-sage-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <Phone className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-body font-semibold text-ansar-charcoal text-sm">WhyIslam Hotline</h3>
+              <p className="font-body text-xs text-ansar-sage-700">1-877-WHY-ISLAM</p>
+              <p className="font-body text-xs text-ansar-muted mt-0.5">Tap to call</p>
+            </div>
+          </a>
+
+          <a
+            href="https://www.whyislam.org/chat/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-4 bg-ansar-ochre-50 hover:bg-ansar-ochre-100 border border-ansar-ochre-200 rounded-xl p-5 transition-colors group"
+          >
+            <div className="w-12 h-12 bg-ansar-ochre-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <MessageSquare className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-body font-semibold text-ansar-charcoal text-sm">Live Chat</h3>
+              <p className="font-body text-xs text-ansar-ochre-700">Chat with a Muslim online</p>
+              <p className="font-body text-xs text-ansar-muted mt-0.5">Opens in new tab</p>
+            </div>
+          </a>
+
+          <a
+            href="https://www.whyislam.org/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-5 transition-colors group"
+          >
+            <div className="w-12 h-12 bg-ansar-charcoal rounded-full flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-body font-semibold text-ansar-charcoal text-sm">WhyIslam.org</h3>
+              <p className="font-body text-xs text-ansar-gray">Explore Islam resources</p>
+            </div>
+          </a>
+
+          <a
+            href="mailto:support@ansar.family"
+            className="flex items-center gap-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-5 transition-colors group"
+          >
+            <div className="w-12 h-12 bg-ansar-charcoal rounded-full flex items-center justify-center flex-shrink-0">
+              <Mail className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-body font-semibold text-ansar-charcoal text-sm">Email Us</h3>
+              <p className="font-body text-xs text-ansar-gray">support@ansar.family</p>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      {/* Encouraging message */}
+      <div className="border-l-4 border-ansar-sage-400 pl-6 py-2">
+        <p className="font-body text-ansar-gray italic leading-relaxed">
+          &quot;Whoever relieves a believer of a hardship in this world, Allah will relieve them of a hardship on the Day of Judgment.&quot;
+        </p>
+        <p className="font-body text-xs text-ansar-muted mt-2">Prophet Muhammad (peace be upon him)</p>
+      </div>
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SHARED COMPONENTS
+// ═══════════════════════════════════════════════════════════════
+
+/** Status banner — contextual based on journey stage */
+function StatusBanner({
+  intakeExists,
+  status,
+  seekerIntake,
+  pairing,
+}: {
+  intakeExists: boolean;
+  status: string;
+  seekerIntake: any;
+  pairing: any;
+}) {
+  if (!intakeExists && seekerIntake !== undefined) {
+    return (
+      <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-5">
+        <div className="flex items-start gap-3">
+          <Loader2 className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0 animate-spin" />
+          <div>
+            <h3 className="font-body font-semibold text-ansar-charcoal text-sm mb-0.5">We&apos;re getting things ready</h3>
+            <p className="font-body text-xs text-ansar-gray">Your information is being set up. This usually takes just a moment.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (intakeExists && status === "awaiting_outreach") {
+    return (
+      <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-5">
+        <div className="flex items-start gap-3">
+          <Clock className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="font-body font-semibold text-ansar-charcoal text-sm mb-0.5">Application Received</h3>
+            <p className="font-body text-xs text-ansar-gray">We&apos;re matching you with a local community. Someone will reach out within 3-5 days.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (intakeExists && status === "triaged") {
+    return (
+      <div className="bg-ansar-ochre-50 border border-ansar-ochre-200 rounded-xl p-5">
+        <div className="flex items-start gap-3">
+          <Building2 className="w-5 h-5 text-ansar-ochre-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="font-body font-semibold text-ansar-charcoal text-sm mb-0.5">Matched with a Community</h3>
+            <p className="font-body text-xs text-ansar-gray">
+              Your community is finding the right companion for you. They&apos;ll reach out soon.
+            </p>
+            {seekerIntake?.organizationId && (
+              <p className="font-body text-xs text-ansar-ochre-700 font-medium mt-1">
+                Community: {pairing?.organization?.name || "Your local hub"}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (intakeExists && (status === "connected" || status === "active")) {
+    return (
+      <div className="bg-ansar-sage-50 border border-ansar-sage-200 rounded-xl p-5">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 text-ansar-sage-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="font-body font-semibold text-ansar-charcoal text-sm mb-0.5">You&apos;re Paired with an Ansar!</h3>
+            <p className="font-body text-xs text-ansar-gray">Your companion is here to support you on your journey.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+/** Quick action button */
+function QuickAction({
+  icon,
+  label,
+  badge,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="relative bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col items-center gap-2 group border border-transparent hover:border-ansar-sage-200"
+    >
+      <span className="text-ansar-sage-600 group-hover:scale-110 transition-transform">{icon}</span>
+      <span className="font-body text-xs text-ansar-charcoal font-medium">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span className="absolute top-2 right-2 bg-ansar-sage-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+}
+
+/** Ansar companion card */
+function AnsarCard({ pairing }: { pairing: any }) {
+  return (
+    <div className="bg-white rounded-2xl p-6 shadow-sm">
+      <h3 className="font-heading text-lg text-ansar-charcoal mb-4 flex items-center gap-2">
+        <UserCircle className="w-5 h-5 text-ansar-sage-600" />
+        Your Ansar
+      </h3>
+      <div className="flex items-center gap-4 mb-4">
+        <div className="w-14 h-14 bg-ansar-sage-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <span className="text-lg font-heading text-ansar-sage-700">
+            {pairing.ansar.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+          </span>
+        </div>
+        <div>
+          <h4 className="font-heading text-lg text-ansar-charcoal">{pairing.ansar.fullName}</h4>
+          {pairing.organization && (
+            <p className="font-body text-xs text-ansar-sage-600 flex items-center gap-1">
+              <Building2 className="w-3 h-3" />
+              {pairing.organization.name}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {pairing.ansar.phone && (
+          <div className="flex items-center gap-2">
+            <a
+              href={`tel:${pairing.ansar.phone}`}
+              className="inline-flex items-center gap-2 text-xs font-body text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
+            >
+              <Phone className="w-3 h-3 text-ansar-sage-600" />
+              {pairing.ansar.phone}
+            </a>
+            <a
+              href={`sms:${pairing.ansar.phone}`}
+              className="inline-flex items-center gap-2 text-xs font-body text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Text
+            </a>
+          </div>
+        )}
+        {pairing.ansar.email && (
+          <a
+            href={`mailto:${pairing.ansar.email}`}
+            className="inline-flex items-center gap-2 text-xs font-body text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
+          >
+            <Mail className="w-3 h-3 text-ansar-sage-600" />
+            {pairing.ansar.email}
+          </a>
+        )}
+        {pairing.ansar.city && (
+          <p className="flex items-center gap-1.5 text-xs font-body text-ansar-gray mt-1">
+            <MapPin className="w-3 h-3 text-ansar-muted" />
+            {pairing.ansar.city}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Event card */
+function EventCard({ event }: { event: any }) {
+  const date = new Date(event.date + "T00:00:00");
+  const month = date.toLocaleDateString("en-US", { month: "short" });
+  const day = date.getDate();
+
+  return (
+    <div className="flex items-start gap-4 p-4 rounded-xl bg-ansar-sage-50/50 border border-[rgba(61,61,61,0.06)] hover:bg-ansar-sage-50 transition-colors">
+      {/* Date badge */}
+      <div className="w-12 h-14 bg-white rounded-lg border border-[rgba(61,61,61,0.08)] flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
+        <span className="text-[10px] font-body font-medium text-ansar-sage-600 uppercase leading-none">{month}</span>
+        <span className="text-lg font-heading text-ansar-charcoal leading-none mt-0.5">{day}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-body font-semibold text-ansar-charcoal text-sm truncate">{event.title}</h4>
+        {event.time && (
+          <p className="font-body text-xs text-ansar-sage-600 mt-0.5">{event.time}</p>
+        )}
+        {event.location && (
+          <p className="font-body text-xs text-ansar-muted mt-0.5 flex items-center gap-1 truncate">
+            <MapPin className="w-3 h-3 flex-shrink-0" />
+            {event.location}
+          </p>
+        )}
+        {event.description && (
+          <p className="font-body text-xs text-ansar-gray mt-1 line-clamp-2">{event.description}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Video carousel — 5 across on desktop, scrollable on mobile */
+function VideoCarousel({
+  videos,
+  onPlay,
+  activeId,
+}: {
+  videos: typeof ONBOARDING_VIDEOS;
+  onPlay?: (id: string) => void;
+  activeId?: string | null;
+}) {
+  return (
+    <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-1 px-1">
+      {videos.map((video) => (
+        <button
+          key={video.id}
+          onClick={() => onPlay ? onPlay(video.id) : window.open(`https://www.youtube.com/watch?v=${video.id}`, "_blank")}
+          className={`flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] snap-start group ${
+            activeId === video.id ? "ring-2 ring-ansar-sage-600 rounded-xl" : ""
+          }`}
+        >
+          <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video">
+            <img
+              src={`https://img.youtube.com/vi/${video.id}/mqdefault.jpg`}
+              alt={video.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+              <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                <PlayCircle className="w-5 h-5 text-ansar-sage-700" />
+              </div>
+            </div>
+            {video.duration && (
+              <span className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-[9px] font-body px-1.5 py-0.5 rounded">
+                {video.duration}
+              </span>
+            )}
+          </div>
+          <p className="font-body text-xs text-ansar-charcoal mt-2 text-left truncate">{video.title}</p>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Resource link card */
+function ResourceLink({ title, source, href }: { title: string; source: string; href: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-3 bg-gray-50 hover:bg-ansar-sage-50 border border-[rgba(61,61,61,0.06)] rounded-xl p-4 transition-colors group"
+    >
+      <div className="flex-1 min-w-0">
+        <h4 className="font-body font-medium text-ansar-charcoal text-sm truncate">{title}</h4>
+        <p className="font-body text-xs text-ansar-muted">{source}</p>
+      </div>
+      <ExternalLink className="w-4 h-4 text-ansar-muted group-hover:text-ansar-sage-600 flex-shrink-0 transition-colors" />
+    </a>
+  );
+}
+
+/** Journey step — compact visual progress indicator */
 function JourneyStep({
   step,
   label,
@@ -695,17 +1061,16 @@ function JourneyStep({
 }: {
   step: number;
   label: string;
-  description: string;
+  description?: string;
   completed: boolean;
   active: boolean;
   isLast?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-4">
-      {/* Vertical line + circle */}
+    <div className="flex items-start gap-3">
       <div className="flex flex-col items-center">
         <div
-          className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-body font-semibold
+          className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-body font-semibold
             ${completed
               ? "bg-ansar-sage-600 text-white"
               : active
@@ -713,20 +1078,21 @@ function JourneyStep({
                 : "bg-gray-200 text-gray-400"
             }`}
         >
-          {completed ? <CheckCircle2 className="w-4 h-4" /> : step}
+          {completed ? <CheckCircle2 className="w-3.5 h-3.5" /> : step}
         </div>
         {!isLast && (
-          <div className={`w-0.5 h-8 ${completed ? "bg-ansar-sage-300" : "bg-gray-200"}`} />
+          <div className={`w-0.5 h-6 ${completed ? "bg-ansar-sage-300" : "bg-gray-200"}`} />
         )}
       </div>
-      {/* Text */}
-      <div className="pb-6">
+      <div className="pb-4">
         <p className={`font-body font-semibold text-sm ${completed || active ? "text-ansar-charcoal" : "text-gray-400"}`}>
           {label}
         </p>
-        <p className={`font-body text-xs ${completed || active ? "text-ansar-gray" : "text-gray-300"}`}>
-          {description}
-        </p>
+        {description && (
+          <p className={`font-body text-xs ${completed || active ? "text-ansar-gray" : "text-gray-300"}`}>
+            {description}
+          </p>
+        )}
       </div>
     </div>
   );

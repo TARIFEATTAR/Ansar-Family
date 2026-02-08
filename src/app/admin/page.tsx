@@ -9,6 +9,7 @@ import {
   LayoutDashboard, Shield, Loader2, Trash2, CheckCircle2,
   Phone, Mail, MapPin, Clock, Eye, Check, X as XIcon, BookUser,
   UserCog, Menu, ChevronRight, TrendingUp, Activity, LogOut,
+  Copy, ExternalLink,
 } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
 import { useEffect, useMemo, useState, useCallback } from "react";
@@ -470,6 +471,7 @@ function AdminDashboard({ currentUser }: { currentUser: { role: string; name: st
             {activeTab === "partners" && (
               <PartnersTab
                 partners={partners}
+                organizations={organizations}
                 search={search}
                 setSearch={setSearch}
                 statusFilter={statusFilter}
@@ -1026,14 +1028,31 @@ function AnsarsTab({
 // ═══════════════════════════════════════════════════════════════
 
 function PartnersTab({
-  partners, search, setSearch, statusFilter, setStatusFilter, onApprove, onReject, onDelete, onUpdate,
+  partners, organizations, search, setSearch, statusFilter, setStatusFilter, onApprove, onReject, onDelete, onUpdate,
 }: {
-  partners: any[]; search: string; setSearch: (v: string) => void;
+  partners: any[]; organizations: any[]; search: string; setSearch: (v: string) => void;
   statusFilter: string; setStatusFilter: (v: string) => void;
   onApprove: (id: Id<"partners">) => void; onReject: (id: Id<"partners">) => void; onDelete: (id: Id<"partners">) => void;
   onUpdate: (args: any) => Promise<any>;
 }) {
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Build org map from organizations
+  const orgMap = useMemo(() => {
+    const map: Record<string, any> = {};
+    organizations.forEach((org: any) => { map[org._id] = org; });
+    return map;
+  }, [organizations]);
+
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://ansar.family";
+
+  const copyHubLink = useCallback((url: string, id: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  }, []);
 
   const orgTypeLabels: Record<string, string> = {
     masjid: "Masjid", msa: "MSA", nonprofit: "Nonprofit",
@@ -1100,6 +1119,19 @@ function PartnersTab({
         emptyIcon={<Building2 className="w-12 h-12" />}
         actions={(row) => (
           <div className="flex items-center gap-1">
+            {row.organizationId && orgMap[row.organizationId] && (
+              <button
+                onClick={() => {
+                  const slug = orgMap[row.organizationId].slug;
+                  const url = `${baseUrl}/${slug}`;
+                  copyHubLink(url, `table-${row._id}`);
+                }}
+                className="p-1.5 text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors"
+                title="Copy Hub Link"
+              >
+                {copiedId === `table-${row._id}` ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            )}
             {row.status === "pending" && (
               <>
                 <button onClick={() => onApprove(row._id)} className="p-1.5 text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Approve">
@@ -1132,6 +1164,53 @@ function PartnersTab({
         {selectedPartner && (
           <dl className="space-y-0">
             <DetailField label="Status"><StatusBadge status={selectedPartner.status} size="md" /></DetailField>
+
+            {/* Hub Links — only shown for approved/active partners with an org */}
+            {selectedPartner.organizationId && orgMap[selectedPartner.organizationId] && (() => {
+              const org = orgMap[selectedPartner.organizationId];
+              const hubPageUrl = `${baseUrl}/${org.slug}`;
+              const joinUrl = `${baseUrl}/${org.slug}/join`;
+              const dashboardUrl = `${baseUrl}/dashboard/${org.slug}`;
+              return (
+                <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.04)] space-y-3">
+                  <p className="font-body text-xs font-semibold text-ansar-charcoal uppercase tracking-wider">Hub Links</p>
+                  {/* Hub Landing Page */}
+                  <div className="flex items-center gap-2">
+                    <span className="font-body text-xs text-ansar-gray w-24 flex-shrink-0">Landing Page</span>
+                    <code className="flex-1 text-xs font-mono text-ansar-charcoal bg-gray-50 px-2 py-1 rounded truncate">{hubPageUrl}</code>
+                    <button onClick={() => copyHubLink(hubPageUrl, `hub-${selectedPartner._id}`)} className="p-1.5 text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Copy link">
+                      {copiedId === `hub-${selectedPartner._id}` ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                    <a href={hubPageUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 text-ansar-muted hover:text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Open in new tab">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                  {/* Seeker Join Page */}
+                  <div className="flex items-center gap-2">
+                    <span className="font-body text-xs text-ansar-gray w-24 flex-shrink-0">Seeker Join</span>
+                    <code className="flex-1 text-xs font-mono text-ansar-charcoal bg-gray-50 px-2 py-1 rounded truncate">{joinUrl}</code>
+                    <button onClick={() => copyHubLink(joinUrl, `join-${selectedPartner._id}`)} className="p-1.5 text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Copy link">
+                      {copiedId === `join-${selectedPartner._id}` ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                    <a href={joinUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 text-ansar-muted hover:text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Open in new tab">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                  {/* Partner Lead Dashboard */}
+                  <div className="flex items-center gap-2">
+                    <span className="font-body text-xs text-ansar-gray w-24 flex-shrink-0">Dashboard</span>
+                    <code className="flex-1 text-xs font-mono text-ansar-charcoal bg-gray-50 px-2 py-1 rounded truncate">{dashboardUrl}</code>
+                    <button onClick={() => copyHubLink(dashboardUrl, `dash-${selectedPartner._id}`)} className="p-1.5 text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Copy link">
+                      {copiedId === `dash-${selectedPartner._id}` ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                    <a href={dashboardUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 text-ansar-muted hover:text-ansar-sage-600 hover:bg-ansar-sage-50 rounded-lg transition-colors" title="Open in new tab">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              );
+            })()}
+
             <DetailField label="Hub Level">Level {selectedPartner.hubLevel}</DetailField>
             <EditableField label="Organization Name" value={selectedPartner.orgName} onSave={(v) => onUpdate({ id: selectedPartner._id, orgName: v })} />
             <EditableField label="Organization Type" type="select" value={selectedPartner.orgType} options={[{ value: "masjid", label: "Masjid" }, { value: "msa", label: "MSA" }, { value: "nonprofit", label: "Nonprofit" }, { value: "informal_circle", label: "Community Circle" }, { value: "other", label: "Other" }]} onSave={(v) => onUpdate({ id: selectedPartner._id, orgType: v })} />

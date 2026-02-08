@@ -174,14 +174,14 @@ export default function Home() {
               </p>
             </motion.div>
 
-            {/* RIGHT: Cards */}
+            {/* RIGHT: Cards - Desktop (horizontal layout, stacked) */}
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               animate={isLoaded ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.35 }}
-              className="flex flex-col gap-5 w-full lg:w-[380px]"
+              className="hidden lg:flex flex-col gap-5 w-[380px]"
             >
-              {/* Card 1: Seeker */}
+              {/* Desktop Card 1: Seeker */}
               <Link href="/join" className="block relative group">
                 <motion.div
                   whileHover={{ y: -6, scale: 1.015 }}
@@ -189,32 +189,23 @@ export default function Home() {
                   className="bg-white/45 backdrop-blur-xl p-6 rounded-[20px] border border-white/60 shadow-[0_2px_16px_-4px_rgba(61,61,61,0.05)] group-hover:shadow-[0_16px_32px_-8px_rgba(61,61,61,0.1)] group-hover:bg-white/65 group-hover:border-white/80 transition-all duration-300 relative overflow-hidden"
                 >
                   <div className="absolute -top-8 -right-8 w-40 h-40 bg-ansar-terracotta-100/25 rounded-full blur-2xl group-hover:bg-ansar-terracotta-200/35 transition-colors duration-500" />
-                  
                   <div className="relative z-10 flex items-start gap-5">
-                    {/* Display Font Initial instead of icon */}
                     <div className="w-12 h-12 bg-gradient-to-br from-ansar-terracotta-50 to-ansar-terracotta-100/80 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-500 border border-ansar-terracotta-200/30 shrink-0">
                       <span className="font-display text-2xl text-ansar-terracotta-600 leading-none select-none">S</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-body text-[10px] font-semibold tracking-wider text-ansar-terracotta-600/80 uppercase mb-1">
-                        I&apos;m New to Islam
-                      </p>
-                      <h3 className="font-display text-xl text-ansar-charcoal mb-1.5 group-hover:text-ansar-terracotta-800 transition-colors">
-                        Find Your People
-                      </h3>
-                      <p className="font-body text-sm text-ansar-gray leading-relaxed mb-4">
-                        We pair you with someone local, who walks with you at your pace.
-                      </p>
+                      <p className="font-body text-[10px] font-semibold tracking-wider text-ansar-terracotta-600/80 uppercase mb-1">I&apos;m New to Islam</p>
+                      <h3 className="font-display text-xl text-ansar-charcoal mb-1.5 group-hover:text-ansar-terracotta-800 transition-colors">Find Your People</h3>
+                      <p className="font-body text-sm text-ansar-gray leading-relaxed mb-4">We pair you with someone local, who walks with you at your pace.</p>
                       <span className="inline-flex items-center gap-1.5 font-body text-xs font-medium text-ansar-terracotta-700 group-hover:gap-2.5 transition-all bg-white/60 px-3 py-1.5 rounded-full border border-ansar-terracotta-100/40 group-hover:bg-white group-hover:shadow-sm">
-                        Get Connected
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        Get Connected <ArrowRight className="w-3.5 h-3.5" />
                       </span>
                     </div>
                   </div>
                 </motion.div>
               </Link>
 
-              {/* Card 2: Volunteer */}
+              {/* Desktop Card 2: Volunteer */}
               <Link href="/volunteer" className="block relative group">
                 <motion.div
                   whileHover={{ y: -6, scale: 1.015 }}
@@ -222,29 +213,70 @@ export default function Home() {
                   className="bg-white/45 backdrop-blur-xl p-6 rounded-[20px] border border-white/60 shadow-[0_2px_16px_-4px_rgba(61,61,61,0.05)] group-hover:shadow-[0_16px_32px_-8px_rgba(61,61,61,0.1)] group-hover:bg-white/65 group-hover:border-white/80 transition-all duration-300 relative overflow-hidden"
                 >
                   <div className="absolute -top-8 -right-8 w-40 h-40 bg-ansar-sage-100/25 rounded-full blur-2xl group-hover:bg-ansar-sage-200/35 transition-colors duration-500" />
-                  
                   <div className="relative z-10 flex items-start gap-5">
-                    {/* Display Font Initial instead of icon */}
                     <div className="w-12 h-12 bg-gradient-to-br from-ansar-sage-50 to-ansar-sage-100/80 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:rotate-[3deg] transition-all duration-500 border border-ansar-sage-200/30 shrink-0">
                       <span className="font-display text-2xl text-ansar-sage-600 leading-none select-none">A</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-body text-[10px] font-semibold tracking-wider text-ansar-sage-600/80 uppercase mb-1">
-                        I Want to Help
-                      </p>
-                      <h3 className="font-display text-xl text-ansar-charcoal mb-1.5 group-hover:text-ansar-sage-800 transition-colors">
-                        Become an Ansar
-                      </h3>
-                      <p className="font-body text-sm text-ansar-gray leading-relaxed mb-4">
-                        You don&apos;t need to be a scholar. Just someone willing to be there for a person finding their way. 90 days. One person. That&apos;s the commitment.
-                      </p>
+                      <p className="font-body text-[10px] font-semibold tracking-wider text-ansar-sage-600/80 uppercase mb-1">I Want to Help</p>
+                      <h3 className="font-display text-xl text-ansar-charcoal mb-1.5 group-hover:text-ansar-sage-800 transition-colors">Become an Ansar</h3>
+                      <p className="font-body text-sm text-ansar-gray leading-relaxed mb-4">You don&apos;t need to be a scholar. Just someone willing to be there for a person finding their way.</p>
                       <span className="inline-flex items-center gap-1.5 font-body text-xs font-medium text-ansar-sage-700 group-hover:gap-2.5 transition-all bg-white/60 px-3 py-1.5 rounded-full border border-ansar-sage-100/40 group-hover:bg-white group-hover:shadow-sm">
-                        Become an Ansar
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        Become an Ansar <ArrowRight className="w-3.5 h-3.5" />
                       </span>
                     </div>
                   </div>
                 </motion.div>
+              </Link>
+            </motion.div>
+
+            {/* MOBILE: Two square tiles side by side */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
+              className="grid grid-cols-2 gap-3 w-full lg:hidden"
+            >
+              {/* Mobile Tile 1: Seeker */}
+              <Link href="/join" className="block relative group">
+                <div className="bg-white/50 backdrop-blur-xl p-4 rounded-2xl border border-white/60 shadow-[0_2px_12px_-4px_rgba(61,61,61,0.06)] active:scale-[0.97] transition-all duration-200 relative overflow-hidden aspect-square flex flex-col justify-between">
+                  <div className="absolute -top-6 -right-6 w-28 h-28 bg-ansar-terracotta-100/20 rounded-full blur-2xl" />
+                  <div className="relative z-10">
+                    <div className="w-10 h-10 bg-gradient-to-br from-ansar-terracotta-50 to-ansar-terracotta-100/80 rounded-xl flex items-center justify-center border border-ansar-terracotta-200/30 mb-3">
+                      <span className="font-display text-lg text-ansar-terracotta-600 leading-none select-none">S</span>
+                    </div>
+                    <h3 className="font-display text-base text-ansar-charcoal mb-1.5 leading-tight">
+                      New to Islam?
+                    </h3>
+                    <p className="font-body text-[11px] text-ansar-gray leading-snug">
+                      We pair you with someone in your local community who walks with you at your pace.
+                    </p>
+                  </div>
+                  <span className="relative z-10 inline-flex items-center gap-1 font-body text-[11px] font-medium text-ansar-terracotta-700 mt-2">
+                    Get Connected <ArrowRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </Link>
+
+              {/* Mobile Tile 2: Volunteer */}
+              <Link href="/volunteer" className="block relative group">
+                <div className="bg-white/50 backdrop-blur-xl p-4 rounded-2xl border border-white/60 shadow-[0_2px_12px_-4px_rgba(61,61,61,0.06)] active:scale-[0.97] transition-all duration-200 relative overflow-hidden aspect-square flex flex-col justify-between">
+                  <div className="absolute -top-6 -right-6 w-28 h-28 bg-ansar-sage-100/20 rounded-full blur-2xl" />
+                  <div className="relative z-10">
+                    <div className="w-10 h-10 bg-gradient-to-br from-ansar-sage-50 to-ansar-sage-100/80 rounded-xl flex items-center justify-center border border-ansar-sage-200/30 mb-3">
+                      <span className="font-display text-lg text-ansar-sage-600 leading-none select-none">A</span>
+                    </div>
+                    <h3 className="font-display text-base text-ansar-charcoal mb-1.5 leading-tight">
+                      Become an Ansar
+                    </h3>
+                    <p className="font-body text-[11px] text-ansar-gray leading-snug">
+                      You don&apos;t need to be a scholar. Just someone willing to be there for a person finding their way.
+                    </p>
+                  </div>
+                  <span className="relative z-10 inline-flex items-center gap-1 font-body text-[11px] font-medium text-ansar-sage-700 mt-2">
+                    Become an Ansar <ArrowRight className="w-3 h-3" />
+                  </span>
+                </div>
               </Link>
             </motion.div>
 

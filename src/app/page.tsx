@@ -429,9 +429,20 @@ export default function Home() {
           </div>
 
           {/* Copyright */}
-          <div className="pt-8 border-t border-[rgba(61,61,61,0.08)] text-center">
+          <div className="pt-8 border-t border-[rgba(61,61,61,0.08)] text-center space-y-2">
             <p className="font-body text-sm text-ansar-muted">
               © 2026 Ansar Family. Every Heart Rooted.
+            </p>
+            <p className="font-body text-xs text-ansar-muted/70">
+              Built by{" "}
+              <a
+                href="https://asala.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors"
+              >
+                asala.ai
+              </a>
             </p>
           </div>
         </div>

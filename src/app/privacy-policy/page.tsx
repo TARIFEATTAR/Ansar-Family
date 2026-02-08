@@ -316,9 +316,15 @@ export default function PrivacyPolicyPage() {
       {/* Footer */}
       <footer className="px-6 md:px-12 py-8 border-t border-ansar-sage-100">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="font-body text-sm text-ansar-gray">
-            © 2026 Ansar Family. Every Heart Rooted.
-          </p>
+          <div className="flex flex-col items-center md:items-start gap-1">
+            <p className="font-body text-sm text-ansar-gray">
+              © 2026 Ansar Family. Every Heart Rooted.
+            </p>
+            <p className="font-body text-xs text-ansar-muted/70">
+              Built by{" "}
+              <a href="https://asala.ai" target="_blank" rel="noopener noreferrer" className="text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors">asala.ai</a>
+            </p>
+          </div>
           <div className="flex items-center gap-6">
             <Link
               href="/privacy-policy"

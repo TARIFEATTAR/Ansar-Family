@@ -181,9 +181,15 @@ export default function PartnerLandingPage() {
           <p className="font-body text-sm text-ansar-gray">
             {organization.name} is a partner of the Ansar Family Network
           </p>
-          <Link href="/" className="font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors">
-            Learn more about Ansar Family →
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link href="/" className="font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors">
+              Learn more about Ansar Family →
+            </Link>
+            <span className="font-body text-xs text-ansar-muted/70">
+              Built by{" "}
+              <a href="https://asala.ai" target="_blank" rel="noopener noreferrer" className="text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors">asala.ai</a>
+            </span>
+          </div>
         </div>
       </footer>
     </main>

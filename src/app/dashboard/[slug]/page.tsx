@@ -334,6 +334,8 @@ function PartnerDashboard({
           <PartnerSeekersTab
             seekers={seekers}
             availableAnsars={availableAnsars}
+            pairings={pairings}
+            ansars={ansars}
             search={search}
             setSearch={setSearch}
             statusFilter={statusFilter}
@@ -816,11 +818,11 @@ function PartnerOverviewTab({
 // ═══════════════════════════════════════════════════════════════
 
 function PartnerSeekersTab({
-  seekers, availableAnsars, search, setSearch, statusFilter, setStatusFilter,
+  seekers, availableAnsars, pairings, ansars, search, setSearch, statusFilter, setStatusFilter,
   onPair, onDelete, onUpdate, onSendMessage, onBulkEmail, senderName, organizationName,
   viewerRole,
 }: {
-  seekers: any[]; availableAnsars: any[];
+  seekers: any[]; availableAnsars: any[]; pairings: any[]; ansars: any[];
   search: string; setSearch: (v: string) => void;
   statusFilter: string; setStatusFilter: (v: string) => void;
   onPair: (seekerId: Id<"intakes">, ansarId: Id<"ansars">) => void;
@@ -832,6 +834,12 @@ function PartnerSeekersTab({
   organizationName: string;
   viewerRole: string;
 }) {
+  // Build ansar lookup map for pairing display
+  const ansarMap = useMemo(() => {
+    const map: Record<string, any> = {};
+    for (const a of ansars) { map[a._id] = a; }
+    return map;
+  }, [ansars]);
   const [selectedSeeker, setSelectedSeeker] = useState<any>(null);
   const [pairingSeeker, setPairingSeeker] = useState<Id<"intakes"> | null>(null);
   const [showMessageModal, setShowMessageModal] = useState<any>(null);
@@ -933,6 +941,27 @@ function PartnerSeekersTab({
     { key: "city", label: "City", sortable: true, render: (r) => r.city },
     { key: "journeyType", label: "Journey", render: (r) => <StatusBadge status={r.journeyType} /> },
     { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
+    {
+      key: "pairedAnsar",
+      label: "Paired With",
+      render: (r) => {
+        const pairing = pairings.find((p: any) =>
+          p.seekerId === r._id && (p.status === "active" || p.status === "pending_intro")
+        );
+        const ansar = pairing ? ansarMap[pairing.ansarId] : null;
+        return ansar ? (
+          <span className="flex items-center gap-1.5">
+            <Link2 className="w-3 h-3 text-ansar-sage-500" />
+            <span className="text-xs font-medium text-ansar-charcoal">{ansar.fullName}</span>
+          </span>
+        ) : (
+          <span className="flex items-center gap-1.5 text-ansar-muted">
+            <UserPlus className="w-3 h-3 text-amber-400" />
+            <span className="text-xs italic">Unassigned</span>
+          </span>
+        );
+      },
+    },
   ];
 
   return (
@@ -1026,6 +1055,39 @@ function PartnerSeekersTab({
         {selectedSeeker && (
           <dl className="space-y-0">
             <DetailField label="Status"><StatusBadge status={selectedSeeker.status} size="md" /></DetailField>
+
+            {/* ═══ ASSIGNED ANSAR INDICATOR ═══ */}
+            {(() => {
+              const pairing = pairings.find((p: any) =>
+                p.seekerId === selectedSeeker._id &&
+                (p.status === "active" || p.status === "pending_intro")
+              );
+              const pairedAnsar = pairing ? ansarMap[pairing.ansarId] : null;
+              return (
+                <DetailField label="Assigned Ansar">
+                  {pairedAnsar ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-6 h-6 bg-ansar-sage-100 rounded-full flex items-center justify-center">
+                          <Link2 className="w-3 h-3 text-ansar-sage-600" />
+                        </div>
+                        <span className="font-body text-sm font-medium text-ansar-charcoal">
+                          {pairedAnsar.fullName}
+                        </span>
+                      </div>
+                      <StatusBadge status={pairing.status} size="sm" />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-6 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center">
+                        <UserPlus className="w-3 h-3 text-amber-500" />
+                      </div>
+                      <span className="font-body text-xs text-ansar-muted italic">Not yet paired</span>
+                    </div>
+                  )}
+                </DetailField>
+              );
+            })()}
 
             {/* ═══ FEMALE CONTACT DATA PROTECTION BANNER ═══ */}
             {selectedSeeker.gender === "female" && !canViewFemaleContacts && (

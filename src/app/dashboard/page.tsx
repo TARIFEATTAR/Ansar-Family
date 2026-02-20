@@ -88,9 +88,12 @@ export default function DashboardGatewayPage() {
             return;
         }
 
-        // Handle Partner Lead or Sister Admin with organization
-        if ((currentUser?.role === "partner_lead" || currentUser?.role === "sister_admin") && organization) {
-            router.replace(`/dashboard/${organization.slug}`);
+        // Handle Partner Lead or Sister Admin — if they have an org, wait for it to load then redirect
+        if ((currentUser?.role === "partner_lead" || currentUser?.role === "sister_admin")) {
+            if (currentUser?.organizationId && organization) {
+                router.replace(`/dashboard/${organization.slug}`);
+            }
+            // If no organizationId (pending), fall through and render the pending screen below
             return;
         }
 
@@ -140,7 +143,8 @@ export default function DashboardGatewayPage() {
     }
 
     // Partner Lead or Sister Admin waiting for organization data
-    if ((currentUser?.role === "partner_lead" || currentUser?.role === "sister_admin") && organization === undefined) {
+    // Only show loading spinner if they HAVE an organizationId but data hasn't arrived yet
+    if ((currentUser?.role === "partner_lead" || currentUser?.role === "sister_admin") && currentUser?.organizationId && organization === undefined) {
         return (
             <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
                 <div className="text-center">

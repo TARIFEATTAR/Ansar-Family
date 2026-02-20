@@ -36,7 +36,7 @@ const isProtectedRoute = createRouteMatcher([
 // Role-to-route access map
 const ROUTE_ROLE_MAP: Record<string, string[]> = {
   "/admin": ["super_admin"],
-  "/dashboard": ["super_admin", "partner_lead", "sister_admin"],
+  "/dashboard": ["super_admin", "partner_lead", "sister_admin", "seeker", "ansar"],
   "/seeker": ["seeker"],
   "/ansar": ["ansar"],
 };

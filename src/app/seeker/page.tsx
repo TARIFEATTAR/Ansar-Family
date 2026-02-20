@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { DashboardSidebar, SidebarNavItem } from "@/components/crm";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
+import { FloatingChatWidget } from "@/components/messaging/FloatingChatWidget";
 
 /**
  * SEEKER PORTAL — Redesigned dashboard for New Muslims & Seekers
@@ -121,6 +122,12 @@ export default function SeekerPortalPage() {
   const markAsRead = useMutation(api.inbox.markAsRead);
   const replyToConversation = useMutation(api.inbox.replyToConversation);
 
+  // Get the Ansar's user record for the floating chat widget
+  const ansarUser = useQuery(
+    api.users.getByEmail,
+    pairing?.ansar?.email ? { email: pairing.ansar.email.toLowerCase() } : "skip"
+  );
+
   // ── Loading states ────────────────────────────────────────────
   if (!isLoaded || currentUser === undefined || (currentUser === null && !upsertAttempted)) {
     return (
@@ -173,62 +180,77 @@ export default function SeekerPortalPage() {
   ];
 
   return (
-    <DashboardSidebar
-      brandIcon={<Heart className="w-4 h-4 text-white" />}
-      brandTitle="Ansar Family"
-      brandSubtitle="Your Journey Portal"
-      navItems={navItems}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      userName={currentUser.name}
-      userRoleLabel="Seeker"
-      accentColor="sage"
-    >
-      {/* ═══════ HOME TAB ═══════ */}
-      {activeTab === "home" && (
-        <HomeTab
-          firstName={firstName}
-          intakeExists={intakeExists}
-          status={status}
-          seekerIntake={seekerIntake}
-          pairing={pairing}
-          events={events}
-          hubVideos={hubVideos}
-          inboxUnread={inboxUnread}
-          onNavigate={setActiveTab}
+    <>
+      <DashboardSidebar
+        brandIcon={<Heart className="w-4 h-4 text-white" />}
+        brandTitle="Ansar Family"
+        brandSubtitle="Your Journey Portal"
+        navItems={navItems}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        userName={currentUser.name}
+        userRoleLabel="Seeker"
+        accentColor="sage"
+      >
+        {/* ═══════ HOME TAB ═══════ */}
+        {activeTab === "home" && (
+          <HomeTab
+            firstName={firstName}
+            intakeExists={intakeExists}
+            status={status}
+            seekerIntake={seekerIntake}
+            pairing={pairing}
+            events={events}
+            hubVideos={hubVideos}
+            inboxUnread={inboxUnread}
+            onNavigate={setActiveTab}
+          />
+        )}
+
+        {/* ═══════ MESSAGES TAB ═══════ */}
+        {activeTab === "messages" && seekerUserId && (
+          <MessagesTab
+            seekerUserId={seekerUserId}
+            seekerName={currentUser.name}
+            inbox={inbox}
+            inboxUnread={inboxUnread}
+            latestConversation={latestConversation}
+            markAsRead={markAsRead}
+            replyToConversation={replyToConversation}
+            pairing={pairing}
+          />
+        )}
+
+        {/* ═══════ JOURNEY TAB ═══════ */}
+        {activeTab === "journey" && (
+          <JourneyTab
+            intakeExists={intakeExists}
+            status={status}
+            seekerIntake={seekerIntake}
+            pairing={pairing}
+          />
+        )}
+
+        {/* ═══════ LEARN TAB ═══════ */}
+        {activeTab === "learn" && <LearnTab hubVideos={hubVideos} hubArticles={hubArticles} />}
+
+        {/* ═══════ SUPPORT TAB ═══════ */}
+        {activeTab === "support" && <SupportTab />}
+      </DashboardSidebar>
+
+      {/* ═══════ FLOATING CHAT WIDGET ═══════ */}
+      {seekerUserId && activeTab !== "messages" && (
+        <FloatingChatWidget
+          currentUserId={seekerUserId}
+          currentUserName={currentUser.name}
+          currentUserRole="seeker"
+          recipientId={ansarUser?._id}
+          recipientName={pairing?.ansar?.fullName}
+          recipientRole="ansar"
+          organizationId={orgId}
         />
       )}
-
-      {/* ═══════ MESSAGES TAB ═══════ */}
-      {activeTab === "messages" && seekerUserId && (
-        <MessagesTab
-          seekerUserId={seekerUserId}
-          seekerName={currentUser.name}
-          inbox={inbox}
-          inboxUnread={inboxUnread}
-          latestConversation={latestConversation}
-          markAsRead={markAsRead}
-          replyToConversation={replyToConversation}
-          pairing={pairing}
-        />
-      )}
-
-      {/* ═══════ JOURNEY TAB ═══════ */}
-      {activeTab === "journey" && (
-        <JourneyTab
-          intakeExists={intakeExists}
-          status={status}
-          seekerIntake={seekerIntake}
-          pairing={pairing}
-        />
-      )}
-
-      {/* ═══════ LEARN TAB ═══════ */}
-      {activeTab === "learn" && <LearnTab hubVideos={hubVideos} hubArticles={hubArticles} />}
-
-      {/* ═══════ SUPPORT TAB ═══════ */}
-      {activeTab === "support" && <SupportTab />}
-    </DashboardSidebar>
+    </>
   );
 }
 

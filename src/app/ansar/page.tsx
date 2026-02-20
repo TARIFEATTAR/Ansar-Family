@@ -16,6 +16,7 @@ import {
 } from "@/components/crm";
 import type { SidebarNavItem, StatItem } from "@/components/crm";
 import { InboxTab } from "@/components/messaging";
+import { FloatingChatWidget } from "@/components/messaging/FloatingChatWidget";
 import { AnimatePresence, motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -156,8 +157,8 @@ function AnsarDashboard({
 
   const hubUrl = organization?.slug
     ? (typeof window !== "undefined"
-        ? `${window.location.origin}/${organization.slug}`
-        : `https://ansar.family/${organization.slug}`)
+      ? `${window.location.origin}/${organization.slug}`
+      : `https://ansar.family/${organization.slug}`)
     : null;
 
   const copyHubLink = useCallback(() => {
@@ -195,11 +196,10 @@ function AnsarDashboard({
       <div className="flex items-center gap-1.5">
         <button
           onClick={copyHubLink}
-          className={`flex-1 flex items-center justify-center gap-1 text-[10px] font-body font-medium px-2 py-1.5 rounded-lg border transition-all ${
-            linkCopied
+          className={`flex-1 flex items-center justify-center gap-1 text-[10px] font-body font-medium px-2 py-1.5 rounded-lg border transition-all ${linkCopied
               ? "bg-ansar-sage-100 border-ansar-sage-300 text-ansar-sage-700"
               : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50"
-          }`}
+            }`}
         >
           {linkCopied ? <><CheckCheck className="w-3 h-3" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
         </button>
@@ -264,6 +264,16 @@ function AnsarDashboard({
           <ProfileTab ansarRecord={ansarRecord} organization={organization} />
         )}
       </DashboardSidebar>
+
+      {/* ═══════ FLOATING CHAT WIDGET ═══════ */}
+      {ansarUserId && activeTab !== "inbox" && (
+        <FloatingChatWidget
+          currentUserId={ansarUserId}
+          currentUserName={currentUser?.name ?? "Ansar"}
+          currentUserRole="ansar"
+          organizationId={ansarRecord?.organizationId}
+        />
+      )}
 
       {/* QR Code Modal */}
       {hubUrl && (
@@ -407,7 +417,7 @@ function OverviewTab({
       label: "Check-In",
       value: ansarRecord?.checkInFrequency
         ? ansarRecord.checkInFrequency.charAt(0).toUpperCase() +
-          ansarRecord.checkInFrequency.slice(1)
+        ansarRecord.checkInFrequency.slice(1)
         : "—",
       icon: <Calendar className="w-4 h-4" />,
       accent: "ochre",

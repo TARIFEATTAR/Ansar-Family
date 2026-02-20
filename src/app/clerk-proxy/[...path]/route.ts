@@ -40,6 +40,9 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ path: s
             method: req.method,
             headers,
             body: req.method !== "GET" && req.method !== "HEAD" ? req.body : undefined,
+            // Don't follow redirects — pass them through to the browser
+            // (critical for Clerk handshake which returns 307 with Set-Cookie)
+            redirect: "manual",
             // @ts-ignore - duplex needed for streaming body
             duplex: req.method !== "GET" && req.method !== "HEAD" ? "half" : undefined,
         });

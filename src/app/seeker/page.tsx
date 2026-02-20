@@ -27,15 +27,14 @@ import { MessageBubble } from "@/components/messaging/MessageBubble";
  */
 
 // ═══════════════════════════════════════════════════════════════
-// VIDEO DATA (placeholder — swap YouTube IDs later)
+// VIDEO DATA (placeholder — swap YouTube IDs when Bro Uzi finishes)
 // ═══════════════════════════════════════════════════════════════
 
 const ONBOARDING_VIDEOS = [
-  { id: "l6XQbQsNq04", title: "What is Islam?", duration: "8 min" },
-  { id: "fCkcr0kcWOE", title: "How to Pray", duration: "12 min" },
-  { id: "hzM3KN6j7kQ", title: "Five Pillars", duration: "6 min" },
-  { id: "ZIqMi8onVtY", title: "Reading the Quran", duration: "10 min" },
-  { id: "1cMTLSqD6cQ", title: "New Muslim Guide", duration: "15 min" },
+  { id: "placeholder_wudu", title: "How to Make Wudu", duration: "~5 min", placeholder: true },
+  { id: "placeholder_shahada", title: "Understanding the Shahada", duration: "~8 min", placeholder: true },
+  { id: "placeholder_salah", title: "How to Pray (Salah)", duration: "~12 min", placeholder: true },
+  { id: "placeholder_quran", title: "Beginning with the Quran", duration: "~10 min", placeholder: true },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -815,13 +814,17 @@ function LearnTab({ hubVideos, hubArticles }: { hubVideos: any[]; hubArticles: a
 
       {/* Default Video Section */}
       <div className="bg-white rounded-lg p-6 lg:p-8 shadow-sm">
-        <h2 className="font-heading text-xl text-ansar-charcoal mb-2">Getting Started Videos</h2>
-        <p className="font-body text-sm text-ansar-gray mb-6">
+        <h2 className="font-heading text-xl text-ansar-charcoal mb-1">Getting Started Videos</h2>
+        <p className="font-body text-sm text-ansar-gray mb-1">
           Short, practical videos to help you understand the basics of Islam.
         </p>
+        <p className="font-body text-xs text-ansar-sage-600 mb-6 flex items-center gap-1.5">
+          <span className="inline-block w-1.5 h-1.5 bg-ansar-sage-400 rounded-full" />
+          Videos are being prepared — titles below show what&apos;s coming.
+        </p>
 
-        {/* Playing video */}
-        {!hubVideos.length && playingId && (
+        {/* Playing video — only for non-placeholder IDs */}
+        {!hubVideos.length && playingId && !playingId.startsWith("placeholder_") && (
           <div className="mb-6">
             <div className="relative w-full rounded-lg overflow-hidden bg-black" style={{ paddingBottom: "56.25%" }}>
               <iframe
@@ -842,7 +845,7 @@ function LearnTab({ hubVideos, hubArticles }: { hubVideos: any[]; hubArticles: a
         )}
 
         {/* Video grid */}
-        <VideoCarousel videos={ONBOARDING_VIDEOS} onPlay={setPlayingId} activeId={playingId} />
+        <VideoCarousel videos={ONBOARDING_VIDEOS} activeId={playingId} />
       </div>
 
       {/* Reading Resources */}
@@ -1176,46 +1179,71 @@ function EventCard({ event }: { event: any }) {
   );
 }
 
-/** Video carousel — 5 across on desktop, scrollable on mobile */
+/** Video carousel — 4 across on desktop, scrollable on mobile */
 function VideoCarousel({
   videos,
   onPlay,
   activeId,
 }: {
-  videos: typeof ONBOARDING_VIDEOS;
+  videos: { id: string; title: string; duration: string; placeholder?: boolean }[];
   onPlay?: (id: string) => void;
   activeId?: string | null;
 }) {
   return (
     <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-1 px-1">
-      {videos.map((video) => (
-        <button
-          key={video.id}
-          onClick={() => onPlay ? onPlay(video.id) : window.open(`https://www.youtube.com/watch?v=${video.id}`, "_blank")}
-          className={`flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] snap-start group ${
-            activeId === video.id ? "ring-2 ring-ansar-sage-600 rounded-lg" : ""
-          }`}
-        >
-          <div className="relative rounded-lg overflow-hidden bg-gray-100 aspect-video">
-            <img
-              src={`https://img.youtube.com/vi/${video.id}/mqdefault.jpg`}
-              alt={video.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-              <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <PlayCircle className="w-5 h-5 text-ansar-sage-700" />
+      {videos.map((video) => {
+        const isPlaceholder = video.placeholder || video.id.startsWith("placeholder_");
+
+        if (isPlaceholder) {
+          return (
+            <div
+              key={video.id}
+              className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] snap-start"
+            >
+              <div className="relative rounded-lg overflow-hidden bg-gradient-to-br from-ansar-sage-100 to-ansar-sage-200 aspect-video flex items-center justify-center">
+                <div className="text-center px-3">
+                  <PlayCircle className="w-6 h-6 text-ansar-sage-400 mx-auto mb-1.5" />
+                  <p className="font-body text-[10px] font-medium text-ansar-sage-600 uppercase tracking-wide">Coming Soon</p>
+                </div>
+                {video.duration && (
+                  <span className="absolute bottom-1.5 right-1.5 bg-ansar-sage-300/60 text-ansar-sage-700 text-[9px] font-body px-1.5 py-0.5 rounded">
+                    {video.duration}
+                  </span>
+                )}
               </div>
+              <p className="font-body text-xs text-ansar-charcoal mt-2 text-left truncate">{video.title}</p>
             </div>
-            {video.duration && (
-              <span className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-[9px] font-body px-1.5 py-0.5 rounded">
-                {video.duration}
-              </span>
-            )}
-          </div>
-          <p className="font-body text-xs text-ansar-charcoal mt-2 text-left truncate">{video.title}</p>
-        </button>
-      ))}
+          );
+        }
+
+        return (
+          <button
+            key={video.id}
+            onClick={() => onPlay ? onPlay(video.id) : window.open(`https://www.youtube.com/watch?v=${video.id}`, "_blank")}
+            className={`flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] snap-start group ${activeId === video.id ? "ring-2 ring-ansar-sage-600 rounded-lg" : ""
+              }`}
+          >
+            <div className="relative rounded-lg overflow-hidden bg-gray-100 aspect-video">
+              <img
+                src={`https://img.youtube.com/vi/${video.id}/mqdefault.jpg`}
+                alt={video.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                  <PlayCircle className="w-5 h-5 text-ansar-sage-700" />
+                </div>
+              </div>
+              {video.duration && (
+                <span className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-[9px] font-body px-1.5 py-0.5 rounded">
+                  {video.duration}
+                </span>
+              )}
+            </div>
+            <p className="font-body text-xs text-ansar-charcoal mt-2 text-left truncate">{video.title}</p>
+          </button>
+        );
+      })}
     </div>
   );
 }

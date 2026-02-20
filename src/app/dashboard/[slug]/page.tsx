@@ -13,7 +13,7 @@ import {
   X as XIcon, BookUser, Copy, CheckCheck, Share2, ExternalLink,
   QrCode, ChevronDown, ChevronUp, Sparkles, CheckCircle2, Circle,
   Inbox as InboxIcon, MailPlus, CheckSquare, Calendar, Plus, Pencil,
-  PlayCircle, FileText, Globe, Video,
+  PlayCircle, FileText, Globe, Video, Lock, ShieldAlert,
 } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import {
@@ -75,7 +75,7 @@ export default function PartnerDashboardPage() {
     notFound();
   }
 
-  if (currentUser && currentUser.role === "partner_lead") {
+  if (currentUser && (currentUser.role === "partner_lead" || currentUser.role === "sister_admin")) {
     if (currentUser.organizationId !== organization._id) {
       return (
         <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
@@ -145,6 +145,7 @@ function PartnerDashboard({
   const messages = useQuery(api.messages.listAll) ?? []; // Will filter client-side
   const events = useQuery(api.events.getByOrganization, { organizationId: organization._id }) ?? [];
   const hubResources = useQuery(api.hubResources.listByOrganization, { organizationId: organization._id }) ?? [];
+  const hasSisterAdmin = useQuery(api.users.hasSisterAdmin, { organizationId: organization._id }) ?? false;
 
   // Inbox
   const partnerUserId = currentUser?._id;
@@ -261,11 +262,10 @@ function PartnerDashboard({
       <div className="flex items-center gap-1.5">
         <button
           onClick={copyHubLink}
-          className={`flex-1 flex items-center justify-center gap-1 text-[10px] font-body font-medium px-2 py-1.5 rounded-lg border transition-all ${
-            linkCopied
-              ? "bg-ansar-sage-100 border-ansar-sage-300 text-ansar-sage-700"
-              : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50"
-          }`}
+          className={`flex-1 flex items-center justify-center gap-1 text-[10px] font-body font-medium px-2 py-1.5 rounded-lg border transition-all ${linkCopied
+            ? "bg-ansar-sage-100 border-ansar-sage-300 text-ansar-sage-700"
+            : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50"
+            }`}
         >
           {linkCopied ? <><CheckCheck className="w-3 h-3" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
         </button>
@@ -303,7 +303,7 @@ function PartnerDashboard({
         activeTab={activeTab}
         onTabChange={handleTabChange}
         userName={currentUser?.name}
-        userRoleLabel="Partner Lead"
+        userRoleLabel={currentUser?.role === "sister_admin" ? "Sister Admin" : currentUser?.role === "super_admin" ? "Super Admin" : "Partner Lead"}
         footerContent={hubLinkFooter}
       >
         {activeTab === "overview" && (
@@ -319,6 +319,7 @@ function PartnerDashboard({
             hubUrl={hubUrl}
             events={events}
             onNavigateToEvents={() => handleTabChange("events")}
+            hasSisterAdmin={hasSisterAdmin}
           />
         )}
         {activeTab === "inbox" && partnerUserId && (
@@ -344,6 +345,7 @@ function PartnerDashboard({
             onBulkEmail={sendBulkEmailMutation}
             senderName={currentUser?.name || "Partner Lead"}
             organizationName={organization.name}
+            viewerRole={currentUser?.role || "partner_lead"}
           />
         )}
         {activeTab === "ansars" && (
@@ -517,8 +519,8 @@ function QRCodeModal({
 // ONBOARDING CHECKLIST
 // ═══════════════════════════════════════════════════════════════
 
-function OnboardingChecklist({ orgSlug, hubUrl, seekerCount, ansarCount }: {
-  orgSlug: string; hubUrl: string; seekerCount: number; ansarCount: number;
+function OnboardingChecklist({ orgSlug, hubUrl, seekerCount, ansarCount, hasSisterAdmin }: {
+  orgSlug: string; hubUrl: string; seekerCount: number; ansarCount: number; hasSisterAdmin: boolean;
 }) {
   const storageKey = `ansar_onboarding_dismissed_${orgSlug}`;
   const [dismissed, setDismissed] = useState(false);
@@ -536,6 +538,7 @@ function OnboardingChecklist({ orgSlug, hubUrl, seekerCount, ansarCount }: {
     { label: "Share your hub link with seekers", done: seekerCount > 0 },
     { label: "Review incoming seeker applications", done: seekerCount >= 2 },
     { label: "Approve at least one Ansar volunteer", done: ansarCount > 0 },
+    { label: "Designate a Sister Admin for female seeker data", done: hasSisterAdmin },
     { label: "Create your first seeker-Ansar pairing", done: false }, // Pairings not passed in, keep simple
   ];
 
@@ -602,6 +605,18 @@ function OnboardingChecklist({ orgSlug, hubUrl, seekerCount, ansarCount }: {
                 </div>
               ))}
 
+              {/* Sister Admin notice */}
+              {!hasSisterAdmin && (
+                <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <ShieldAlert className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" />
+                    <p className="font-body text-[11px] text-amber-700">
+                      <strong>No Sister Admin yet.</strong> Female seeker contact data is hidden from Partner Leads until a Sister Admin is designated. Contact your Super Admin to assign one.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="pt-2 flex items-center gap-3">
                 <Link
                   href={`/${orgSlug}`}
@@ -624,11 +639,12 @@ function OnboardingChecklist({ orgSlug, hubUrl, seekerCount, ansarCount }: {
 // ═══════════════════════════════════════════════════════════════
 
 function PartnerOverviewTab({
-  seekers, ansars, contacts, pairings, pairingStats, readyToPair, orgMessages, orgSlug, hubUrl, events, onNavigateToEvents,
+  seekers, ansars, contacts, pairings, pairingStats, readyToPair, orgMessages, orgSlug, hubUrl, events, onNavigateToEvents, hasSisterAdmin,
 }: {
   seekers: any[]; ansars: any[]; contacts: any[]; pairings: any[];
   pairingStats: any; readyToPair: any[]; orgMessages: any[];
   orgSlug: string; hubUrl: string; events: any[]; onNavigateToEvents: () => void;
+  hasSisterAdmin: boolean;
 }) {
   const stats: StatItem[] = [
     { label: "Seekers", value: seekers.length, icon: <Heart className="w-4 h-4" />, accent: "terracotta" },
@@ -651,6 +667,7 @@ function PartnerOverviewTab({
         hubUrl={hubUrl}
         seekerCount={seekers.length}
         ansarCount={ansars.length}
+        hasSisterAdmin={hasSisterAdmin}
       />
 
       <StatsRow stats={stats} />
@@ -801,6 +818,7 @@ function PartnerOverviewTab({
 function PartnerSeekersTab({
   seekers, availableAnsars, search, setSearch, statusFilter, setStatusFilter,
   onPair, onDelete, onUpdate, onSendMessage, onBulkEmail, senderName, organizationName,
+  viewerRole,
 }: {
   seekers: any[]; availableAnsars: any[];
   search: string; setSearch: (v: string) => void;
@@ -812,12 +830,38 @@ function PartnerSeekersTab({
   onBulkEmail: (args: any) => Promise<any>;
   senderName: string;
   organizationName: string;
+  viewerRole: string;
 }) {
   const [selectedSeeker, setSelectedSeeker] = useState<any>(null);
   const [pairingSeeker, setPairingSeeker] = useState<Id<"intakes"> | null>(null);
   const [showMessageModal, setShowMessageModal] = useState<any>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkEmail, setShowBulkEmail] = useState(false);
+
+  // ═══ FEMALE CONTACT DATA PROTECTION ═══
+  // Partner Leads can see male contact data but female contact data is hidden.
+  // Super Admins and Sister Admins can see all contact data.
+  const canViewFemaleContacts = viewerRole === "super_admin" || viewerRole === "sister_admin";
+
+  // Check if a specific seeker's contact data is visible to the current viewer
+  const isContactVisible = (seeker: any) => {
+    if (seeker.gender !== "female") return true; // male contacts always visible
+    return canViewFemaleContacts;
+  };
+
+  // Get the seeker being paired (for gender filtering in PairingModal)
+  const pairingSeekerData = useMemo(
+    () => seekers.find((s) => s._id === pairingSeeker),
+    [seekers, pairingSeeker]
+  );
+
+  // Filter available ansars by gender when pairing
+  const genderFilteredAnsars = useMemo(() => {
+    if (!pairingSeekerData?.gender) return availableAnsars;
+    return availableAnsars.filter(
+      (a: any) => !a.gender || a.gender === pairingSeekerData.gender
+    );
+  }, [availableAnsars, pairingSeekerData]);
 
   const filtered = useMemo(() => {
     let result = seekers;
@@ -879,7 +923,13 @@ function PartnerSeekersTab({
       ),
     },
     { key: "fullName", label: "Name", sortable: true, render: (r) => <span className="font-medium">{r.fullName}</span> },
-    { key: "phone", label: "Phone", render: (r) => <span className="text-ansar-gray text-xs">{r.phone}</span> },
+    {
+      key: "phone",
+      label: "Phone",
+      render: (r) => isContactVisible(r)
+        ? <span className="text-ansar-gray text-xs">{r.phone}</span>
+        : <span className="text-ansar-muted text-xs flex items-center gap-1"><Lock className="w-3 h-3" /> Protected</span>,
+    },
     { key: "city", label: "City", sortable: true, render: (r) => r.city },
     { key: "journeyType", label: "Journey", render: (r) => <StatusBadge status={r.journeyType} /> },
     { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
@@ -908,11 +958,10 @@ function PartnerSeekersTab({
         <div className="flex items-center gap-2">
           <button
             onClick={toggleSelectAll}
-            className={`flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border transition-all ${
-              selectedIds.size > 0
-                ? "bg-ansar-sage-50 border-ansar-sage-300 text-ansar-sage-700"
-                : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50"
-            }`}
+            className={`flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border transition-all ${selectedIds.size > 0
+              ? "bg-ansar-sage-50 border-ansar-sage-300 text-ansar-sage-700"
+              : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50"
+              }`}
           >
             <CheckSquare className="w-3.5 h-3.5" />
             {selectedIds.size > 0
@@ -963,7 +1012,7 @@ function PartnerSeekersTab({
         title={selectedSeeker?.fullName}
         subtitle={selectedSeeker ? `${selectedSeeker.city} • ${selectedSeeker.journeyType?.replace("_", " ")}` : ""}
         actions={
-          selectedSeeker && (
+          selectedSeeker && isContactVisible(selectedSeeker) && (
             <button
               onClick={() => setShowMessageModal(selectedSeeker)}
               className="flex items-center gap-1.5 text-xs font-body font-medium text-ansar-sage-700 bg-ansar-sage-50 hover:bg-ansar-sage-100 px-3 py-1.5 rounded-lg border border-ansar-sage-200 transition-colors"
@@ -978,52 +1027,85 @@ function PartnerSeekersTab({
           <dl className="space-y-0">
             <DetailField label="Status"><StatusBadge status={selectedSeeker.status} size="md" /></DetailField>
 
-            {/* Quick contact buttons */}
-            <div className="px-5 py-3 flex items-center gap-2 border-b border-[rgba(61,61,61,0.04)]">
-              {selectedSeeker.phone && (
-                <a
-                  href={`sms:${selectedSeeker.phone}`}
-                  className="flex items-center gap-1.5 text-xs font-body font-medium text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
+            {/* ═══ FEMALE CONTACT DATA PROTECTION BANNER ═══ */}
+            {selectedSeeker.gender === "female" && !canViewFemaleContacts && (
+              <div className="mx-5 my-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-start gap-2.5">
+                  <ShieldAlert className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-body text-xs font-medium text-amber-800">
+                      Sister Contact Data Protected
+                    </p>
+                    <p className="font-body text-[11px] text-amber-700 mt-0.5">
+                      Phone, email, and address for female seekers are only visible to Sister Admins and Super Admins. Contact your organization&apos;s Sister Admin to reach this seeker.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quick contact buttons — only for visible contacts */}
+            {isContactVisible(selectedSeeker) && (
+              <div className="px-5 py-3 flex items-center gap-2 border-b border-[rgba(61,61,61,0.04)]">
+                {selectedSeeker.phone && (
+                  <a
+                    href={`sms:${selectedSeeker.phone}`}
+                    className="flex items-center gap-1.5 text-xs font-body font-medium text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
+                  >
+                    <Phone className="w-3 h-3" />
+                    SMS
+                  </a>
+                )}
+                {selectedSeeker.email && (
+                  <a
+                    href={`mailto:${selectedSeeker.email}`}
+                    className="flex items-center gap-1.5 text-xs font-body font-medium text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
+                  >
+                    <Mail className="w-3 h-3" />
+                    Email
+                  </a>
+                )}
+                <button
+                  onClick={() => setShowMessageModal(selectedSeeker)}
+                  className="flex items-center gap-1.5 text-xs font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-3 py-1.5 rounded-lg transition-colors"
                 >
-                  <Phone className="w-3 h-3" />
-                  SMS
-                </a>
-              )}
-              {selectedSeeker.email && (
-                <a
-                  href={`mailto:${selectedSeeker.email}`}
-                  className="flex items-center gap-1.5 text-xs font-body font-medium text-ansar-charcoal bg-ansar-sage-50 hover:bg-ansar-sage-100 px-3 py-1.5 rounded-lg border border-[rgba(61,61,61,0.08)] transition-colors"
-                >
-                  <Mail className="w-3 h-3" />
-                  Email
-                </a>
-              )}
-              <button
-                onClick={() => setShowMessageModal(selectedSeeker)}
-                className="flex items-center gap-1.5 text-xs font-body font-medium text-white bg-ansar-sage-600 hover:bg-ansar-sage-700 px-3 py-1.5 rounded-lg transition-colors"
-              >
-                <Send className="w-3 h-3" />
-                Send via Platform
-              </button>
-            </div>
+                  <Send className="w-3 h-3" />
+                  Send via Platform
+                </button>
+              </div>
+            )}
 
             <EditableField
               label="Full Name"
               value={selectedSeeker.fullName}
               onSave={(v) => onUpdate({ id: selectedSeeker._id, fullName: v })}
             />
-            <EditableField
-              label="Email"
-              type="email"
-              value={selectedSeeker.email}
-              onSave={(v) => onUpdate({ id: selectedSeeker._id, email: v })}
-            />
-            <EditableField
-              label="Phone"
-              type="tel"
-              value={selectedSeeker.phone}
-              onSave={(v) => onUpdate({ id: selectedSeeker._id, phone: v })}
-            />
+
+            {/* Email & Phone — protected for female seekers */}
+            {isContactVisible(selectedSeeker) ? (
+              <>
+                <EditableField
+                  label="Email"
+                  type="email"
+                  value={selectedSeeker.email}
+                  onSave={(v) => onUpdate({ id: selectedSeeker._id, email: v })}
+                />
+                <EditableField
+                  label="Phone"
+                  type="tel"
+                  value={selectedSeeker.phone}
+                  onSave={(v) => onUpdate({ id: selectedSeeker._id, phone: v })}
+                />
+              </>
+            ) : (
+              <DetailField label="Contact Info">
+                <span className="flex items-center gap-1.5 text-ansar-muted text-xs">
+                  <Lock className="w-3 h-3" />
+                  Contact details hidden — Sister Admin access required
+                </span>
+              </DetailField>
+            )}
+
             <EditableField
               label="City"
               value={selectedSeeker.city}
@@ -1078,11 +1160,12 @@ function PartnerSeekersTab({
         onSend={onSendMessage}
       />
 
-      {/* Pairing Modal */}
+      {/* Pairing Modal — filtered by gender */}
       <PairingModal
         isOpen={!!pairingSeeker}
         onClose={() => setPairingSeeker(null)}
-        availableAnsars={availableAnsars}
+        availableAnsars={genderFilteredAnsars}
+        seekerGender={pairingSeekerData?.gender}
         onSelect={(ansarId) => {
           if (pairingSeeker) {
             onPair(pairingSeeker, ansarId);
@@ -1110,11 +1193,12 @@ function PartnerSeekersTab({
 // ═══════════════════════════════════════════════════════════════
 
 function PairingModal({
-  isOpen, onClose, availableAnsars, onSelect,
+  isOpen, onClose, availableAnsars, seekerGender, onSelect,
 }: {
   isOpen: boolean;
   onClose: () => void;
   availableAnsars: any[];
+  seekerGender?: "male" | "female";
   onSelect: (ansarId: Id<"ansars">) => void;
 }) {
   return (
@@ -1135,11 +1219,18 @@ function PairingModal({
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[440px] md:max-h-[80vh] bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden"
           >
-            <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)] flex items-center justify-between">
-              <h3 className="font-heading text-lg text-ansar-charcoal">Select an Ansar</h3>
-              <button onClick={onClose} className="p-1 text-ansar-muted hover:text-ansar-charcoal rounded-lg transition-colors">
-                <XIcon className="w-5 h-5" />
-              </button>
+            <div className="px-6 py-4 border-b border-[rgba(61,61,61,0.08)]">
+              <div className="flex items-center justify-between">
+                <h3 className="font-heading text-lg text-ansar-charcoal">Select an Ansar</h3>
+                <button onClick={onClose} className="p-1 text-ansar-muted hover:text-ansar-charcoal rounded-lg transition-colors">
+                  <XIcon className="w-5 h-5" />
+                </button>
+              </div>
+              {seekerGender && (
+                <p className="font-body text-[11px] text-ansar-muted mt-1">
+                  Showing {seekerGender === "female" ? "Sister" : "Brother"} Ansars only — same-gender pairing required
+                </p>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto p-3">
               {availableAnsars.length === 0 ? (
@@ -1444,11 +1535,10 @@ function PartnerAnsarsTab({
         <div className="flex items-center gap-2">
           <button
             onClick={toggleSelectAll}
-            className={`flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border transition-all ${
-              selectedIds.size > 0
-                ? "bg-ansar-sage-50 border-ansar-sage-300 text-ansar-sage-700"
-                : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50"
-            }`}
+            className={`flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1.5 rounded-lg border transition-all ${selectedIds.size > 0
+              ? "bg-ansar-sage-50 border-ansar-sage-300 text-ansar-sage-700"
+              : "bg-white border-[rgba(61,61,61,0.10)] text-ansar-charcoal hover:bg-ansar-sage-50"
+              }`}
           >
             <CheckSquare className="w-3.5 h-3.5" />
             {selectedIds.size > 0
@@ -1654,9 +1744,11 @@ function PartnerPairingsTab({
     { key: "seekerName", label: "Seeker", sortable: true, render: (r) => <span className="font-medium">{r.seekerName}</span> },
     { key: "ansarName", label: "Ansar", sortable: true, render: (r) => <span className="font-medium">{r.ansarName}</span> },
     { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
-    { key: "pairedAt", label: "Paired", sortable: true, render: (r) => (
-      <span className="text-ansar-gray text-xs">{new Date(r.pairedAt).toLocaleDateString()}</span>
-    )},
+    {
+      key: "pairedAt", label: "Paired", sortable: true, render: (r) => (
+        <span className="text-ansar-gray text-xs">{new Date(r.pairedAt).toLocaleDateString()}</span>
+      )
+    },
   ];
 
   return (
@@ -1735,16 +1827,22 @@ function PartnerMessagesTab({
 
   const columns: Column<any>[] = [
     { key: "type", label: "Type", render: (r) => <StatusBadge status={r.type} /> },
-    { key: "recipient", label: "Recipient", render: (r) => (
-      <span className="text-ansar-gray text-xs">{r.recipientEmail || r.recipientPhone || "---"}</span>
-    )},
-    { key: "template", label: "Template", sortable: true, render: (r) => (
-      <span className="font-body text-xs text-ansar-charcoal capitalize">{r.template.replace(/_/g, " ")}</span>
-    )},
+    {
+      key: "recipient", label: "Recipient", render: (r) => (
+        <span className="text-ansar-gray text-xs">{r.recipientEmail || r.recipientPhone || "---"}</span>
+      )
+    },
+    {
+      key: "template", label: "Template", sortable: true, render: (r) => (
+        <span className="font-body text-xs text-ansar-charcoal capitalize">{r.template.replace(/_/g, " ")}</span>
+      )
+    },
     { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
-    { key: "sentAt", label: "Sent", sortable: true, render: (r) => (
-      <span className="text-ansar-gray text-xs">{new Date(r.sentAt).toLocaleString()}</span>
-    )},
+    {
+      key: "sentAt", label: "Sent", sortable: true, render: (r) => (
+        <span className="text-ansar-gray text-xs">{new Date(r.sentAt).toLocaleString()}</span>
+      )
+    },
   ];
 
   return (
@@ -2172,11 +2270,10 @@ function PartnerContentTab({
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-body font-medium transition-colors ${
-                filter === f
-                  ? "bg-ansar-sage-600 text-white"
-                  : "bg-white text-ansar-muted border border-[rgba(61,61,61,0.10)] hover:bg-ansar-sage-50"
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-body font-medium transition-colors ${filter === f
+                ? "bg-ansar-sage-600 text-white"
+                : "bg-white text-ansar-muted border border-[rgba(61,61,61,0.10)] hover:bg-ansar-sage-50"
+                }`}
             >
               {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1) + "s"}
             </button>
@@ -2322,9 +2419,8 @@ function PartnerContentTab({
           {filteredResources.map((resource) => (
             <div
               key={resource._id}
-              className={`bg-white rounded-lg border border-[rgba(61,61,61,0.08)] p-4 shadow-sm hover:shadow-md transition-shadow ${
-                !resource.isActive ? "opacity-50" : ""
-              }`}
+              className={`bg-white rounded-lg border border-[rgba(61,61,61,0.08)] p-4 shadow-sm hover:shadow-md transition-shadow ${!resource.isActive ? "opacity-50" : ""
+                }`}
             >
               <div className="flex items-start gap-4">
                 {/* Thumbnail or icon */}
@@ -2337,9 +2433,8 @@ function PartnerContentTab({
                     />
                   </div>
                 ) : (
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    resource.type === "article" ? "bg-ansar-ochre-50" : "bg-ansar-terracotta-50"
-                  }`}>
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${resource.type === "article" ? "bg-ansar-ochre-50" : "bg-ansar-terracotta-50"
+                    }`}>
                     {typeIcon(resource.type)}
                   </div>
                 )}
@@ -2348,11 +2443,10 @@ function PartnerContentTab({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <h4 className="font-body font-semibold text-ansar-charcoal text-sm truncate">{resource.title}</h4>
-                    <span className={`text-[10px] font-body font-medium px-1.5 py-0.5 rounded ${
-                      resource.type === "video" ? "bg-ansar-sage-50 text-ansar-sage-700" :
+                    <span className={`text-[10px] font-body font-medium px-1.5 py-0.5 rounded ${resource.type === "video" ? "bg-ansar-sage-50 text-ansar-sage-700" :
                       resource.type === "article" ? "bg-ansar-ochre-50 text-ansar-ochre-700" :
-                      "bg-ansar-terracotta-50 text-ansar-terracotta-700"
-                    }`}>
+                        "bg-ansar-terracotta-50 text-ansar-terracotta-700"
+                      }`}>
                       {resource.type}
                     </span>
                   </div>
@@ -2381,11 +2475,10 @@ function PartnerContentTab({
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => handleToggleActive(resource)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      resource.isActive
-                        ? "text-ansar-sage-600 hover:bg-ansar-sage-50"
-                        : "text-ansar-muted hover:bg-gray-50"
-                    }`}
+                    className={`p-2 rounded-lg transition-colors ${resource.isActive
+                      ? "text-ansar-sage-600 hover:bg-ansar-sage-50"
+                      : "text-ansar-muted hover:bg-gray-50"
+                      }`}
                     title={resource.isActive ? "Deactivate" : "Activate"}
                   >
                     {resource.isActive ? <Eye className="w-4 h-4" /> : <Circle className="w-4 h-4" />}

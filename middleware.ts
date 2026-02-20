@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
  *
  * Protected routes (require authentication):
  *   /admin/*      → super_admin only
- *   /dashboard/*  → super_admin or partner_lead
+ *   /dashboard/*  → super_admin, partner_lead, or sister_admin
  *   /seeker/*     → seeker only
  *   /ansar/*      → ansar only
  *
@@ -36,7 +36,7 @@ const isProtectedRoute = createRouteMatcher([
 // Role-to-route access map
 const ROUTE_ROLE_MAP: Record<string, string[]> = {
   "/admin": ["super_admin"],
-  "/dashboard": ["super_admin", "partner_lead"],
+  "/dashboard": ["super_admin", "partner_lead", "sister_admin"],
   "/seeker": ["seeker"],
   "/ansar": ["ansar"],
 };
@@ -99,6 +99,7 @@ function getRoleHomepage(role: string, baseUrl: string): URL {
     case "super_admin":
       return new URL("/admin", baseUrl);
     case "partner_lead":
+    case "sister_admin":
       return new URL("/dashboard", baseUrl);
     case "ansar":
       return new URL("/ansar", baseUrl);

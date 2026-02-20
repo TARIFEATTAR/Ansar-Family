@@ -27,6 +27,7 @@ export default defineSchema({
     role: v.union(
       v.literal("super_admin"),    // Full access to everything
       v.literal("partner_lead"),   // Access to their organization only
+      v.literal("sister_admin"),   // Female contact data access within their org
       v.literal("ansar"),          // Future: Ansar self-service
       v.literal("seeker")          // Future: Seeker self-service
     ),
@@ -269,16 +270,16 @@ export default defineSchema({
   messages: defineTable({
     // What type of message
     type: v.union(v.literal("sms"), v.literal("email")),
-    
+
     // Who received it
     recipientId: v.string(), // Can be intake, ansar, or partner ID
     recipientPhone: v.optional(v.string()),
     recipientEmail: v.optional(v.string()),
-    
+
     // What was sent
     template: v.string(), // e.g., "welcome_seeker", "welcome_ansar", "pairing"
     subject: v.optional(v.string()), // For emails
-    
+
     // Status
     status: v.union(
       v.literal("pending"),
@@ -286,10 +287,10 @@ export default defineSchema({
       v.literal("failed")
     ),
     errorMessage: v.optional(v.string()),
-    
+
     // External IDs for debugging
     externalId: v.optional(v.string()), // Twilio SID or Resend ID
-    
+
     // Timestamps
     sentAt: v.number(),
   })

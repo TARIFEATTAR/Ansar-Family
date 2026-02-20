@@ -41,6 +41,15 @@ export const create = mutation({
       throw new Error("Ansar must be approved before pairing.");
     }
 
+    // ═══ GENDER-BASED PAIRING ENFORCEMENT ═══
+    // Ansars can only be paired with Seekers of the same gender.
+    // This is a hard server-side safety rule.
+    if (seeker.gender && ansar.gender && seeker.gender !== ansar.gender) {
+      throw new Error(
+        `Gender mismatch: Cannot pair a ${seeker.gender === "female" ? "Sister" : "Brother"} seeker with a ${ansar.gender === "female" ? "Sister" : "Brother"} Ansar. Pairings must be same-gender.`
+      );
+    }
+
     // Check if seeker already has an active pairing
     const existingPairing = await ctx.db
       .query("pairings")
@@ -83,15 +92,15 @@ export const create = mutation({
     // ═══════════════════════════════════════════════════════════
     // TRIGGER PAIRING NOTIFICATIONS (SMS + Email to Seeker & Ansar)
     // ═══════════════════════════════════════════════════════════
-    
+
     // Get organization details for community name
     const organization = await ctx.db.get(args.organizationId);
     const communityName = organization?.name || "your local community";
-    
+
     // Extract first names
     const seekerFirstName = seeker.fullName.split(" ")[0] || seeker.fullName;
     const ansarFirstName = ansar.fullName.split(" ")[0] || ansar.fullName;
-    
+
     // --- Seeker notifications ---
     try {
       await ctx.scheduler.runAfter(0, internal.notifications.sendPairingSMS, {
@@ -102,7 +111,7 @@ export const create = mutation({
         communityName,
       });
     } catch (e) { console.error("⚠️ Seeker pairing SMS schedule failed:", e); }
-    
+
     try {
       await ctx.scheduler.runAfter(0, internal.notifications.sendPairingEmail, {
         recipientId: args.seekerId.toString(),
@@ -112,7 +121,7 @@ export const create = mutation({
         communityName,
       });
     } catch (e) { console.error("⚠️ Seeker pairing email schedule failed:", e); }
-    
+
     // --- Ansar notifications ---
     try {
       await ctx.scheduler.runAfter(0, internal.notifications.sendPairingAnsarSMS, {
@@ -123,7 +132,7 @@ export const create = mutation({
         communityName,
       });
     } catch (e) { console.error("⚠️ Ansar pairing SMS schedule failed:", e); }
-    
+
     try {
       await ctx.scheduler.runAfter(0, internal.notifications.sendPairingAnsarEmail, {
         recipientId: args.ansarId.toString(),

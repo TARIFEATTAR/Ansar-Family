@@ -29,42 +29,39 @@ const fadeInUp = {
   }),
 };
 
-// Placeholder video series — replace URLs with real content later
+// Placeholder video series — replace YouTube IDs with real content once Bro Uzi finishes
 const videoSeries = [
   {
     id: 1,
-    title: "What is Islam?",
-    description: "A gentle introduction to the core beliefs and what it means to be Muslim.",
-    duration: "8 min",
-    youtubeId: "TpcbfxtdoI8", // New Muslim Academy placeholder
+    title: "How to Make Wudu",
+    description: "A step-by-step guide to the ritual ablution performed before prayer.",
+    duration: "~5 min",
+    youtubeId: "", // placeholder
+    placeholder: true,
   },
   {
     id: 2,
-    title: "The Five Pillars",
-    description: "The five foundational practices every Muslim learns — simple and approachable.",
-    duration: "12 min",
-    youtubeId: "P5ZOwNK6n9U",
+    title: "Understanding the Shahada",
+    description: "What the testimony of faith means and why it's the foundation of everything.",
+    duration: "~8 min",
+    youtubeId: "", // placeholder
+    placeholder: true,
   },
   {
     id: 3,
     title: "How to Pray (Salah)",
     description: "Step-by-step guide to the daily prayer. Don't worry — everyone starts here.",
-    duration: "15 min",
-    youtubeId: "zalLv2NY68E",
+    duration: "~12 min",
+    youtubeId: "", // placeholder
+    placeholder: true,
   },
   {
     id: 4,
-    title: "Reading the Quran",
-    description: "How to begin engaging with the Quran, even if you don't read Arabic yet.",
-    duration: "10 min",
-    youtubeId: "WnQ7YHjgPfY",
-  },
-  {
-    id: 5,
-    title: "Finding Your Community",
-    description: "Why community matters and how to connect with Muslims near you.",
-    duration: "7 min",
-    youtubeId: "YD6fA3rNMAo",
+    title: "Beginning with the Quran",
+    description: "How to start engaging with the Quran, even if you don't read Arabic yet.",
+    duration: "~10 min",
+    youtubeId: "", // placeholder
+    placeholder: true,
   },
 ];
 
@@ -395,6 +392,7 @@ export default function NewMuslimResourcesPage() {
 
 function VideoCard({ video, index }: { video: typeof videoSeries[0]; index: number }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const isPlaceholder = video.placeholder || !video.youtubeId;
 
   return (
     <motion.div
@@ -406,35 +404,46 @@ function VideoCard({ video, index }: { video: typeof videoSeries[0]; index: numb
       custom={index * 0.5}
     >
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-5 flex items-center justify-between hover:bg-ansar-sage-50/30 transition-colors"
+        onClick={() => !isPlaceholder && setIsExpanded(!isExpanded)}
+        className={`w-full px-6 py-5 flex items-center justify-between transition-colors ${isPlaceholder ? "cursor-default" : "hover:bg-ansar-sage-50/30"
+          }`}
       >
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-ansar-sage-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Play className="w-4 h-4 text-ansar-sage-600 ml-0.5" />
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isPlaceholder ? "bg-ansar-sage-50" : "bg-ansar-sage-100"
+            }`}>
+            <Play className={`w-4 h-4 ml-0.5 ${isPlaceholder ? "text-ansar-sage-300" : "text-ansar-sage-600"}`} />
           </div>
           <div className="text-left">
-            <p className="font-body text-sm font-medium text-ansar-charcoal">
-              {video.id}. {video.title}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-body text-sm font-medium text-ansar-charcoal">
+                {video.id}. {video.title}
+              </p>
+              {isPlaceholder && (
+                <span className="font-body text-[10px] font-medium text-ansar-sage-600 bg-ansar-sage-100 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                  Coming Soon
+                </span>
+              )}
+            </div>
             <p className="font-body text-xs text-ansar-muted mt-0.5">
               {video.duration} &middot; {video.description}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-          <span className="font-body text-xs text-ansar-muted hidden sm:inline">
-            {isExpanded ? "Close" : "Watch"}
-          </span>
-          {isExpanded ? (
-            <ChevronUp className="w-4 h-4 text-ansar-muted" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-ansar-muted" />
-          )}
-        </div>
+        {!isPlaceholder && (
+          <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+            <span className="font-body text-xs text-ansar-muted hidden sm:inline">
+              {isExpanded ? "Close" : "Watch"}
+            </span>
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4 text-ansar-muted" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-ansar-muted" />
+            )}
+          </div>
+        )}
       </button>
 
-      {isExpanded && (
+      {isExpanded && !isPlaceholder && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}

@@ -88,8 +88,8 @@ export default function DashboardGatewayPage() {
             return;
         }
 
-        // Handle Partner Lead with organization
-        if (currentUser?.role === "partner_lead" && organization) {
+        // Handle Partner Lead or Sister Admin with organization
+        if ((currentUser?.role === "partner_lead" || currentUser?.role === "sister_admin") && organization) {
             router.replace(`/dashboard/${organization.slug}`);
             return;
         }
@@ -139,8 +139,8 @@ export default function DashboardGatewayPage() {
         );
     }
 
-    // Partner Lead waiting for organization data
-    if (currentUser?.role === "partner_lead" && organization === undefined) {
+    // Partner Lead or Sister Admin waiting for organization data
+    if ((currentUser?.role === "partner_lead" || currentUser?.role === "sister_admin") && organization === undefined) {
         return (
             <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
                 <div className="text-center">
@@ -151,8 +151,8 @@ export default function DashboardGatewayPage() {
         );
     }
 
-    // Partner Lead without an organization (pending approval)
-    if (currentUser?.role === "partner_lead" && !currentUser?.organizationId) {
+    // Partner Lead or Sister Admin without an organization (pending approval)
+    if ((currentUser?.role === "partner_lead" || currentUser?.role === "sister_admin") && !currentUser?.organizationId) {
         return (
             <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
                 <div className="text-center max-w-md mx-auto px-6">

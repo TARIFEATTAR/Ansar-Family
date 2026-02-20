@@ -111,7 +111,7 @@ export const upsertFromClerk = mutation({
 
     // 3. No existing user — determine role from applications
     const superAdminEmails = ["jordan@tarifeattar.com"];
-    let role: "super_admin" | "partner_lead" | "ansar" | "seeker" = "seeker";
+    let role: "super_admin" | "partner_lead" | "sister_admin" | "ansar" | "seeker" = "seeker";
     let organizationId = undefined;
     let isActive = true;
 
@@ -168,6 +168,7 @@ export const createManual = mutation({
     role: v.union(
       v.literal("super_admin"),
       v.literal("partner_lead"),
+      v.literal("sister_admin"),
       v.literal("ansar"),
       v.literal("seeker")
     ),
@@ -206,6 +207,7 @@ export const setRole = mutation({
     role: v.union(
       v.literal("super_admin"),
       v.literal("partner_lead"),
+      v.literal("sister_admin"),
       v.literal("ansar"),
       v.literal("seeker")
     ),
@@ -230,6 +232,7 @@ export const update = mutation({
     role: v.optional(v.union(
       v.literal("super_admin"),
       v.literal("partner_lead"),
+      v.literal("sister_admin"),
       v.literal("ansar"),
       v.literal("seeker")
     )),
@@ -311,5 +314,19 @@ export const listByOrganization = query({
       .query("users")
       .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
       .collect();
+  },
+});
+
+/**
+ * Checks whether an organization has at least one active sister_admin.
+ */
+export const hasSisterAdmin = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const orgUsers = await ctx.db
+      .query("users")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .collect();
+    return orgUsers.some((u) => u.role === "sister_admin" && u.isActive);
   },
 });

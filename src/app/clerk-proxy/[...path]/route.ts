@@ -51,10 +51,17 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ path: s
                 lower === "transfer-encoding" ||
                 lower === "content-encoding" ||
                 lower === "content-length" ||
-                lower === "connection"
+                lower === "connection" ||
+                lower === "set-cookie" // Handle Set-Cookie separately below
             ) return;
             responseHeaders.set(key, value);
         });
+
+        // Handle Set-Cookie headers specially — must use append() for multiple values
+        const setCookies = response.headers.getSetCookie?.() ?? [];
+        for (const cookie of setCookies) {
+            responseHeaders.append("Set-Cookie", cookie);
+        }
 
         // Read the body as an ArrayBuffer to avoid streaming issues
         const body = response.status === 204 || response.status === 304

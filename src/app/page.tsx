@@ -97,13 +97,13 @@ export default function Home() {
               Communities
             </Link>
           </nav>
-          
+
           <div className="flex items-center gap-4">
             <Link
-              href="/sign-in"
+              href="/dashboard"
               className="hidden md:block font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors font-medium"
             >
-              Partner Login
+              Sign In
             </Link>
             <Link
               href="/partner"
@@ -137,8 +137,8 @@ export default function Home() {
           {/* Ambient floating shapes - subtle background animation */}
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
             <motion.div
-              animate={{ 
-                x: [0, 30, -20, 0], 
+              animate={{
+                x: [0, 30, -20, 0],
                 y: [0, -40, 20, 0],
                 scale: [1, 1.1, 0.95, 1]
               }}
@@ -146,8 +146,8 @@ export default function Home() {
               className="absolute top-[15%] right-[10%] w-[400px] h-[400px] bg-ansar-sage-100/20 rounded-full blur-3xl"
             />
             <motion.div
-              animate={{ 
-                x: [0, -20, 30, 0], 
+              animate={{
+                x: [0, -20, 30, 0],
                 y: [0, 30, -20, 0],
                 scale: [1, 0.9, 1.05, 1]
               }}
@@ -155,8 +155,8 @@ export default function Home() {
               className="absolute bottom-[20%] right-[25%] w-[300px] h-[300px] bg-ansar-terracotta-100/15 rounded-full blur-3xl"
             />
             <motion.div
-              animate={{ 
-                x: [0, 15, -10, 0], 
+              animate={{
+                x: [0, 15, -10, 0],
                 y: [0, -15, 25, 0]
               }}
               transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
@@ -165,7 +165,7 @@ export default function Home() {
           </div>
 
           <div className="max-w-[1200px] mx-auto w-full relative z-10 grid lg:grid-cols-[1fr_auto] gap-12 lg:gap-16 items-center">
-            
+
             {/* LEFT: Typography */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
@@ -296,7 +296,75 @@ export default function Home() {
         </section>
 
         {/* ============================================
-            SECTION 2: THE REALITY
+            SECTION: THE GARDEN PHILOSOPHY
+            ============================================ */}
+        <section className="py-24 px-6 relative z-10">
+          <div className="max-w-[900px] mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <p className="font-body text-xs font-normal tracking-[0.2em] uppercase text-ansar-sage-600 mb-4">
+                The Garden
+              </p>
+              <h2 className="font-display text-[clamp(2rem,1.5rem+2.5vw,3rem)] text-ansar-charcoal mb-8">
+                A seed needs soil, water, and light to grow
+              </h2>
+              <div className="space-y-6 font-body text-lg text-ansar-gray leading-relaxed max-w-[780px]">
+                <p>
+                  The Ansar were those in Madinah who opened their homes and hearts to the first Muslims. They understood something simple: faith doesn&apos;t grow in isolation. It grows in community.
+                </p>
+                <p>
+                  Like a garden, every role matters. The seed carries the potential. The water and soil provide the nourishment. And the garden bed gives it all a place to take root.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Three mini-cards */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+              className="grid grid-cols-3 gap-4 mt-14"
+            >
+              {/* Seed */}
+              <div className="text-center rounded-2xl bg-ansar-terracotta-50/40 border border-ansar-terracotta-100/30 overflow-hidden">
+                <div className="relative w-full aspect-[4/3]">
+                  <Image
+                    src="/images/accents/asala_Single_seed_resting_on_soft_earth_watercolor_and_ink_il_7ad05669-43e3-49bf-b656-772e96b1fb87_3.png"
+                    alt="Watercolor seed illustration"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="p-4 md:p-6">
+                  <h3 className="font-display text-lg md:text-xl text-ansar-charcoal mb-1.5">Seeds</h3>
+                  <p className="font-body text-sm text-ansar-gray leading-relaxed">New and returning Muslims</p>
+                </div>
+              </div>
+
+              {/* Water & Soil */}
+              <div className="text-center p-6 md:p-8 rounded-2xl bg-ansar-sage-50/40 border border-ansar-sage-100/30">
+                <span className="font-display text-3xl md:text-4xl leading-none block mb-3 select-none">&#x1F4A7;</span>
+                <h3 className="font-display text-lg md:text-xl text-ansar-charcoal mb-2">Water &amp; Soil</h3>
+                <p className="font-body text-sm text-ansar-gray leading-relaxed">Ansars</p>
+              </div>
+
+              {/* Garden Beds */}
+              <div className="text-center p-6 md:p-8 rounded-2xl bg-ansar-ochre-50/40 border border-ansar-ochre-100/30">
+                <span className="font-display text-3xl md:text-4xl leading-none block mb-3 select-none">&#x1F33F;</span>
+                <h3 className="font-display text-lg md:text-xl text-ansar-charcoal mb-2">Garden Beds</h3>
+                <p className="font-body text-sm text-ansar-gray leading-relaxed">Partner communities</p>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ============================================
+            SECTION: THE REALITY
             ============================================ */}
         <section id="reality" className="py-24 px-6 bg-white relative z-10">
           <div className="max-w-[900px] mx-auto">
@@ -344,7 +412,7 @@ export default function Home() {
 
             {/* 4 Steps */}
             <div className="grid md:grid-cols-4 gap-6">
-              
+
               {/* Step 1 */}
               <div className="bg-white p-6 rounded-xl shadow-sm border border-ansar-sage-100 flex flex-col items-center text-center">
                 <div className="w-12 h-12 bg-ansar-sage-100 rounded-full flex items-center justify-center mb-4 text-ansar-sage-600">
@@ -520,12 +588,12 @@ export default function Home() {
               Whether you&apos;re looking for your community or trying to build one that actually holds people. Start here.
             </p>
             <div className="flex flex-col md:flex-row gap-4 justify-center items-center mt-8">
-               <Link href="/join" className="btn-secondary min-w-[200px] shadow-lg shadow-ansar-terracotta-500/20">
-                 Find a Community
-               </Link>
-               <Link href="/partner" className="btn-outline min-w-[200px]">
-                 Register Your Organization
-               </Link>
+              <Link href="/join" className="btn-secondary min-w-[200px] shadow-lg shadow-ansar-terracotta-500/20">
+                Find a Community
+              </Link>
+              <Link href="/partner" className="btn-outline min-w-[200px]">
+                Register Your Organization
+              </Link>
             </div>
           </div>
         </section>
@@ -591,11 +659,6 @@ export default function Home() {
                 <li>
                   <Link href="/terms-and-conditions" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors">
                     Terms & Conditions
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/admin" className="font-body text-sm text-ansar-muted hover:text-ansar-gray transition-colors">
-                    Admin
                   </Link>
                 </li>
               </ul>

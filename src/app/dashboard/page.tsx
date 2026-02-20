@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -39,6 +39,38 @@ export default function DashboardGatewayPage() {
             });
         }
     }, [user, isLoaded, upsertUser]);
+
+    // Sync Convex role → Clerk publicMetadata (so middleware JWT has the role)
+    const roleSyncedRef = useRef(false);
+    const syncRoleToClerk = useCallback(async (role: string) => {
+        if (roleSyncedRef.current) return;
+        roleSyncedRef.current = true;
+        try {
+            const res = await fetch("/api/auth/sync-role", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ role }),
+            });
+            if (res.ok) {
+                console.log(`✅ Role "${role}" synced to Clerk`);
+            } else {
+                console.error("Failed to sync role:", await res.text());
+                roleSyncedRef.current = false; // allow retry
+            }
+        } catch (err) {
+            console.error("Failed to sync role:", err);
+            roleSyncedRef.current = false; // allow retry
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!currentUser?.role || !user) return;
+        // Check if role is already synced in session claims
+        const clerkRole = (user.publicMetadata as { role?: string })?.role;
+        if (clerkRole === currentUser.role) return; // already synced
+        // Role mismatch or missing — sync it
+        syncRoleToClerk(currentUser.role);
+    }, [currentUser?.role, user, syncRoleToClerk]);
 
     // If user is a partner_lead, get their organization to find the slug
     const organization = useQuery(

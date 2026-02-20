@@ -11,12 +11,12 @@ import { clerkClient } from "@clerk/nextjs/server";
  * If the email already exists in Clerk, we look up the existing user
  * and return their ID so the intake can still be created.
  *
- * Body: { email: string, password: string, firstName: string, lastName?: string }
+ * Body: { email: string, password: string, firstName: string, lastName?: string, role?: string }
  * Returns: { clerkUserId: string } or { error: string }
  */
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { email, password, firstName, lastName } = body;
+  const { email, password, firstName, lastName, role } = body;
 
   if (!email || !password || !firstName) {
     return NextResponse.json(
@@ -24,6 +24,10 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
+
+  // Determine the role to set in Clerk publicMetadata
+  const validRoles = ["super_admin", "partner_lead", "ansar", "seeker"];
+  const userRole = role && validRoles.includes(role) ? role : "seeker";
 
   if (password.length < 8) {
     return NextResponse.json(
@@ -40,6 +44,7 @@ export async function POST(request: NextRequest) {
       password,
       firstName,
       lastName: lastName || undefined,
+      publicMetadata: { role: userRole },
     });
 
     return NextResponse.json({ clerkUserId: clerkUser.id });

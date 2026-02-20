@@ -60,8 +60,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" className={`${cormorantGaramond.variable} ${outfit.variable}`}>
+    <ClerkProvider telemetry={false}>
+      <html lang="en" className={`${cormorantGaramond.variable} ${outfit.variable}`} style={{ scrollBehavior: 'smooth' }}>
         <body className="bg-ansar-cream text-ansar-charcoal antialiased">
           <ConvexClientProvider>
             {children}

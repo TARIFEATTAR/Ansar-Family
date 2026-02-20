@@ -71,7 +71,7 @@ export default function Home() {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="fixed top-0 left-0 right-0 z-50 px-6 md:px-8 py-4 bg-ansar-cream/90 backdrop-blur-md border-b border-[rgba(61,61,61,0.06)]"
+        className="fixed top-4 left-4 right-4 md:left-8 md:right-8 z-50 max-w-[1200px] mx-auto px-6 md:px-8 py-3 bg-white/90 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_-8px_rgba(61,61,61,0.08)] rounded-full"
       >
         <div className="max-w-[1200px] mx-auto flex items-center justify-between">
           <Link href="/" className="font-display text-xl text-ansar-charcoal tracking-wide hover:opacity-80 transition-opacity">
@@ -107,7 +107,7 @@ export default function Home() {
             </Link>
             <Link
               href="/partner"
-              className="inline-flex items-center py-2 px-4 text-xs font-medium rounded-lg border border-ansar-sage-200 text-ansar-sage-700 bg-transparent hover:bg-ansar-sage-600 hover:text-white hover:border-ansar-sage-600 transition-all duration-300"
+              className="inline-flex items-center py-2.5 px-5 text-xs font-semibold rounded-full border border-ansar-sage-200/60 text-ansar-sage-700 bg-ansar-sage-50 hover:bg-ansar-sage-600 hover:text-white hover:border-ansar-sage-600 hover:shadow-md transition-all duration-300"
             >
               Bring Ansar to Your Community
             </Link>
@@ -198,7 +198,7 @@ export default function Home() {
                 <motion.div
                   whileHover={{ y: -6, scale: 1.015 }}
                   transition={{ duration: 0.35, ease: [0.19, 1, 0.22, 1] }}
-                  className="bg-white/45 backdrop-blur-xl p-6 rounded-[20px] border border-white/60 shadow-[0_2px_16px_-4px_rgba(61,61,61,0.05)] group-hover:shadow-[0_16px_32px_-8px_rgba(61,61,61,0.1)] group-hover:bg-white/65 group-hover:border-white/80 transition-all duration-300 relative overflow-hidden"
+                  className="bg-white/45 backdrop-blur-xl p-7 rounded-[32px] border border-white/80 shadow-[0_8px_32px_-8px_rgba(61,61,61,0.06)] group-hover:shadow-[0_24px_48px_-12px_rgba(61,61,61,0.1)] group-hover:bg-white/80 group-hover:border-white transition-all duration-400 relative overflow-hidden backdrop-blur-2xl"
                 >
                   <div className="absolute -top-8 -right-8 w-40 h-40 bg-ansar-terracotta-100/25 rounded-full blur-2xl group-hover:bg-ansar-terracotta-200/35 transition-colors duration-500" />
                   <div className="relative z-10 flex items-start gap-5">
@@ -222,7 +222,7 @@ export default function Home() {
                 <motion.div
                   whileHover={{ y: -6, scale: 1.015 }}
                   transition={{ duration: 0.35, ease: [0.19, 1, 0.22, 1] }}
-                  className="bg-white/45 backdrop-blur-xl p-6 rounded-[20px] border border-white/60 shadow-[0_2px_16px_-4px_rgba(61,61,61,0.05)] group-hover:shadow-[0_16px_32px_-8px_rgba(61,61,61,0.1)] group-hover:bg-white/65 group-hover:border-white/80 transition-all duration-300 relative overflow-hidden"
+                  className="bg-white/45 backdrop-blur-xl p-7 rounded-[32px] border border-white/80 shadow-[0_8px_32px_-8px_rgba(61,61,61,0.06)] group-hover:shadow-[0_24px_48px_-12px_rgba(61,61,61,0.1)] group-hover:bg-white/80 group-hover:border-white transition-all duration-400 relative overflow-hidden backdrop-blur-2xl"
                 >
                   <div className="absolute -top-8 -right-8 w-40 h-40 bg-ansar-sage-100/25 rounded-full blur-2xl group-hover:bg-ansar-sage-200/35 transition-colors duration-500" />
                   <div className="relative z-10 flex items-start gap-5">
@@ -251,7 +251,7 @@ export default function Home() {
             >
               {/* Mobile Tile 1: Seeker */}
               <Link href="/join" className="block relative group">
-                <div className="bg-white/50 backdrop-blur-xl p-4 rounded-2xl border border-white/60 shadow-[0_2px_12px_-4px_rgba(61,61,61,0.06)] active:scale-[0.97] transition-all duration-200 relative overflow-hidden aspect-square flex flex-col justify-between">
+                <div className="bg-white/50 backdrop-blur-xl p-5 rounded-[24px] border border-white/80 shadow-[0_8px_24px_-6px_rgba(61,61,61,0.06)] active:scale-[0.97] transition-all duration-300 relative overflow-hidden aspect-square flex flex-col justify-between bg-white/70 backdrop-blur-2xl">
                   <div className="absolute -top-6 -right-6 w-28 h-28 bg-ansar-terracotta-100/20 rounded-full blur-2xl" />
                   <div className="relative z-10">
                     <div className="w-10 h-10 bg-gradient-to-br from-ansar-terracotta-50 to-ansar-terracotta-100/80 rounded-xl flex items-center justify-center border border-ansar-terracotta-200/30 mb-3">
@@ -272,7 +272,7 @@ export default function Home() {
 
               {/* Mobile Tile 2: Volunteer */}
               <Link href="/volunteer" className="block relative group">
-                <div className="bg-white/50 backdrop-blur-xl p-4 rounded-2xl border border-white/60 shadow-[0_2px_12px_-4px_rgba(61,61,61,0.06)] active:scale-[0.97] transition-all duration-200 relative overflow-hidden aspect-square flex flex-col justify-between">
+                <div className="bg-white/50 backdrop-blur-xl p-5 rounded-[24px] border border-white/80 shadow-[0_8px_24px_-6px_rgba(61,61,61,0.06)] active:scale-[0.97] transition-all duration-300 relative overflow-hidden aspect-square flex flex-col justify-between bg-white/70 backdrop-blur-2xl">
                   <div className="absolute -top-6 -right-6 w-28 h-28 bg-ansar-sage-100/20 rounded-full blur-2xl" />
                   <div className="relative z-10">
                     <div className="w-10 h-10 bg-gradient-to-br from-ansar-sage-50 to-ansar-sage-100/80 rounded-xl flex items-center justify-center border border-ansar-sage-200/30 mb-3">
@@ -331,7 +331,7 @@ export default function Home() {
               className="grid grid-cols-3 gap-4 mt-14"
             >
               {/* Seed */}
-              <div className="text-center rounded-2xl bg-ansar-terracotta-50/40 border border-ansar-terracotta-100/30 overflow-hidden">
+              <div className="text-center rounded-[32px] bg-gradient-to-b from-ansar-terracotta-50/60 to-white/80 border border-white shadow-[0_8px_24px_-8px_rgba(61,61,61,0.04)] overflow-hidden hover:shadow-[0_16px_32px_-12px_rgba(61,61,61,0.08)] hover:-translate-y-1 transition-all duration-400">
                 <div className="relative w-full aspect-[4/3]">
                   <Image
                     src="/images/accents/asala_Single_seed_resting_on_soft_earth_watercolor_and_ink_il_7ad05669-43e3-49bf-b656-772e96b1fb87_3.png"
@@ -347,14 +347,14 @@ export default function Home() {
               </div>
 
               {/* Water & Soil */}
-              <div className="text-center p-6 md:p-8 rounded-2xl bg-ansar-sage-50/40 border border-ansar-sage-100/30">
+              <div className="text-center p-6 md:p-8 rounded-[32px] bg-gradient-to-b from-ansar-sage-50/60 to-white/80 border border-white shadow-[0_8px_24px_-8px_rgba(61,61,61,0.04)] hover:shadow-[0_16px_32px_-12px_rgba(61,61,61,0.08)] hover:-translate-y-1 transition-all duration-400">
                 <span className="font-display text-3xl md:text-4xl leading-none block mb-3 select-none">&#x1F4A7;</span>
                 <h3 className="font-display text-lg md:text-xl text-ansar-charcoal mb-2">Water &amp; Soil</h3>
                 <p className="font-body text-sm text-ansar-gray leading-relaxed">Ansars</p>
               </div>
 
               {/* Garden Beds */}
-              <div className="text-center p-6 md:p-8 rounded-2xl bg-ansar-ochre-50/40 border border-ansar-ochre-100/30">
+              <div className="text-center p-6 md:p-8 rounded-[32px] bg-gradient-to-b from-ansar-ochre-50/60 to-white/80 border border-white shadow-[0_8px_24px_-8px_rgba(61,61,61,0.04)] hover:shadow-[0_16px_32px_-12px_rgba(61,61,61,0.08)] hover:-translate-y-1 transition-all duration-400">
                 <span className="font-display text-3xl md:text-4xl leading-none block mb-3 select-none">&#x1F33F;</span>
                 <h3 className="font-display text-lg md:text-xl text-ansar-charcoal mb-2">Garden Beds</h3>
                 <p className="font-body text-sm text-ansar-gray leading-relaxed">Partner communities</p>
@@ -414,11 +414,11 @@ export default function Home() {
             <div className="grid md:grid-cols-4 gap-6">
 
               {/* Step 1 */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-ansar-sage-100 flex flex-col items-center text-center">
-                <div className="w-12 h-12 bg-ansar-sage-100 rounded-full flex items-center justify-center mb-4 text-ansar-sage-600">
+              <div className="bg-white p-8 rounded-[32px] shadow-[0_8px_32px_-12px_rgba(61,61,61,0.06)] border border-white flex flex-col items-center text-center hover:shadow-[0_16px_40px_-16px_rgba(61,61,61,0.1)] hover:-translate-y-1 transition-all duration-400 relative overflow-hidden group">
+                <div className="w-16 h-16 bg-ansar-sage-50 border border-ansar-sage-100/50 rounded-[24px] flex items-center justify-center mb-6 text-ansar-sage-600 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
                   <Send className="w-6 h-6" strokeWidth={1.5} />
                 </div>
-                <span className="font-body text-xs text-ansar-sage-600 uppercase tracking-wider mb-2">Within Minutes</span>
+                <span className="font-body text-[10.5px] font-bold text-ansar-sage-600 uppercase tracking-widest mb-4 bg-ansar-sage-50/80 px-3.5 py-1.5 rounded-full">Within Minutes</span>
                 <h4 className="font-display text-lg text-ansar-charcoal mb-2">Welcome message</h4>
                 <p className="font-body text-sm text-ansar-gray">
                   A text and email with starter resources. You&apos;re in the system, not floating.
@@ -426,11 +426,11 @@ export default function Home() {
               </div>
 
               {/* Step 2 */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-ansar-sage-100 flex flex-col items-center text-center">
-                <div className="w-12 h-12 bg-ansar-sage-100 rounded-full flex items-center justify-center mb-4 text-ansar-sage-600">
+              <div className="bg-white p-8 rounded-[32px] shadow-[0_8px_32px_-12px_rgba(61,61,61,0.06)] border border-white flex flex-col items-center text-center hover:shadow-[0_16px_40px_-16px_rgba(61,61,61,0.1)] hover:-translate-y-1 transition-all duration-400 relative overflow-hidden group">
+                <div className="w-16 h-16 bg-ansar-sage-50 border border-ansar-sage-100/50 rounded-[24px] flex items-center justify-center mb-6 text-ansar-sage-600 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
                   <Phone className="w-6 h-6" strokeWidth={1.5} />
                 </div>
-                <span className="font-body text-xs text-ansar-sage-600 uppercase tracking-wider mb-2">Within 48 Hours</span>
+                <span className="font-body text-[10.5px] font-bold text-ansar-sage-600 uppercase tracking-widest mb-4 bg-ansar-sage-50/80 px-3.5 py-1.5 rounded-full">Within 48 Hours</span>
                 <h4 className="font-display text-lg text-ansar-charcoal mb-2">A real person calls</h4>
                 <p className="font-body text-sm text-ansar-gray">
                   Someone from our team listens to where you are and what you need.
@@ -438,11 +438,11 @@ export default function Home() {
               </div>
 
               {/* Step 3 */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-ansar-sage-100 flex flex-col items-center text-center">
-                <div className="w-12 h-12 bg-ansar-sage-100 rounded-full flex items-center justify-center mb-4 text-ansar-sage-600">
+              <div className="bg-white p-8 rounded-[32px] shadow-[0_8px_32px_-12px_rgba(61,61,61,0.06)] border border-white flex flex-col items-center text-center hover:shadow-[0_16px_40px_-16px_rgba(61,61,61,0.1)] hover:-translate-y-1 transition-all duration-400 relative overflow-hidden group">
+                <div className="w-16 h-16 bg-ansar-sage-50 border border-ansar-sage-100/50 rounded-[24px] flex items-center justify-center mb-6 text-ansar-sage-600 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
                   <Coffee className="w-6 h-6" strokeWidth={1.5} />
                 </div>
-                <span className="font-body text-xs text-ansar-sage-600 uppercase tracking-wider mb-2">Within a Week</span>
+                <span className="font-body text-[10.5px] font-bold text-ansar-sage-600 uppercase tracking-widest mb-4 bg-ansar-sage-50/80 px-3.5 py-1.5 rounded-full">Within a Week</span>
                 <h4 className="font-display text-lg text-ansar-charcoal mb-2">Meet your Ansar</h4>
                 <p className="font-body text-sm text-ansar-gray">
                   We pair you with someone local who meets you before you ever walk into a masjid alone.
@@ -450,11 +450,11 @@ export default function Home() {
               </div>
 
               {/* Step 4 */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-ansar-sage-100 flex flex-col items-center text-center">
-                <div className="w-12 h-12 bg-ansar-sage-100 rounded-full flex items-center justify-center mb-4 text-ansar-sage-600">
+              <div className="bg-white p-8 rounded-[32px] shadow-[0_8px_32px_-12px_rgba(61,61,61,0.06)] border border-white flex flex-col items-center text-center hover:shadow-[0_16px_40px_-16px_rgba(61,61,61,0.1)] hover:-translate-y-1 transition-all duration-400 relative overflow-hidden group">
+                <div className="w-16 h-16 bg-ansar-sage-50 border border-ansar-sage-100/50 rounded-[24px] flex items-center justify-center mb-6 text-ansar-sage-600 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
                   <UtensilsCrossed className="w-6 h-6" strokeWidth={1.5} />
                 </div>
-                <span className="font-body text-xs text-ansar-sage-600 uppercase tracking-wider mb-2">Within a Month</span>
+                <span className="font-body text-[10.5px] font-bold text-ansar-sage-600 uppercase tracking-widest mb-4 bg-ansar-sage-50/80 px-3.5 py-1.5 rounded-full">Within a Month</span>
                 <h4 className="font-display text-lg text-ansar-charcoal mb-2">Dinner with the community</h4>
                 <p className="font-body text-sm text-ansar-gray">
                   Your Ansar brings you to the monthly gathering. Food, conversation, and people glad you came.
@@ -481,8 +481,8 @@ export default function Home() {
             </p>
 
             <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-ansar-cream p-8 rounded-xl border border-ansar-sage-100">
-                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mb-6 text-ansar-terracotta-600 shadow-sm">
+              <div className="bg-gradient-to-br from-[#FAF9F5] to-white p-8 rounded-[32px] border border-white shadow-[0_8px_24px_-12px_rgba(61,61,61,0.05)] hover:shadow-[0_20px_40px_-16px_rgba(61,61,61,0.08)] hover:-translate-y-1 transition-all duration-400 relative overflow-hidden group">
+                <div className="w-14 h-14 bg-white rounded-[20px] flex items-center justify-center mb-6 text-ansar-terracotta-600 shadow-md border border-ansar-terracotta-50/50 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
                   <QrCode className="w-6 h-6" strokeWidth={1.5} />
                 </div>
                 <h4 className="font-display text-xl text-ansar-charcoal mb-3">Your own page</h4>
@@ -490,8 +490,8 @@ export default function Home() {
                   A branded page at ansar.family/your-name with sign-up forms, QR codes for your lobby, and links for your social media. People route directly to you.
                 </p>
               </div>
-              <div className="bg-ansar-cream p-8 rounded-xl border border-ansar-sage-100">
-                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mb-6 text-ansar-terracotta-600 shadow-sm">
+              <div className="bg-gradient-to-br from-[#FAF9F5] to-white p-8 rounded-[32px] border border-white shadow-[0_8px_24px_-12px_rgba(61,61,61,0.05)] hover:shadow-[0_20px_40px_-16px_rgba(61,61,61,0.08)] hover:-translate-y-1 transition-all duration-400 relative overflow-hidden group">
+                <div className="w-14 h-14 bg-white rounded-[20px] flex items-center justify-center mb-6 text-ansar-terracotta-600 shadow-md border border-ansar-terracotta-50/50 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
                   <LayoutDashboard className="w-6 h-6" strokeWidth={1.5} />
                 </div>
                 <h4 className="font-display text-xl text-ansar-charcoal mb-3">A dashboard that works</h4>
@@ -499,8 +499,8 @@ export default function Home() {
                   See who&apos;s new. See who&apos;s been paired. See who needs follow-up. Your volunteers and new Muslims in one place, updated in real time.
                 </p>
               </div>
-              <div className="bg-ansar-cream p-8 rounded-xl border border-ansar-sage-100">
-                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mb-6 text-ansar-terracotta-600 shadow-sm">
+              <div className="bg-gradient-to-br from-[#FAF9F5] to-white p-8 rounded-[32px] border border-white shadow-[0_8px_24px_-12px_rgba(61,61,61,0.05)] hover:shadow-[0_20px_40px_-16px_rgba(61,61,61,0.08)] hover:-translate-y-1 transition-all duration-400 relative overflow-hidden group">
+                <div className="w-14 h-14 bg-white rounded-[20px] flex items-center justify-center mb-6 text-ansar-terracotta-600 shadow-md border border-ansar-terracotta-50/50 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
                   <MessageCircle className="w-6 h-6" strokeWidth={1.5} />
                 </div>
                 <h4 className="font-display text-xl text-ansar-charcoal mb-3">Automatic follow-up</h4>
@@ -527,7 +527,7 @@ export default function Home() {
             <div className="space-y-8">
               {/* Seeker */}
               <div className="flex gap-6 items-start group">
-                <div className="w-16 h-16 bg-ansar-sage-100 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-ansar-sage-50 to-ansar-sage-100/80 shadow-inner border border-ansar-sage-200/40 rounded-[24px] flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-500 group-hover:shadow-[0_8px_24px_-8px_rgba(141,162,144,0.3)]">
                   <Heart className="w-8 h-8 text-ansar-sage-600" strokeWidth={1.5} />
                 </div>
                 <div>
@@ -543,7 +543,7 @@ export default function Home() {
 
               {/* Ansar */}
               <div className="flex gap-6 items-start group">
-                <div className="w-16 h-16 bg-ansar-terracotta-100 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-ansar-terracotta-50 to-ansar-terracotta-100/80 shadow-inner border border-ansar-terracotta-200/40 rounded-[24px] flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-500 group-hover:shadow-[0_8px_24px_-8px_rgba(202,104,83,0.3)]">
                   <Users className="w-8 h-8 text-ansar-terracotta-600" strokeWidth={1.5} />
                 </div>
                 <div>
@@ -559,7 +559,7 @@ export default function Home() {
 
               {/* Partner Hubs */}
               <div className="flex gap-6 items-start group">
-                <div className="w-16 h-16 bg-ansar-ochre-100 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-ansar-ochre-50 to-ansar-ochre-100/80 shadow-inner border border-ansar-ochre-200/40 rounded-[24px] flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-500 group-hover:shadow-[0_8px_24px_-8px_rgba(212,163,115,0.3)]">
                   <Building2 className="w-8 h-8 text-ansar-ochre-600" strokeWidth={1.5} />
                 </div>
                 <div>
@@ -588,10 +588,10 @@ export default function Home() {
               Whether you&apos;re looking for your community or trying to build one that actually holds people. Start here.
             </p>
             <div className="flex flex-col md:flex-row gap-4 justify-center items-center mt-8">
-              <Link href="/join" className="btn-secondary min-w-[200px] shadow-lg shadow-ansar-terracotta-500/20">
+              <Link href="/join" className="bg-ansar-terracotta-600 text-white hover:bg-ansar-terracotta-700 min-w-[220px] rounded-full shadow-[0_8px_20px_-6px_rgba(202,104,83,0.4)] hover:shadow-[0_16px_32px_-10px_rgba(202,104,83,0.5)] transition-all duration-300 py-4 px-8 text-base font-medium flex items-center justify-center hover:-translate-y-1">
                 Find a Community
               </Link>
-              <Link href="/partner" className="btn-outline min-w-[200px]">
+              <Link href="/partner" className="bg-white text-ansar-charcoal border border-ansar-gray/20 hover:border-ansar-charcoal hover:bg-ansar-charcoal hover:text-white min-w-[220px] rounded-full shadow-sm hover:shadow-[0_12px_24px_-8px_rgba(61,61,61,0.15)] transition-all duration-300 py-4 px-8 text-base font-medium flex items-center justify-center hover:-translate-y-1">
                 Register Your Organization
               </Link>
             </div>

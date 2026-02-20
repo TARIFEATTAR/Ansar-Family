@@ -58,13 +58,14 @@ export const upsertFromClerk = mutation({
           .withIndex("by_email", (q) => q.eq("leadEmail", email))
           .first();
 
-        if (partnerApp && (partnerApp.status === "approved" || partnerApp.status === "active")) {
+        if (partnerApp) {
+          const isApproved = partnerApp.status === "approved" || partnerApp.status === "active";
           await ctx.db.patch(existingByClerkId._id, {
             role: "partner_lead",
-            organizationId: partnerApp.organizationId,
-            isActive: true,
+            organizationId: partnerApp.organizationId ?? undefined,
+            isActive: isApproved,
           });
-          console.log(`✅ Upgraded user ${existingByClerkId._id} to partner_lead based on app`);
+          console.log(`✅ Upgraded user ${existingByClerkId._id} to partner_lead based on app (approved: ${isApproved})`);
           return existingByClerkId._id;
         }
 
@@ -74,13 +75,14 @@ export const upsertFromClerk = mutation({
           .withIndex("by_email", (q) => q.eq("email", email))
           .first();
 
-        if (ansarApp && (ansarApp.status === "approved" || ansarApp.status === "active")) {
+        if (ansarApp) {
+          const isApproved = ansarApp.status === "approved" || ansarApp.status === "active";
           await ctx.db.patch(existingByClerkId._id, {
             role: "ansar",
-            organizationId: ansarApp.organizationId,
-            isActive: true,
+            organizationId: ansarApp.organizationId ?? undefined,
+            isActive: isApproved,
           });
-          console.log(`✅ Upgraded user ${existingByClerkId._id} to ansar based on app`);
+          console.log(`✅ Upgraded user ${existingByClerkId._id} to ansar based on app (approved: ${isApproved})`);
           return existingByClerkId._id;
         }
       }
@@ -106,6 +108,44 @@ export const upsertFromClerk = mutation({
         name: args.name,
       });
       console.log(`✅ Linked user ${existingByEmail._id} (${existingByEmail.role}) to Clerk ID ${args.clerkId}`);
+
+      // Self-heal: If user is currently a "seeker" but has a partner/ansar application, upgrade them.
+      if (existingByEmail.role === "seeker") {
+        // Check partner applications
+        const partnerApp = await ctx.db
+          .query("partners")
+          .withIndex("by_email", (q) => q.eq("leadEmail", email))
+          .first();
+
+        if (partnerApp) {
+          const isApproved = partnerApp.status === "approved" || partnerApp.status === "active";
+          await ctx.db.patch(existingByEmail._id, {
+            role: "partner_lead",
+            organizationId: partnerApp.organizationId ?? undefined,
+            isActive: isApproved,
+          });
+          console.log(`✅ Upgraded linked user ${existingByEmail._id} to partner_lead based on app (approved: ${isApproved})`);
+          return existingByEmail._id;
+        }
+
+        // Check ansar applications
+        const ansarApp = await ctx.db
+          .query("ansars")
+          .withIndex("by_email", (q) => q.eq("email", email))
+          .first();
+
+        if (ansarApp) {
+          const isApproved = ansarApp.status === "approved" || ansarApp.status === "active";
+          await ctx.db.patch(existingByEmail._id, {
+            role: "ansar",
+            organizationId: ansarApp.organizationId ?? undefined,
+            isActive: isApproved,
+          });
+          console.log(`✅ Upgraded linked user ${existingByEmail._id} to ansar based on app (approved: ${isApproved})`);
+          return existingByEmail._id;
+        }
+      }
+
       return existingByEmail._id;
     }
 

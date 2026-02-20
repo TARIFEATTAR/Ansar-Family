@@ -137,8 +137,9 @@ export function FloatingChatWidget({
         }
     };
 
-    // Don't render if no recipient and no existing conversations
-    if (!recipientId && inbox.length === 0) return null;
+    // Determine the display name for the chat header
+    const hasConversations = inbox.length > 0;
+    const canStartNew = !!recipientId && !!recipientName && !!recipientRole;
 
     const otherPartyName = activeConversation?.participants
         ?.filter((p: any) => p.userId !== currentUserId)
@@ -247,14 +248,29 @@ export function FloatingChatWidget({
                                     <div className="w-12 h-12 bg-ansar-sage-100 rounded-full flex items-center justify-center mb-3">
                                         <MessageSquare className="w-6 h-6 text-ansar-sage-400" />
                                     </div>
-                                    <p className="font-body text-sm text-ansar-charcoal font-medium mb-1">
-                                        Start a Conversation
-                                    </p>
-                                    <p className="font-body text-xs text-ansar-muted max-w-[220px]">
-                                        {currentUserRole === "seeker"
-                                            ? "Send a message to your Ansar companion. They're here to support you."
-                                            : "Send a message to your Seeker. They're looking forward to hearing from you."}
-                                    </p>
+                                    {canStartNew ? (
+                                        <>
+                                            <p className="font-body text-sm text-ansar-charcoal font-medium mb-1">
+                                                Start a Conversation
+                                            </p>
+                                            <p className="font-body text-xs text-ansar-muted max-w-[220px]">
+                                                {currentUserRole === "seeker"
+                                                    ? "Send a message to your Ansar companion. They're here to support you."
+                                                    : "Send a message to your Seeker. They're looking forward to hearing from you."}
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="font-body text-sm text-ansar-charcoal font-medium mb-1">
+                                                No Messages Yet
+                                            </p>
+                                            <p className="font-body text-xs text-ansar-muted max-w-[220px]">
+                                                {currentUserRole === "seeker"
+                                                    ? "Once you're paired with an Ansar companion, you'll be able to chat here."
+                                                    : "Once you're paired with a Seeker, your conversations will appear here."}
+                                            </p>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -267,14 +283,15 @@ export function FloatingChatWidget({
                                     value={replyText}
                                     onChange={(e) => setReplyText(e.target.value)}
                                     onKeyDown={handleKeyDown}
-                                    placeholder="Type a message..."
+                                    placeholder={!hasConversations && !canStartNew ? "Waiting for a pairing..." : "Type a message..."}
                                     rows={1}
-                                    className="flex-1 px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-xl font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 resize-none focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200 transition-all"
+                                    disabled={!hasConversations && !canStartNew}
+                                    className="flex-1 px-3 py-2 border border-[rgba(61,61,61,0.12)] rounded-xl font-body text-sm text-ansar-charcoal placeholder:text-ansar-muted/50 resize-none focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50"
                                     style={{ minHeight: "38px", maxHeight: "80px" }}
                                 />
                                 <button
                                     onClick={handleSendReply}
-                                    disabled={!replyText.trim() || sending}
+                                    disabled={!replyText.trim() || sending || (!hasConversations && !canStartNew)}
                                     className="flex items-center justify-center w-9 h-9 rounded-xl bg-ansar-sage-600 text-white hover:bg-ansar-sage-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
                                     aria-label="Send message"
                                 >

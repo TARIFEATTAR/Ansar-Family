@@ -10,13 +10,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Heart, Users, Building2, ArrowRight, Send, Phone, Coffee, UtensilsCrossed, QrCode, LayoutDashboard, MessageCircle } from "lucide-react";
+import { Heart, Users, Building2, ArrowRight, Send, Phone, Coffee, UtensilsCrossed, QrCode, LayoutDashboard, MessageCircle, Menu, X } from "lucide-react";
 import Image from "next/image";
 import GardenAnimation from "@/components/GardenAnimation";
 import { motion } from "framer-motion";
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -71,49 +72,57 @@ export default function Home() {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="fixed top-4 left-4 right-4 md:left-8 md:right-8 z-50 max-w-[1200px] mx-auto px-6 md:px-8 py-3 bg-white/90 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_-8px_rgba(61,61,61,0.08)] rounded-full"
+        className="fixed top-4 left-4 right-4 md:left-8 md:right-8 z-50 max-w-[1200px] mx-auto px-4 md:px-8 py-3 bg-white/90 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_-8px_rgba(61,61,61,0.08)] rounded-full"
       >
         <div className="max-w-[1200px] mx-auto flex items-center justify-between">
           <Link href="/" className="font-display text-xl text-ansar-charcoal tracking-wide hover:opacity-80 transition-opacity">
             Ansar Family
           </Link>
           <nav className="hidden md:flex items-center gap-8">
-            <Link
-              href="#mission"
-              className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors"
-            >
-              How It Works
-            </Link>
-            <Link
-              href="#ecosystem"
-              className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors"
-            >
-              Who It&apos;s For
-            </Link>
-            <Link
-              href="/communities"
-              className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors"
-            >
-              Communities
-            </Link>
+            <Link href="#mission" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors">How It Works</Link>
+            <Link href="#ecosystem" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors">Who It&apos;s For</Link>
+            <Link href="/communities" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 transition-colors">Communities</Link>
           </nav>
 
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="hidden md:block font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors font-medium"
-            >
-              Sign In
-            </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard" className="hidden md:block font-body text-sm text-ansar-sage-600 hover:text-ansar-sage-700 transition-colors font-medium">Sign In</Link>
             <Link
               href="/partner"
-              className="inline-flex items-center py-2.5 px-5 text-xs font-semibold rounded-full border border-ansar-sage-200/60 text-ansar-sage-700 bg-ansar-sage-50 hover:bg-ansar-sage-600 hover:text-white hover:border-ansar-sage-600 hover:shadow-md transition-all duration-300"
+              className="hidden sm:inline-flex items-center py-2.5 px-5 text-xs font-semibold rounded-full border border-ansar-sage-200/60 text-ansar-sage-700 bg-ansar-sage-50 hover:bg-ansar-sage-600 hover:text-white hover:border-ansar-sage-600 hover:shadow-md transition-all duration-300"
             >
               Bring Ansar to Your Community
             </Link>
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-full hover:bg-ansar-sage-50 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5 text-ansar-charcoal" /> : <Menu className="w-5 h-5 text-ansar-charcoal" />}
+            </button>
           </div>
         </div>
       </motion.header>
+
+      {/* Mobile Nav Drawer */}
+      {mobileMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.25 }}
+          className="fixed top-[72px] left-4 right-4 z-40 bg-white/95 backdrop-blur-2xl rounded-2xl border border-white/60 shadow-[0_16px_48px_-12px_rgba(61,61,61,0.15)] p-5 md:hidden"
+        >
+          <nav className="flex flex-col gap-1">
+            <Link onClick={() => setMobileMenuOpen(false)} href="#mission" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 px-3 py-2.5 rounded-lg hover:bg-ansar-sage-50 transition-colors">How It Works</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} href="#ecosystem" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 px-3 py-2.5 rounded-lg hover:bg-ansar-sage-50 transition-colors">Who It&apos;s For</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} href="/communities" className="font-body text-sm text-ansar-gray hover:text-ansar-sage-600 px-3 py-2.5 rounded-lg hover:bg-ansar-sage-50 transition-colors">Communities</Link>
+            <div className="border-t border-[rgba(61,61,61,0.06)] my-2" />
+            <Link onClick={() => setMobileMenuOpen(false)} href="/dashboard" className="font-body text-sm font-medium text-ansar-sage-600 px-3 py-2.5 rounded-lg hover:bg-ansar-sage-50 transition-colors">Sign In</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} href="/partner" className="font-body text-sm font-medium text-white bg-ansar-sage-600 px-3 py-2.5 rounded-lg text-center hover:bg-ansar-sage-700 transition-colors">Bring Ansar to Your Community</Link>
+          </nav>
+        </motion.div>
+      )}
 
       {/* Content wrapper */}
       <div className="relative">
@@ -242,52 +251,44 @@ export default function Home() {
               </Link>
             </motion.div>
 
-            {/* MOBILE: Two square tiles side by side */}
+            {/* MOBILE: Stacked tiles */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={isLoaded ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
-              className="grid grid-cols-2 gap-3 w-full lg:hidden"
+              className="flex flex-col gap-3 w-full lg:hidden"
             >
               {/* Mobile Tile 1: Seeker */}
               <Link href="/join" className="block relative group">
-                <div className="bg-white/50 backdrop-blur-xl p-5 rounded-[24px] border border-white/80 shadow-[0_8px_24px_-6px_rgba(61,61,61,0.06)] active:scale-[0.97] transition-all duration-300 relative overflow-hidden aspect-square flex flex-col justify-between bg-white/70 backdrop-blur-2xl">
+                <div className="bg-white/60 backdrop-blur-xl p-5 rounded-2xl border border-white/80 shadow-[0_8px_24px_-6px_rgba(61,61,61,0.06)] active:scale-[0.98] transition-all duration-300 relative overflow-hidden">
                   <div className="absolute -top-6 -right-6 w-28 h-28 bg-ansar-terracotta-100/20 rounded-full blur-2xl" />
-                  <div className="relative z-10">
-                    <div className="w-10 h-10 bg-gradient-to-br from-ansar-terracotta-50 to-ansar-terracotta-100/80 rounded-xl flex items-center justify-center border border-ansar-terracotta-200/30 mb-3">
+                  <div className="relative z-10 flex items-center gap-4">
+                    <div className="w-11 h-11 bg-gradient-to-br from-ansar-terracotta-50 to-ansar-terracotta-100/80 rounded-xl flex items-center justify-center border border-ansar-terracotta-200/30 shrink-0">
                       <span className="font-display text-lg text-ansar-terracotta-600 leading-none select-none">S</span>
                     </div>
-                    <h3 className="font-display text-base text-ansar-charcoal mb-1.5 leading-tight">
-                      New to Islam?
-                    </h3>
-                    <p className="font-body text-[11px] text-ansar-gray leading-snug">
-                      We pair you with someone in your local community who walks with you at your pace.
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display text-base text-ansar-charcoal leading-tight">New to Islam?</h3>
+                      <p className="font-body text-xs text-ansar-gray mt-0.5">Get paired with someone local</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-ansar-terracotta-600 shrink-0" />
                   </div>
-                  <span className="relative z-10 inline-flex items-center gap-1 font-body text-[11px] font-medium text-ansar-terracotta-700 mt-2">
-                    Get Connected <ArrowRight className="w-3 h-3" />
-                  </span>
                 </div>
               </Link>
 
               {/* Mobile Tile 2: Volunteer */}
               <Link href="/volunteer" className="block relative group">
-                <div className="bg-white/50 backdrop-blur-xl p-5 rounded-[24px] border border-white/80 shadow-[0_8px_24px_-6px_rgba(61,61,61,0.06)] active:scale-[0.97] transition-all duration-300 relative overflow-hidden aspect-square flex flex-col justify-between bg-white/70 backdrop-blur-2xl">
+                <div className="bg-white/60 backdrop-blur-xl p-5 rounded-2xl border border-white/80 shadow-[0_8px_24px_-6px_rgba(61,61,61,0.06)] active:scale-[0.98] transition-all duration-300 relative overflow-hidden">
                   <div className="absolute -top-6 -right-6 w-28 h-28 bg-ansar-sage-100/20 rounded-full blur-2xl" />
-                  <div className="relative z-10">
-                    <div className="w-10 h-10 bg-gradient-to-br from-ansar-sage-50 to-ansar-sage-100/80 rounded-xl flex items-center justify-center border border-ansar-sage-200/30 mb-3">
+                  <div className="relative z-10 flex items-center gap-4">
+                    <div className="w-11 h-11 bg-gradient-to-br from-ansar-sage-50 to-ansar-sage-100/80 rounded-xl flex items-center justify-center border border-ansar-sage-200/30 shrink-0">
                       <span className="font-display text-lg text-ansar-sage-600 leading-none select-none">A</span>
                     </div>
-                    <h3 className="font-display text-base text-ansar-charcoal mb-1.5 leading-tight">
-                      Become an Ansar
-                    </h3>
-                    <p className="font-body text-[11px] text-ansar-gray leading-snug">
-                      You don&apos;t need to be a scholar. Just someone willing to be there for a person finding their way.
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display text-base text-ansar-charcoal leading-tight">Become an Ansar</h3>
+                      <p className="font-body text-xs text-ansar-gray mt-0.5">Be the friend someone needs</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-ansar-sage-600 shrink-0" />
                   </div>
-                  <span className="relative z-10 inline-flex items-center gap-1 font-body text-[11px] font-medium text-ansar-sage-700 mt-2">
-                    Become an Ansar <ArrowRight className="w-3 h-3" />
-                  </span>
                 </div>
               </Link>
             </motion.div>
@@ -328,7 +329,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-              className="grid grid-cols-3 gap-4 mt-14"
+              className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-14"
             >
               {/* Seed */}
               <div className="text-center rounded-[32px] bg-gradient-to-b from-ansar-terracotta-50/60 to-white/80 border border-white shadow-[0_8px_24px_-8px_rgba(61,61,61,0.04)] overflow-hidden hover:shadow-[0_16px_32px_-12px_rgba(61,61,61,0.08)] hover:-translate-y-1 transition-all duration-400">
@@ -411,7 +412,7 @@ export default function Home() {
             </p>
 
             {/* 4 Steps */}
-            <div className="grid md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
 
               {/* Step 1 */}
               <div className="bg-white p-8 rounded-[32px] shadow-[0_8px_32px_-12px_rgba(61,61,61,0.06)] border border-white flex flex-col items-center text-center hover:shadow-[0_16px_40px_-16px_rgba(61,61,61,0.1)] hover:-translate-y-1 transition-all duration-400 relative overflow-hidden group">

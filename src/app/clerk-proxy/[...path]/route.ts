@@ -27,7 +27,7 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ path: s
     const headers = new Headers(req.headers);
 
     // Set required Clerk proxy headers
-    const proxyUrl = `${req.nextUrl.origin}/__clerk`;
+    const proxyUrl = `${req.nextUrl.origin}/clerk-proxy`;
     headers.set("Clerk-Proxy-Url", proxyUrl);
     headers.set("Clerk-Secret-Key", process.env.CLERK_SECRET_KEY || "");
     headers.set("X-Forwarded-For", req.headers.get("x-forwarded-for") || "127.0.0.1");

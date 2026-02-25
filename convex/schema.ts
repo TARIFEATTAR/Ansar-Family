@@ -395,6 +395,30 @@ export default defineSchema({
     .index("by_target_seeker", ["targetSeekerId"]),
 
   // ═══════════════════════════════════════════════════════════════
+  // LEADS — Inbound partner interest from homepage
+  // ═══════════════════════════════════════════════════════════════
+  leads: defineTable({
+    fullName: v.string(),
+    email: v.string(),
+    organizationType: v.union(
+      v.literal("masjid"),
+      v.literal("msa"),
+      v.literal("community_org"),
+      v.literal("other")
+    ),
+    status: v.union(
+      v.literal("new"),
+      v.literal("contacted"),
+      v.literal("scheduled"),
+      v.literal("converted")
+    ),
+    calBookingId: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  })
+    .index("by_email", ["email"])
+    .index("by_status", ["status"]),
+
+  // ═══════════════════════════════════════════════════════════════
   // CONTACTS — CRM contacts for community members
   // ═══════════════════════════════════════════════════════════════
   contacts: defineTable({

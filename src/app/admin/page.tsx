@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Shield, Loader2, Trash2, CheckCircle2,
   Phone, Mail, MapPin, Clock, Eye, Check, X as XIcon, BookUser,
   UserCog, Menu, ChevronRight, TrendingUp, Activity, LogOut,
-  Copy, ExternalLink, Inbox, Calendar, Plus, Pencil,
+  Copy, ExternalLink, Inbox, Calendar, Plus, Pencil, Target,
 } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
 import { useEffect, useMemo, useState, useCallback } from "react";
@@ -97,6 +97,7 @@ const navConfig: Omit<NavItem, "icon">[] = [
   { id: "partners", label: "Partners", description: "Community Hub organizations" },
   { id: "users", label: "Users", description: "Authenticated platform users" },
   { id: "pairings", label: "Pairings", description: "Seeker-Ansar connections" },
+  { id: "leads", label: "Leads", description: "Inbound partner interest from homepage" },
   { id: "events", label: "Events", description: "Community events across all hubs" },
   { id: "messages", label: "Notification Log", description: "SMS and email notification log" },
 ];
@@ -110,6 +111,7 @@ const navIcons: Record<string, React.ReactNode> = {
   partners: <Building2 className="w-[18px] h-[18px]" />,
   users: <UserCog className="w-[18px] h-[18px]" />,
   pairings: <Link2 className="w-[18px] h-[18px]" />,
+  leads: <Target className="w-[18px] h-[18px]" />,
   events: <Calendar className="w-[18px] h-[18px]" />,
   messages: <MessageSquare className="w-[18px] h-[18px]" />,
 };
@@ -134,6 +136,8 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
   const users = useQuery(api.users.listAll) ?? [];
   const organizations = useQuery(api.organizations.listActive) ?? [];
   const allEvents = useQuery(api.events.listAll) ?? [];
+  const leads = useQuery(api.leads.list) ?? [];
+  const leadCounts = useQuery(api.leads.countByStatus);
 
   // Inbox — get the current admin user's ID for inbox queries
   const adminUserId = currentUser?._id;
@@ -162,6 +166,8 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
   const updateUser = useMutation(api.users.update);
   const deleteUser = useMutation(api.users.deleteUser);
   const removeEvent = useMutation(api.events.remove);
+  const updateLeadStatus = useMutation(api.leads.updateStatus);
+  const deleteLead = useMutation(api.leads.deleteLead);
 
   // Counts per section
   const counts: Record<string, number> = {
@@ -171,6 +177,7 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
     partners: partners.length,
     users: users.length,
     pairings: pairings.length,
+    leads: leads.length,
     events: allEvents.length,
     messages: messages.length,
   };
@@ -261,7 +268,7 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navConfig.map((item) => {
             const isActive = activeTab === item.id;
-            const badgeCount = item.id === "inbox" ? inboxUnread : (["messages", "events"].includes(item.id) ? counts[item.id] : undefined);
+            const badgeCount = item.id === "inbox" ? inboxUnread : item.id === "leads" ? (leadCounts?.new || 0) : (["messages", "events"].includes(item.id) ? counts[item.id] : undefined);
             return (
               <button
                 key={item.id}
@@ -530,6 +537,22 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
                 setSearch={setSearch}
                 statusFilter={statusFilter}
                 setStatusFilter={setStatusFilter}
+              />
+            )}
+            {activeTab === "leads" && (
+              <AdminLeadsTab
+                leads={leads}
+                leadCounts={leadCounts}
+                search={search}
+                setSearch={setSearch}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                onUpdateStatus={updateLeadStatus}
+                onDelete={async (id: Id<"leads">) => {
+                  if (confirm("Delete this lead? This cannot be undone.")) {
+                    await deleteLead({ id });
+                  }
+                }}
               />
             )}
             {activeTab === "events" && (
@@ -1920,6 +1943,140 @@ function AdminEventsTab({
           </div>
         </div>
       )}
+    </>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// LEADS TAB
+// ═══════════════════════════════════════════════════════════════
+
+function AdminLeadsTab({
+  leads,
+  leadCounts,
+  search,
+  setSearch,
+  statusFilter,
+  setStatusFilter,
+  onUpdateStatus,
+  onDelete,
+}: {
+  leads: any[];
+  leadCounts: { total: number; new: number; contacted: number; scheduled: number; converted: number } | undefined;
+  search: string;
+  setSearch: (s: string) => void;
+  statusFilter: string;
+  setStatusFilter: (s: string) => void;
+  onUpdateStatus: (args: { id: Id<"leads">; status: "new" | "contacted" | "scheduled" | "converted" }) => Promise<void>;
+  onDelete: (id: Id<"leads">) => Promise<void>;
+}) {
+  const [selectedLead, setSelectedLead] = useState<any>(null);
+
+  const orgLabels: Record<string, string> = {
+    masjid: "Masjid",
+    msa: "MSA",
+    community_org: "Community Org",
+    other: "Other",
+  };
+
+  const filteredLeads = leads.filter((lead) => {
+    const matchesSearch = !search || 
+      lead.fullName.toLowerCase().includes(search.toLowerCase()) ||
+      lead.email.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = !statusFilter || lead.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const stats: StatItem[] = [
+    { label: "Total Leads", value: leadCounts?.total ?? 0 },
+    { label: "New", value: leadCounts?.new ?? 0, accent: "terracotta" },
+    { label: "Contacted", value: leadCounts?.contacted ?? 0, accent: "ochre" },
+    { label: "Scheduled", value: leadCounts?.scheduled ?? 0, accent: "sage" },
+    { label: "Converted", value: leadCounts?.converted ?? 0, accent: "sage" },
+  ];
+
+  const columns: Column[] = [
+    { key: "fullName", label: "Name" },
+    { key: "email", label: "Email" },
+    { key: "organizationType", label: "Org Type", render: (v: string) => orgLabels[v] || v },
+    { key: "status", label: "Status", render: (v: string) => <StatusBadge status={v} /> },
+    { key: "_creationTime", label: "Date", render: (v: number) => new Date(v).toLocaleDateString() },
+  ];
+
+  return (
+    <>
+      <StatsRow stats={stats} />
+
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Search leads..."
+        filters={[
+          {
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: [
+              { value: "", label: "All statuses" },
+              { value: "new", label: "New" },
+              { value: "contacted", label: "Contacted" },
+              { value: "scheduled", label: "Scheduled" },
+              { value: "converted", label: "Converted" },
+            ],
+          },
+        ]}
+      />
+
+      <DataTable
+        data={filteredLeads}
+        columns={columns}
+        onRowClick={(lead) => setSelectedLead(lead)}
+        emptyMessage="No leads yet. Share the homepage to start collecting partner interest."
+      />
+
+      <AnimatePresence>
+        {selectedLead && (
+          <DetailPanel onClose={() => setSelectedLead(null)} title={selectedLead.fullName}>
+            <DetailField label="Email" value={selectedLead.email} />
+            <DetailField label="Organization Type" value={orgLabels[selectedLead.organizationType] || selectedLead.organizationType} />
+            <DetailField label="Submitted" value={new Date(selectedLead._creationTime).toLocaleString()} />
+            <DetailField label="Notes" value={selectedLead.notes || "No notes"} />
+
+            <div className="mt-6 space-y-3">
+              <label className="block font-body text-xs font-medium text-ansar-gray mb-1">Status</label>
+              <select
+                value={selectedLead.status}
+                onChange={async (e) => {
+                  const newStatus = e.target.value as "new" | "contacted" | "scheduled" | "converted";
+                  await onUpdateStatus({ id: selectedLead._id, status: newStatus });
+                  setSelectedLead({ ...selectedLead, status: newStatus });
+                }}
+                className="w-full px-3 py-2 border border-ansar-charcoal/10 rounded-lg font-body text-sm bg-white focus:outline-none focus:border-ansar-sage-400 cursor-pointer"
+              >
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="converted">Converted</option>
+              </select>
+            </div>
+
+            <div className="mt-6 flex gap-2">
+              <a
+                href={`mailto:${selectedLead.email}`}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-ansar-sage-50 text-ansar-sage-700 rounded-lg text-sm font-medium hover:bg-ansar-sage-100 transition-colors"
+              >
+                <Mail className="w-4 h-4" /> Email
+              </a>
+              <button
+                onClick={() => onDelete(selectedLead._id).then(() => setSelectedLead(null))}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" /> Delete
+              </button>
+            </div>
+          </DetailPanel>
+        )}
+      </AnimatePresence>
     </>
   );
 }

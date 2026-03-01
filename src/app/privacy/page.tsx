@@ -194,7 +194,7 @@ export default function PrivacyPage() {
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-col items-center md:items-start gap-1">
             <p className="font-body text-sm text-ansar-gray">
-              © 2026 Ansar Family. Every Heart Rooted.
+              © 2026 Ansar Family.
             </p>
             <p className="font-body text-xs text-ansar-muted/70">
               Built by{" "}

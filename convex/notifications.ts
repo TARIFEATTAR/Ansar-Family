@@ -86,7 +86,6 @@ function emailWrapper(content: string): string {
     <!-- Header -->
     <div style="text-align: center; margin-bottom: 32px;">
       <h1 style="font-family: Georgia, 'Times New Roman', serif; color: #7D8B6A; font-size: 28px; font-weight: 500; margin: 0 0 8px 0;">Ansar Family</h1>
-      <p style="color: #8A8A85; font-size: 13px; margin: 0; letter-spacing: 0.5px;">Every Heart Rooted</p>
     </div>
     
     <!-- Main Card -->

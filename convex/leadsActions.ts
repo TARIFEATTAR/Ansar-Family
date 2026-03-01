@@ -40,7 +40,7 @@ export const sendConfirmationEmail = internalAction({
         If you scheduled a call, we look forward to speaking with you. If not, you can book a time at any point by visiting our scheduling page.
       </p>
       <div style="border-top:1px solid #eee;padding-top:20px;margin-top:8px;">
-        <p style="font-size:13px;color:#999;margin:0;">Ansar Family — Every Heart Rooted</p>
+        <p style="font-size:13px;color:#999;margin:0;">Ansar Family</p>
       </div>
     </div>
   </div>
@@ -71,6 +71,8 @@ export const sendSlackNotification = internalAction({
   args: {
     fullName: v.string(),
     email: v.string(),
+    phone: v.string(),
+    organizationName: v.optional(v.string()),
     organizationType: v.string(),
   },
   handler: async (_ctx, args) => {
@@ -87,6 +89,14 @@ export const sendSlackNotification = internalAction({
       other: "Other",
     };
 
+    const fields = [
+      { type: "mrkdwn", text: `*Name:*\n${args.fullName}` },
+      { type: "mrkdwn", text: `*Email:*\n${args.email}` },
+      { type: "mrkdwn", text: `*Phone:*\n${args.phone}` },
+      { type: "mrkdwn", text: `*Org Name:*\n${args.organizationName || "—"}` },
+      { type: "mrkdwn", text: `*Org Type:*\n${orgLabel[args.organizationType] || args.organizationType}` },
+    ];
+
     try {
       await fetch(webhookUrl, {
         method: "POST",
@@ -100,11 +110,7 @@ export const sendSlackNotification = internalAction({
             },
             {
               type: "section",
-              fields: [
-                { type: "mrkdwn", text: `*Name:*\n${args.fullName}` },
-                { type: "mrkdwn", text: `*Email:*\n${args.email}` },
-                { type: "mrkdwn", text: `*Organization:*\n${orgLabel[args.organizationType] || args.organizationType}` },
-              ],
+              fields,
             },
           ],
         }),

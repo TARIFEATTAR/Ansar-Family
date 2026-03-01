@@ -1,6 +1,22 @@
 import type { NextConfig } from "next";
+import path from "path";
+
+const projectRoot = path.resolve(process.cwd());
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: projectRoot,
+    resolveAlias: {
+      tailwindcss: path.resolve(projectRoot, "node_modules/tailwindcss"),
+    },
+  },
+  webpack: (config) => {
+    config.resolve.modules = [
+      path.resolve(projectRoot, "node_modules"),
+      ...(config.resolve.modules || ["node_modules"]),
+    ];
+    return config;
+  },
   async redirects() {
     return [
       {

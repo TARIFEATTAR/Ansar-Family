@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState, FormEvent } from "react";
 import { ArrowRight, Loader2, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
@@ -18,12 +19,12 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-ansar-cream selection:bg-ansar-sage-200 selection:text-ansar-charcoal relative overflow-hidden flex flex-col font-body">
+    <main className="min-h-screen bg-ansar-cream selection:bg-ansar-sage-200 selection:text-ansar-charcoal relative overflow-x-hidden flex flex-col font-body">
 
       {/* ========================================
           HERO SECTION
           ======================================== */}
-      <section className="relative w-full min-h-screen flex flex-col justify-between overflow-hidden">
+      <section className="relative w-full min-h-screen flex flex-col justify-between">
         {/* Navbar */}
         <header className="relative w-full flex items-center justify-between px-6 md:px-8 py-6 md:py-8 z-50">
           <motion.div
@@ -44,8 +45,8 @@ export default function Home() {
             <a href="#story" className="hidden md:inline font-body text-sm text-ansar-charcoal/70 hover:text-ansar-charcoal transition-colors">
               Our Story
             </a>
-            <Link href="/login" className="font-body text-sm uppercase tracking-widest text-ansar-charcoal hover:opacity-70 transition-opacity">
-              login
+            <Link href="/sign-in" className="font-body text-xs uppercase tracking-widest bg-ansar-sage-700 text-ansar-cream px-4 py-2 rounded-lg hover:bg-ansar-sage-800 transition-colors duration-200">
+              Login
             </Link>
           </motion.div>
         </header>
@@ -61,8 +62,8 @@ export default function Home() {
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
               className="max-w-[540px]"
             >
-              <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] text-ansar-charcoal mb-4 leading-[1.1] tracking-tight">
-                <span className="italic">A convert care model</span>
+              <h1 className="font-playfair text-4xl md:text-5xl lg:text-[3.5rem] text-ansar-charcoal mb-4 leading-[1.1] tracking-tight">
+                A convert care model
                 <br />
                 that actually works.
               </h1>
@@ -98,34 +99,18 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Big Bottom Text + Bushes */}
-        <div className="relative w-full h-[30vh] md:h-[35vh] flex justify-center items-end pointer-events-none z-0 overflow-hidden">
-          <motion.h2
-            initial={{ y: 80, opacity: 0 }}
-            animate={isLoaded ? { y: 0, opacity: 1 } : {}}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-            className="font-display text-[10vw] md:text-[8vw] leading-[0.8] text-ansar-charcoal tracking-tighter whitespace-nowrap mb-[-1.5vw]"
-          >
-            Ansar Family
-          </motion.h2>
-
-          <motion.img
-            initial={{ x: -16, opacity: 0 }}
-            animate={isLoaded ? { x: 0, opacity: 1 } : {}}
-            transition={{ duration: 1.4, ease: "easeOut", delay: 0.3 }}
-            src="/images/accents/abstract-bush.png"
-            alt=""
-            className="absolute bottom-0 left-0 w-[10vw] h-[10vw] min-w-[60px] min-h-[60px] max-w-[200px] max-h-[200px] object-cover object-bottom-left z-10 mix-blend-multiply opacity-90 pointer-events-none origin-bottom-left"
-          />
-          <motion.img
-            initial={{ x: 16, opacity: 0 }}
-            animate={isLoaded ? { x: 0, opacity: 1 } : {}}
-            transition={{ duration: 1.4, ease: "easeOut", delay: 0.3 }}
-            src="/images/accents/abstract-bush.png"
-            alt=""
-            style={{ transform: "scaleX(-1)" }}
-            className="absolute bottom-0 right-0 w-[10vw] h-[10vw] min-w-[60px] min-h-[60px] max-w-[200px] max-h-[200px] object-cover object-bottom-right z-10 mix-blend-multiply opacity-90 pointer-events-none origin-bottom-right"
-          />
+        {/* Big Bottom Text */}
+        <div className="relative w-full h-[30vh] md:h-[35vh] flex justify-center items-end pointer-events-none z-0">
+          <div className="relative w-full text-center">
+            <motion.h2
+              initial={{ y: 80, opacity: 0 }}
+              animate={isLoaded ? { y: 0, opacity: 1 } : {}}
+              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+              className="relative font-heading font-semibold text-[17vw] md:text-[15vw] leading-[0.75] text-ansar-charcoal tracking-tight whitespace-nowrap mb-[-1vw] inline-block z-20"
+            >
+              Ansar Family
+            </motion.h2>
+          </div>
         </div>
       </section>
 
@@ -211,11 +196,11 @@ export default function Home() {
 
 function LeadForm({ calUrl }: { calUrl: string }) {
   const submitLead = useMutation(api.leads.submit);
-  const [form, setForm] = useState({ fullName: "", email: "", organizationType: "" });
+  const [form, setForm] = useState({ fullName: "", email: "", phone: "", organizationName: "", organizationType: "" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const canSubmit = form.fullName.trim() && form.email.trim() && form.organizationType;
+  const canSubmit = form.fullName.trim() && form.email.trim() && form.phone.trim() && form.organizationType;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -228,6 +213,8 @@ function LeadForm({ calUrl }: { calUrl: string }) {
       await submitLead({
         fullName: form.fullName.trim(),
         email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        organizationName: form.organizationName.trim() || undefined,
         organizationType: form.organizationType as "masjid" | "msa" | "community_org" | "other",
       });
 
@@ -237,7 +224,7 @@ function LeadForm({ calUrl }: { calUrl: string }) {
       });
       window.open(`${calUrl}?${params.toString()}`, "_blank");
 
-      setForm({ fullName: "", email: "", organizationType: "" });
+      setForm({ fullName: "", email: "", phone: "", organizationName: "", organizationType: "" });
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -245,35 +232,53 @@ function LeadForm({ calUrl }: { calUrl: string }) {
     }
   };
 
+  const inputClass = "w-full px-4 py-3 bg-white/70 border border-ansar-charcoal/10 rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-gray/50 focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-400/30 transition-colors";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 max-w-[400px]">
+    <form onSubmit={handleSubmit} className="space-y-3 max-w-[480px]">
       <input
         type="text"
         placeholder="Full name"
         value={form.fullName}
         onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-        className="w-full px-4 py-3 bg-white/70 border border-ansar-charcoal/10 rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-gray/50 focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-400/30 transition-colors"
+        className={inputClass}
       />
       <input
         type="email"
         placeholder="Email address"
         value={form.email}
         onChange={(e) => setForm({ ...form, email: e.target.value })}
-        className="w-full px-4 py-3 bg-white/70 border border-ansar-charcoal/10 rounded-lg font-body text-sm text-ansar-charcoal placeholder:text-ansar-gray/50 focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-400/30 transition-colors"
+        className={inputClass}
       />
-      <div className="relative">
-        <select
-          value={form.organizationType}
-          onChange={(e) => setForm({ ...form, organizationType: e.target.value })}
-          className="w-full px-4 py-3 bg-white/70 border border-ansar-charcoal/10 rounded-lg font-body text-sm text-ansar-charcoal focus:outline-none focus:border-ansar-sage-400 focus:ring-1 focus:ring-ansar-sage-400/30 transition-colors appearance-none cursor-pointer"
-        >
-          <option value="" disabled>Organization type</option>
-          <option value="masjid">Masjid</option>
-          <option value="msa">MSA</option>
-          <option value="community_org">Community Organization</option>
-          <option value="other">Other</option>
-        </select>
-        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ansar-gray/40 pointer-events-none" />
+      <input
+        type="tel"
+        placeholder="Phone number"
+        value={form.phone}
+        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+        className={inputClass}
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <input
+          type="text"
+          placeholder="Organization name"
+          value={form.organizationName}
+          onChange={(e) => setForm({ ...form, organizationName: e.target.value })}
+          className={inputClass}
+        />
+        <div className="relative">
+          <select
+            value={form.organizationType}
+            onChange={(e) => setForm({ ...form, organizationType: e.target.value })}
+            className={`${inputClass} appearance-none cursor-pointer`}
+          >
+            <option value="" disabled>Organization type</option>
+            <option value="masjid">Masjid</option>
+            <option value="msa">MSA</option>
+            <option value="community_org">Community Organization</option>
+            <option value="other">Other</option>
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ansar-gray/40 pointer-events-none" />
+        </div>
       </div>
 
       <button

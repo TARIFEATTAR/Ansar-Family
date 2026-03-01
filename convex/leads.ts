@@ -17,6 +17,8 @@ export const submit = mutation({
   args: {
     fullName: v.string(),
     email: v.string(),
+    phone: v.string(),
+    organizationName: v.optional(v.string()),
     organizationType: v.union(
       v.literal("masjid"),
       v.literal("msa"),
@@ -28,6 +30,8 @@ export const submit = mutation({
     const leadId = await ctx.db.insert("leads", {
       fullName: args.fullName,
       email: args.email.toLowerCase(),
+      phone: args.phone,
+      organizationName: args.organizationName,
       organizationType: args.organizationType,
       status: "new",
     });
@@ -45,6 +49,8 @@ export const submit = mutation({
       await ctx.scheduler.runAfter(0, internal.leadsActions.sendSlackNotification, {
         fullName: args.fullName,
         email: args.email.toLowerCase(),
+        phone: args.phone,
+        organizationName: args.organizationName,
         organizationType: args.organizationType,
       });
     } catch {

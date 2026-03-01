@@ -17,6 +17,8 @@ import type * as events from "../events.js";
 import type * as hubResources from "../hubResources.js";
 import type * as inbox from "../inbox.js";
 import type * as intakes from "../intakes.js";
+import type * as leads from "../leads.js";
+import type * as leadsActions from "../leadsActions.js";
 import type * as messages from "../messages.js";
 import type * as migrate_emails from "../migrate_emails.js";
 import type * as notifications from "../notifications.js";
@@ -42,6 +44,8 @@ declare const fullApi: ApiFromModules<{
   hubResources: typeof hubResources;
   inbox: typeof inbox;
   intakes: typeof intakes;
+  leads: typeof leads;
+  leadsActions: typeof leadsActions;
   messages: typeof messages;
   migrate_emails: typeof migrate_emails;
   notifications: typeof notifications;

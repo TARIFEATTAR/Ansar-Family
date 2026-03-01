@@ -400,6 +400,8 @@ export default defineSchema({
   leads: defineTable({
     fullName: v.string(),
     email: v.string(),
+    phone: v.string(),
+    organizationName: v.optional(v.string()),
     organizationType: v.union(
       v.literal("masjid"),
       v.literal("msa"),

@@ -351,7 +351,7 @@ export default function CommunitiesPage() {
           </div>
           <div className="pt-8 border-t border-[rgba(61,61,61,0.08)] text-center space-y-2">
             <p className="font-body text-sm text-ansar-muted">
-              &copy; 2026 Ansar Family. Every Heart Rooted.
+              &copy; 2026 Ansar Family.
             </p>
             <p className="font-body text-xs text-ansar-muted/70">
               Built by{" "}

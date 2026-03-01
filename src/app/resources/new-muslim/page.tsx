@@ -370,7 +370,7 @@ export default function NewMuslimResourcesPage() {
       <footer className="px-6 md:px-12 py-8 border-t border-[rgba(61,61,61,0.06)]">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="font-body text-sm text-ansar-muted">
-            © 2026 Ansar Family. Every Heart Rooted.
+            © 2026 Ansar Family.
           </p>
           <div className="flex items-center gap-6">
             <Link href="/privacy-policy" className="font-body text-xs text-ansar-muted hover:text-ansar-gray transition-colors">

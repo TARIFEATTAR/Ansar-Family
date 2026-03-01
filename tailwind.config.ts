@@ -103,6 +103,13 @@ const config: Config = {
           "Segoe UI",
           "sans-serif",
         ],
+        playfair: [
+          "var(--font-playfair)",
+          "Playfair Display",
+          "Georgia",
+          "Times New Roman",
+          "serif",
+        ],
       },
 
       fontSize: {

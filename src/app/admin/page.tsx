@@ -1981,9 +1981,11 @@ function AdminLeadsTab({
   };
 
   const filteredLeads = leads.filter((lead) => {
+    const q = search.toLowerCase();
     const matchesSearch = !search || 
-      lead.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      lead.email.toLowerCase().includes(search.toLowerCase());
+      lead.fullName.toLowerCase().includes(q) ||
+      lead.email.toLowerCase().includes(q) ||
+      (lead.phone && lead.phone.includes(search));
     const matchesStatus = !statusFilter || lead.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -1999,6 +2001,7 @@ function AdminLeadsTab({
   const columns: Column[] = [
     { key: "fullName", label: "Name" },
     { key: "email", label: "Email" },
+    { key: "phone", label: "Phone", render: (v: string) => v || "—" },
     { key: "organizationType", label: "Org Type", render: (v: string) => orgLabels[v] || v },
     { key: "status", label: "Status", render: (v: string) => <StatusBadge status={v} /> },
     { key: "_creationTime", label: "Date", render: (v: number) => new Date(v).toLocaleDateString() },
@@ -2038,6 +2041,7 @@ function AdminLeadsTab({
         {selectedLead && (
           <DetailPanel onClose={() => setSelectedLead(null)} title={selectedLead.fullName}>
             <DetailField label="Email" value={selectedLead.email} />
+            <DetailField label="Phone" value={selectedLead.phone ?? "—"} />
             <DetailField label="Organization Type" value={orgLabels[selectedLead.organizationType] || selectedLead.organizationType} />
             <DetailField label="Submitted" value={new Date(selectedLead._creationTime).toLocaleString()} />
             <DetailField label="Notes" value={selectedLead.notes || "No notes"} />

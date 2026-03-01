@@ -7,6 +7,7 @@ import { ArrowRight, Loader2, ChevronDown, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import GardenAnimation from "@/components/GardenAnimation";
 
 const CAL_URL = "https://cal.com/ansar-family/partner-call";
 const FAQ_ITEMS = [
@@ -179,9 +180,8 @@ export default function Home() {
                         {item.question}
                       </span>
                       <Plus
-                        className={`w-5 h-5 text-ansar-sage-700 transition-transform duration-200 ${
-                          isOpen ? "rotate-45" : ""
-                        }`}
+                        className={`w-5 h-5 text-ansar-sage-700 transition-transform duration-200 ${isOpen ? "rotate-45" : ""
+                          }`}
                       />
                     </button>
                     {isOpen && (
@@ -240,10 +240,15 @@ export default function Home() {
       </div>
 
       {/* ========================================
+          GARDEN ANIMATION
+          ======================================== */}
+      <GardenAnimation />
+
+      {/* ========================================
           FOOTER
           ======================================== */}
-      <footer className="relative z-20 overflow-hidden">
-        <div className="absolute inset-0">
+      <footer className="relative z-30"> {/* Removed overflow-hidden, increased z-index so text sits above flower */}
+        <div className="absolute inset-0 z-0">
           <Image
             src="/images/accents/footer-landscape.svg"
             alt=""
@@ -254,7 +259,7 @@ export default function Home() {
           <div className="absolute inset-x-0 top-0 h-24 md:h-32 bg-gradient-to-b from-ansar-cream via-ansar-cream/80 to-transparent" />
         </div>
 
-        <div className="relative max-w-[1000px] mx-auto px-6 py-14">
+        <div className="relative z-10 max-w-[1000px] mx-auto px-6 py-14">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-center md:text-left">
               <p className="font-body text-ansar-charcoal/85 text-sm max-w-sm font-medium">

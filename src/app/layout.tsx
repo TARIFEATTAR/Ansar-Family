@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Outfit, Playfair_Display } from "next/font/google";
+import { Cormorant_Garamond, Lato, Outfit, Playfair_Display } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ConvexClientProvider } from "@/components/providers/ConvexClientProvider";
 import "./globals.css";
@@ -32,6 +32,13 @@ const playfairDisplay = Playfair_Display({
   display: "swap",
 });
 
+const lato = Lato({
+  variable: "--font-lato",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://ansar.family"),
   title: "Ansar Family",
@@ -59,7 +66,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider telemetry={false}>
-      <html lang="en" className={`${cormorantGaramond.variable} ${outfit.variable} ${playfairDisplay.variable}`} style={{ scrollBehavior: 'smooth' }}>
+      <html lang="en" className={`${cormorantGaramond.variable} ${outfit.variable} ${playfairDisplay.variable} ${lato.variable}`} style={{ scrollBehavior: 'smooth' }}>
         <head>
           {/* eslint-disable-next-line @next/next/no-sync-scripts */}
           <script src="https://mcp.figma.com/mcp/html-to-design/capture.js"></script>

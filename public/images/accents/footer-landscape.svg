@@ -1,0 +1,50 @@
+<svg viewBox="0 0 1440 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F7F6F0" />
+      <stop offset="40%" stop-color="#EBE8E0" />
+      <stop offset="100%" stop-color="#D4CBC0" />
+    </linearGradient>
+    <linearGradient id="mt1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D4CBC0" />
+      <stop offset="100%" stop-color="#C4B8AC" />
+    </linearGradient>
+    <linearGradient id="mt2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#C4B8AC" />
+      <stop offset="100%" stop-color="#B8ADA2" />
+    </linearGradient>
+    <linearGradient id="h1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#A8B89A" />
+      <stop offset="100%" stop-color="#8FA07A" />
+    </linearGradient>
+    <linearGradient id="h2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8FA07A" />
+      <stop offset="100%" stop-color="#6B7D5C" />
+    </linearGradient>
+    <linearGradient id="gnd" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7D8B6A" />
+      <stop offset="100%" stop-color="#5A6B50" />
+    </linearGradient>
+    <linearGradient id="gnd2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5A6B50" />
+      <stop offset="100%" stop-color="#4A5A42" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1440" height="400" fill="url(#sky)" />
+
+  <path d="M0,200 Q80,130 180,170 Q280,100 400,155 Q500,85 620,150 Q720,75 840,140 Q960,65 1080,130 Q1180,80 1280,125 Q1380,95 1440,155 L1440,400 L0,400 Z" fill="url(#mt1)" opacity="0.4" />
+  <path d="M0,230 Q120,155 260,200 Q380,140 520,185 Q660,125 800,175 Q940,120 1080,165 Q1200,130 1340,170 Q1400,155 1440,185 L1440,400 L0,400 Z" fill="url(#mt2)" opacity="0.5" />
+
+  <ellipse cx="200" cy="100" rx="80" ry="12" fill="#F7F6F0" opacity="0.6" />
+  <ellipse cx="230" cy="98" rx="50" ry="10" fill="#F7F6F0" opacity="0.4" />
+  <ellipse cx="700" cy="80" rx="100" ry="14" fill="#F7F6F0" opacity="0.5" />
+  <ellipse cx="740" cy="78" rx="60" ry="10" fill="#F7F6F0" opacity="0.35" />
+  <ellipse cx="1150" cy="95" rx="70" ry="11" fill="#F7F6F0" opacity="0.5" />
+  <ellipse cx="1180" cy="93" rx="45" ry="9" fill="#F7F6F0" opacity="0.35" />
+
+  <path d="M0,275 Q80,240 180,260 Q300,225 420,255 Q540,220 660,250 Q780,222 900,248 Q1020,218 1140,245 Q1260,225 1380,252 Q1420,245 1440,258 L1440,400 L0,400 Z" fill="url(#h1)" opacity="0.65" />
+  <path d="M0,300 Q100,270 220,288 Q340,258 460,282 Q580,255 700,278 Q820,252 940,275 Q1060,255 1180,278 Q1300,260 1440,282 L1440,400 L0,400 Z" fill="url(#h2)" opacity="0.8" />
+  <path d="M0,330 Q120,308 260,322 Q400,302 540,320 Q680,305 820,318 Q960,302 1100,316 Q1240,305 1380,320 Q1420,315 1440,325 L1440,400 L0,400 Z" fill="url(#gnd)" />
+  <path d="M0,355 Q150,342 300,350 Q450,338 600,348 Q750,336 900,346 Q1050,338 1200,348 Q1350,340 1440,350 L1440,400 L0,400 Z" fill="url(#gnd2)" />
+</svg>

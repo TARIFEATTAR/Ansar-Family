@@ -110,6 +110,15 @@ const config: Config = {
           "Times New Roman",
           "serif",
         ],
+        lato: [
+          "var(--font-lato)",
+          "Lato",
+          "sans-serif",
+        ],
+        styrene: [
+          '"Styrene B"',
+          "sans-serif",
+        ],
       },
 
       fontSize: {

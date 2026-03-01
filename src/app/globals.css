@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Styrene B — narrow geometric sans-serif (Claude/Anthropic style) */
+@font-face {
+  font-family: "Styrene B";
+  src: url("https://db.onlinewebfonts.com/t/3c8b02394df918ba27fd933f728abc4a.woff2") format("woff2"),
+       url("https://db.onlinewebfonts.com/t/3c8b02394df918ba27fd933f728abc4a.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /**
  * ANSAR FAMILY - Enhanced Design System
  * Claude-Inspired Aesthetics with Garden Metaphor

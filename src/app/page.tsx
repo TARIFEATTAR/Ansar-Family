@@ -9,7 +9,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import GardenAnimation from "@/components/GardenAnimation";
 
-const CAL_URL = "https://cal.com/ansar-family/partner-call";
+const CAL_URL = "https://cal.com/hassankhawaja/ansar-family";
 const FAQ_ITEMS = [
   {
     question: "How does Ansar Family support partner hubs?",

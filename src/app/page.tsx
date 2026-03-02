@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, ChevronDown, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMutation } from "convex/react";
@@ -290,6 +291,7 @@ export default function Home() {
 // ═══════════════════════════════════════════════════════════════
 
 function LeadForm({ calUrl }: { calUrl: string }) {
+  const router = useRouter();
   const submitLead = useMutation(api.leads.submit);
   const [form, setForm] = useState({ fullName: "", email: "", phone: "", organizationName: "", organizationType: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -317,7 +319,7 @@ function LeadForm({ calUrl }: { calUrl: string }) {
         name: form.fullName.trim(),
         email: form.email.trim().toLowerCase(),
       });
-      window.open(`${calUrl}?${params.toString()}`, "_blank");
+      router.push(`/schedule?${params.toString()}`);
 
       setForm({ fullName: "", email: "", phone: "", organizationName: "", organizationType: "" });
     } catch {

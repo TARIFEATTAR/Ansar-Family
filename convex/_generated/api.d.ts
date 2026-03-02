@@ -14,6 +14,7 @@ import type * as contacts from "../contacts.js";
 import type * as diagnose_email from "../diagnose_email.js";
 import type * as directory from "../directory.js";
 import type * as events from "../events.js";
+import type * as http from "../http.js";
 import type * as hubResources from "../hubResources.js";
 import type * as inbox from "../inbox.js";
 import type * as intakes from "../intakes.js";
@@ -27,6 +28,7 @@ import type * as pairings from "../pairings.js";
 import type * as partners from "../partners.js";
 import type * as test_workflows from "../test_workflows.js";
 import type * as users from "../users.js";
+import type * as webhooks from "../webhooks.js";
 
 import type {
   ApiFromModules,
@@ -41,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   diagnose_email: typeof diagnose_email;
   directory: typeof directory;
   events: typeof events;
+  http: typeof http;
   hubResources: typeof hubResources;
   inbox: typeof inbox;
   intakes: typeof intakes;
@@ -54,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   partners: typeof partners;
   test_workflows: typeof test_workflows;
   users: typeof users;
+  webhooks: typeof webhooks;
 }>;
 
 /**

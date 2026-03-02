@@ -273,11 +273,10 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
               <button
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-body text-[13px] transition-all ${
-                  isActive
-                    ? "bg-ansar-sage-50 text-ansar-charcoal font-medium"
-                    : "text-ansar-gray hover:bg-ansar-sage-50/50 hover:text-ansar-charcoal"
-                }`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-body text-[13px] transition-all ${isActive
+                  ? "bg-ansar-sage-50 text-ansar-charcoal font-medium"
+                  : "text-ansar-gray hover:bg-ansar-sage-50/50 hover:text-ansar-charcoal"
+                  }`}
               >
                 <span className={`shrink-0 ${isActive ? "text-ansar-sage-600" : "text-ansar-muted"}`}>
                   {navIcons[item.id]}
@@ -285,13 +284,12 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
                 <span className="flex-1 text-left">{item.label}</span>
                 {badgeCount !== undefined && badgeCount > 0 && (
                   <span
-                    className={`text-[10px] font-medium min-w-[20px] text-center px-1.5 py-0.5 rounded-full ${
-                      item.id === "inbox" && !isActive
-                        ? "bg-ansar-sage-600 text-white"
-                        : isActive
-                          ? "bg-ansar-sage-200 text-ansar-sage-800"
-                          : "bg-gray-100 text-ansar-muted"
-                    }`}
+                    className={`text-[10px] font-medium min-w-[20px] text-center px-1.5 py-0.5 rounded-full ${item.id === "inbox" && !isActive
+                      ? "bg-ansar-sage-600 text-white"
+                      : isActive
+                        ? "bg-ansar-sage-200 text-ansar-sage-800"
+                        : "bg-gray-100 text-ansar-muted"
+                      }`}
                   >
                     {badgeCount}
                   </span>
@@ -369,11 +367,10 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
                     <button
                       key={item.id}
                       onClick={() => handleTabChange(item.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-body text-[13px] transition-all ${
-                        isActive
-                          ? "bg-ansar-sage-50 text-ansar-charcoal font-medium"
-                          : "text-ansar-gray hover:bg-ansar-sage-50/50"
-                      }`}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-body text-[13px] transition-all ${isActive
+                        ? "bg-ansar-sage-50 text-ansar-charcoal font-medium"
+                        : "text-ansar-gray hover:bg-ansar-sage-50/50"
+                        }`}
                     >
                       <span className={`shrink-0 ${isActive ? "text-ansar-sage-600" : "text-ansar-muted"}`}>
                         {navIcons[item.id]}
@@ -627,7 +624,7 @@ function OverviewTab({
   const recentPairings = pairings.slice(0, 5);
 
   return (
-    <motion.div 
+    <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="show"
@@ -653,10 +650,10 @@ function OverviewTab({
 
       {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
-        
+
         {/* Left Column: Primary Feed (2/3) */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Recent Seekers */}
           <motion.div variants={itemVariants} className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-[rgba(61,61,61,0.04)] flex items-center justify-between">
@@ -744,14 +741,14 @@ function OverviewTab({
 
         {/* Right Column: System Status (1/3) */}
         <div className="space-y-6">
-          
+
           {/* Pending Actions Card */}
           <motion.div variants={itemVariants} className="bg-white rounded-lg border border-[rgba(61,61,61,0.06)] shadow-sm overflow-hidden p-5">
             <h3 className="font-heading text-base text-ansar-charcoal mb-4 flex items-center justify-between">
               <span>Action Items</span>
               {totalPending > 0 && <span className="bg-ansar-terracotta-100 text-ansar-terracotta-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{totalPending}</span>}
             </h3>
-            
+
             <div className="space-y-2">
               <div className="flex items-center justify-between p-2.5 rounded-md bg-gray-50 hover:bg-ansar-cream/50 transition-colors cursor-pointer group">
                 <div className="flex items-center gap-2.5">
@@ -762,7 +759,7 @@ function OverviewTab({
                   {pendingSeekers}
                 </span>
               </div>
-              
+
               <div className="flex items-center justify-between p-2.5 rounded-md bg-gray-50 hover:bg-ansar-cream/50 transition-colors cursor-pointer group">
                 <div className="flex items-center gap-2.5">
                   <Users className="w-3.5 h-3.5 text-ansar-ochre-500" />
@@ -820,8 +817,8 @@ function OverviewTab({
                 <span className="font-semibold text-ansar-charcoal">{messages.filter(m => m.status === "sent").length}</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-1 overflow-hidden">
-                <div 
-                  className="bg-ansar-sage-500 h-full rounded-full" 
+                <div
+                  className="bg-ansar-sage-500 h-full rounded-full"
                   style={{ width: `${(messages.filter(m => m.status === "sent").length / Math.max(messages.length, 1)) * 100}%` }}
                 />
               </div>
@@ -891,13 +888,15 @@ function SeekersTab({
     { key: "email", label: "Email", sortable: true, render: (r) => <span className="text-ansar-gray text-xs">{r.email}</span> },
     { key: "phone", label: "Phone", render: (r) => <span className="text-ansar-gray text-xs">{r.phone}</span> },
     { key: "city", label: "City", sortable: true, render: (r) => <span className="text-ansar-gray">{r.city}</span> },
-    { key: "organizationId", label: "Partner Hub", render: (r) => r.organizationId && orgMap[r.organizationId] ? (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-ansar-sage-700 bg-ansar-sage-50 px-2 py-0.5 rounded-full">
-        <Building2 className="w-3 h-3" />{orgMap[r.organizationId].name}
-      </span>
-    ) : (
-      <span className="text-ansar-muted text-xs italic">General</span>
-    )},
+    {
+      key: "organizationId", label: "Partner Hub", render: (r) => r.organizationId && orgMap[r.organizationId] ? (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-ansar-sage-700 bg-ansar-sage-50 px-2 py-0.5 rounded-full">
+          <Building2 className="w-3 h-3" />{orgMap[r.organizationId].name}
+        </span>
+      ) : (
+        <span className="text-ansar-muted text-xs italic">General</span>
+      )
+    },
     { key: "journeyType", label: "Journey", render: (r) => <StatusBadge status={r.journeyType} /> },
     { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
   ];
@@ -1238,11 +1237,13 @@ function PartnersTab({
     { key: "leadName", label: "Lead", sortable: true, render: (r) => <span className="text-ansar-gray">{r.leadName}</span> },
     { key: "city", label: "City", sortable: true, render: (r) => <span className="text-ansar-gray">{r.city}</span> },
     { key: "orgType", label: "Type", render: (r) => <span className="text-ansar-gray text-xs">{orgTypeLabels[r.orgType] || r.orgType}</span> },
-    { key: "hubLevel", label: "Level", sortable: true, render: (r) => (
-      <span className="bg-ansar-sage-50 text-ansar-sage-700 text-[11px] px-2 py-0.5 rounded-full font-body font-medium">
-        L{r.hubLevel}
-      </span>
-    )},
+    {
+      key: "hubLevel", label: "Level", sortable: true, render: (r) => (
+        <span className="bg-ansar-sage-50 text-ansar-sage-700 text-[11px] px-2 py-0.5 rounded-full font-body font-medium">
+          L{r.hubLevel}
+        </span>
+      )
+    },
     { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.status} /> },
   ];
 
@@ -1691,16 +1692,18 @@ function UsersTab({
     { key: "name", label: "Name", sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
     { key: "email", label: "Email", sortable: true, render: (r) => <span className="text-ansar-gray text-xs">{r.email}</span> },
     { key: "role", label: "Role", sortable: true, render: (r) => <StatusBadge status={r.role} /> },
-    { key: "organizationId", label: "Organization", render: (r) => {
-      const org = getOrgForUser(r);
-      return org ? (
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-ansar-sage-700 bg-ansar-sage-50 px-2 py-0.5 rounded-full">
-          <Building2 className="w-3 h-3" />{org.name}
-        </span>
-      ) : (
-        <span className="text-ansar-muted text-xs">—</span>
-      );
-    }},
+    {
+      key: "organizationId", label: "Organization", render: (r) => {
+        const org = getOrgForUser(r);
+        return org ? (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-ansar-sage-700 bg-ansar-sage-50 px-2 py-0.5 rounded-full">
+            <Building2 className="w-3 h-3" />{org.name}
+          </span>
+        ) : (
+          <span className="text-ansar-muted text-xs">—</span>
+        );
+      }
+    },
     { key: "isActive", label: "Status", sortable: true, render: (r) => <StatusBadge status={r.isActive ? "active" : "inactive"} /> },
   ];
 
@@ -1874,12 +1877,10 @@ function AdminEventsTab({
                   className={`px-5 py-4 flex items-start gap-4 hover:bg-ansar-sage-50/30 transition-colors ${isPast ? "opacity-60" : ""}`}
                 >
                   {/* Date badge */}
-                  <div className={`w-14 h-14 rounded-lg flex flex-col items-center justify-center shrink-0 ${
-                    isPast ? "bg-gray-50" : "bg-ansar-sage-50"
-                  }`}>
-                    <span className={`text-[10px] font-body font-medium uppercase leading-none ${
-                      isPast ? "text-ansar-muted" : "text-ansar-sage-600"
+                  <div className={`w-14 h-14 rounded-lg flex flex-col items-center justify-center shrink-0 ${isPast ? "bg-gray-50" : "bg-ansar-sage-50"
                     }`}>
+                    <span className={`text-[10px] font-body font-medium uppercase leading-none ${isPast ? "text-ansar-muted" : "text-ansar-sage-600"
+                      }`}>
                       {month}
                     </span>
                     <span className="text-lg font-heading text-ansar-charcoal leading-tight">
@@ -1923,11 +1924,10 @@ function AdminEventsTab({
                           <MapPin className="w-3 h-3" /> {event.location}
                         </span>
                       )}
-                      <span className={`text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full ${
-                        event.isActive
-                          ? "bg-green-50 text-green-600"
-                          : "bg-gray-100 text-ansar-muted"
-                      }`}>
+                      <span className={`text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full ${event.isActive
+                        ? "bg-green-50 text-green-600"
+                        : "bg-gray-100 text-ansar-muted"
+                        }`}>
                         {event.isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
@@ -1968,8 +1968,8 @@ function AdminLeadsTab({
   setSearch: (s: string) => void;
   statusFilter: string;
   setStatusFilter: (s: string) => void;
-  onUpdateStatus: (args: { id: Id<"leads">; status: "new" | "contacted" | "scheduled" | "converted" }) => Promise<void>;
-  onDelete: (id: Id<"leads">) => Promise<void>;
+  onUpdateStatus: (args: { id: Id<"leads">; status: "new" | "contacted" | "scheduled" | "converted" }) => Promise<any>;
+  onDelete: (id: Id<"leads">) => Promise<any>;
 }) {
   const [selectedLead, setSelectedLead] = useState<any>(null);
 
@@ -1982,7 +1982,7 @@ function AdminLeadsTab({
 
   const filteredLeads = leads.filter((lead) => {
     const q = search.toLowerCase();
-    const matchesSearch = !search || 
+    const matchesSearch = !search ||
       lead.fullName.toLowerCase().includes(q) ||
       lead.email.toLowerCase().includes(q) ||
       (lead.phone && lead.phone.includes(search));
@@ -1998,9 +1998,9 @@ function AdminLeadsTab({
     { label: "Converted", value: leadCounts?.converted ?? 0, accent: "sage" },
   ];
 
-  const columns: Column[] = [
-    { key: "fullName", label: "Name" },
-    { key: "email", label: "Email" },
+  const columns: Column<any>[] = [
+    { key: "fullName", label: "Name", render: (v: string) => v },
+    { key: "email", label: "Email", render: (v: string) => v },
     { key: "phone", label: "Phone", render: (v: string) => v || "—" },
     { key: "organizationType", label: "Org Type", render: (v: string) => orgLabels[v] || v },
     { key: "status", label: "Status", render: (v: string) => <StatusBadge status={v} /> },
@@ -2017,8 +2017,9 @@ function AdminLeadsTab({
         placeholder="Search leads..."
         filters={[
           {
+            id: "status",
+            label: "All statuses",
             value: statusFilter,
-            onChange: setStatusFilter,
             options: [
               { value: "", label: "All statuses" },
               { value: "new", label: "New" },
@@ -2028,23 +2029,25 @@ function AdminLeadsTab({
             ],
           },
         ]}
+        onFilterChange={(_, v) => setStatusFilter(v)}
       />
 
       <DataTable
         data={filteredLeads}
         columns={columns}
+        keyField="_id"
         onRowClick={(lead) => setSelectedLead(lead)}
         emptyMessage="No leads yet. Share the homepage to start collecting partner interest."
       />
 
       <AnimatePresence>
         {selectedLead && (
-          <DetailPanel onClose={() => setSelectedLead(null)} title={selectedLead.fullName}>
-            <DetailField label="Email" value={selectedLead.email} />
-            <DetailField label="Phone" value={selectedLead.phone ?? "—"} />
-            <DetailField label="Organization Type" value={orgLabels[selectedLead.organizationType] || selectedLead.organizationType} />
-            <DetailField label="Submitted" value={new Date(selectedLead._creationTime).toLocaleString()} />
-            <DetailField label="Notes" value={selectedLead.notes || "No notes"} />
+          <DetailPanel isOpen={true} onClose={() => setSelectedLead(null)} title={selectedLead.fullName}>
+            <DetailField label="Email">{selectedLead.email}</DetailField>
+            <DetailField label="Phone">{selectedLead.phone ?? "—"}</DetailField>
+            <DetailField label="Organization Type">{orgLabels[selectedLead.organizationType] || selectedLead.organizationType}</DetailField>
+            <DetailField label="Submitted">{new Date(selectedLead._creationTime).toLocaleString()}</DetailField>
+            <DetailField label="Notes">{selectedLead.notes || "No notes"}</DetailField>
 
             <div className="mt-6 space-y-3">
               <label className="block font-body text-xs font-medium text-ansar-gray mb-1">Status</label>

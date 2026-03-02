@@ -121,17 +121,15 @@ export default function Home() {
                   <div className="absolute -bottom-12 -left-10 w-44 h-44 rounded-full bg-ansar-ochre-200/25 blur-2xl pointer-events-none" />
 
                   <div className="relative aspect-video bg-gradient-to-br from-ansar-sage-50 to-ansar-cream">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center px-6">
-                        <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-ansar-charcoal text-white flex items-center justify-center shadow-md">
-                          <svg viewBox="0 0 24 24" className="w-6 h-6 ml-0.5 fill-current" aria-hidden="true">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        </div>
-                        <p className="font-body text-sm text-ansar-charcoal/80">Intro Video Placeholder</p>
-                        <p className="font-body text-xs text-ansar-muted mt-1">Loom or YouTube embed goes here</p>
-                      </div>
-                    </div>
+                    <iframe
+                      className="absolute inset-0 w-full h-full"
+                      src="https://www.youtube.com/embed/6LkTJH1MaD0?si=WpXXvT0m-yN9-2fA"
+                      title="YouTube video player"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allowFullScreen
+                    ></iframe>
                   </div>
 
                   <div className="px-4 py-3 border-t border-[rgba(61,61,61,0.08)] bg-white/80">

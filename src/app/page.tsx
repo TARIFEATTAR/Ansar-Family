@@ -72,7 +72,7 @@ export default function Home() {
             <a href="#story" className="hidden md:inline font-body text-sm text-ansar-charcoal/70 hover:text-ansar-charcoal transition-colors">
               Our Story
             </a>
-            <Link href="/sign-in" className="font-body text-xs uppercase tracking-widest bg-ansar-sage-700 text-ansar-cream px-4 py-2 rounded-lg hover:bg-ansar-sage-800 transition-colors duration-200">
+            <Link href="/sign-in" className="font-body text-xs uppercase tracking-widest bg-ansar-terracotta/90 text-ansar-cream px-4 py-2 rounded-lg hover:bg-ansar-terracotta transition-colors duration-200">
               Login
             </Link>
           </motion.div>

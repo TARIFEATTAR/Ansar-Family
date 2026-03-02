@@ -361,16 +361,16 @@ export function GardenAnimation({ className = "" }: GardenAnimationProps) {
 
         {/* Butterfly 1 (Right) */}
         <g id="butterfly1" className="garden-butterfly">
-          <ellipse className="butterfly-wing" cx="265" cy="160" rx="8" ry="5" transform="rotate(-20 265 160)" />
-          <ellipse className="butterfly-wing" cx="273" cy="158" rx="8" ry="5" transform="rotate(20 273 158)" />
-          <ellipse className="butterfly-body" cx="269" cy="162" rx="2" ry="6" />
+          <ellipse className="butterfly-wing" cx="265" cy="160" rx="8" ry="5" transform="rotate(-20 265 160)" fill="#D6A48F" />
+          <ellipse className="butterfly-wing" cx="273" cy="158" rx="8" ry="5" transform="rotate(20 273 158)" fill="#D6A48F" />
+          <ellipse className="butterfly-body" cx="269" cy="162" rx="2" ry="6" fill="#415C49" />
         </g>
 
         {/* Butterfly 2 (Left) */}
         <g id="butterfly2" className="garden-butterfly">
-          <ellipse className="butterfly-wing-dark" cx="95" cy="245" rx="7" ry="4" transform="rotate(15 95 245)" />
-          <ellipse className="butterfly-wing-dark" cx="87" cy="242" rx="7" ry="4" transform="rotate(-25 87 242)" />
-          <ellipse className="butterfly-body" cx="91" cy="244" rx="1.5" ry="5" />
+          <ellipse className="butterfly-wing-dark" cx="95" cy="245" rx="7" ry="4" transform="rotate(15 95 245)" fill="#6A8A7A" />
+          <ellipse className="butterfly-wing-dark" cx="87" cy="242" rx="7" ry="4" transform="rotate(-25 87 242)" fill="#6A8A7A" />
+          <ellipse className="butterfly-body" cx="91" cy="244" rx="1.5" ry="5" fill="#415C49" />
         </g>
       </svg>
     </div>

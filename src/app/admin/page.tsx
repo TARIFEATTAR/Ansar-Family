@@ -1999,12 +1999,12 @@ function AdminLeadsTab({
   ];
 
   const columns: Column<any>[] = [
-    { key: "fullName", label: "Name", render: (v: string) => v },
-    { key: "email", label: "Email", render: (v: string) => v },
-    { key: "phone", label: "Phone", render: (v: string) => v || "—" },
-    { key: "organizationType", label: "Org Type", render: (v: string) => orgLabels[v] || v },
-    { key: "status", label: "Status", render: (v: string) => <StatusBadge status={v} /> },
-    { key: "_creationTime", label: "Date", render: (v: number) => new Date(v).toLocaleDateString() },
+    { key: "fullName", label: "Name", render: (row: any) => row.fullName },
+    { key: "email", label: "Email", render: (row: any) => row.email },
+    { key: "phone", label: "Phone", render: (row: any) => row.phone || "—" },
+    { key: "organizationType", label: "Org Type", render: (row: any) => orgLabels[row.organizationType] || row.organizationType },
+    { key: "status", label: "Status", render: (row: any) => <StatusBadge status={row.status} /> },
+    { key: "_creationTime", label: "Date", render: (row: any) => new Date(row._creationTime).toLocaleDateString() },
   ];
 
   return (

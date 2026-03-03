@@ -15,6 +15,7 @@ type EditableFieldProps =
       value: string | undefined;
       onSave: (value: string) => void;
       disabled?: boolean;
+      alwaysShowEditButton?: boolean;
       options?: never;
     }
   | {
@@ -24,6 +25,7 @@ type EditableFieldProps =
       options: { value: string; label: string }[];
       onSave: (value: string) => void;
       disabled?: boolean;
+      alwaysShowEditButton?: boolean;
     }
   | {
       label: string;
@@ -31,11 +33,12 @@ type EditableFieldProps =
       value: boolean | undefined;
       onSave: (value: boolean) => void;
       disabled?: boolean;
+      alwaysShowEditButton?: boolean;
       options?: never;
     };
 
 export function EditableField(props: EditableFieldProps) {
-  const { label, disabled } = props;
+  const { label, disabled, alwaysShowEditButton = false } = props;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string | boolean>(props.value ?? (props.type === "checkbox" ? false : ""));
 
@@ -84,7 +87,7 @@ export function EditableField(props: EditableFieldProps) {
           {!disabled && (
             <button
               onClick={startEdit}
-              className="opacity-0 group-hover:opacity-100 p-1 text-ansar-muted hover:text-ansar-sage-600 hover:bg-ansar-sage-50 rounded transition-all"
+              className={`${alwaysShowEditButton ? "opacity-100" : "opacity-0 group-hover:opacity-100"} p-1 text-ansar-muted hover:text-ansar-sage-600 hover:bg-ansar-sage-50 rounded transition-all`}
               title="Edit"
             >
               <Pencil className="w-3 h-3" />

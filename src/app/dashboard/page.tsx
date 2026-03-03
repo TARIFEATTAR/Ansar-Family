@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -20,6 +20,8 @@ import Link from "next/link";
 export default function DashboardGatewayPage() {
     const { user, isLoaded } = useUser();
     const router = useRouter();
+    const [upsertAttempted, setUpsertAttempted] = useState(false);
+    const [allowNullFallback, setAllowNullFallback] = useState(false);
 
     // Sync user to Convex
     const upsertUser = useMutation(api.users.upsertFromClerk);
@@ -31,14 +33,28 @@ export default function DashboardGatewayPage() {
     );
 
     useEffect(() => {
-        if (user && isLoaded) {
+        if (user && isLoaded && !upsertAttempted) {
             upsertUser({
                 clerkId: user.id,
                 email: user.primaryEmailAddress?.emailAddress ?? "",
                 name: user.fullName ?? user.firstName ?? "User",
+            }).then(() => {
+                setUpsertAttempted(true);
+            }).catch((err) => {
+                console.warn("upsertFromClerk on dashboard page failed:", err);
+                setUpsertAttempted(true);
             });
         }
-    }, [user, isLoaded, upsertUser]);
+    }, [user, isLoaded, upsertAttempted, upsertUser]);
+
+    // Give Convex a brief grace window after upsert before showing null-user fallback states.
+    useEffect(() => {
+        if (upsertAttempted && currentUser === null) {
+            const timer = setTimeout(() => setAllowNullFallback(true), 2500);
+            return () => clearTimeout(timer);
+        }
+        setAllowNullFallback(false);
+    }, [upsertAttempted, currentUser]);
 
     // Sync Convex role → Clerk publicMetadata (so middleware JWT has the role)
     const roleSyncedRef = useRef(false);
@@ -80,7 +96,7 @@ export default function DashboardGatewayPage() {
 
     useEffect(() => {
         // Wait for all data to load
-        if (!isLoaded || currentUser === undefined) return;
+        if (!isLoaded || currentUser === undefined || (currentUser === null && (!upsertAttempted || !allowNullFallback))) return;
 
         // Handle Super Admin
         if (currentUser?.role === "super_admin") {
@@ -108,10 +124,10 @@ export default function DashboardGatewayPage() {
             router.replace("/seeker");
             return;
         }
-    }, [isLoaded, currentUser, organization, router]);
+    }, [isLoaded, currentUser, organization, upsertAttempted, allowNullFallback, router]);
 
     // Loading state
-    if (!isLoaded || currentUser === undefined) {
+    if (!isLoaded || currentUser === undefined || (currentUser === null && (!upsertAttempted || !allowNullFallback))) {
         return (
             <main className="min-h-screen flex items-center justify-center bg-ansar-cream">
                 <div className="text-center">

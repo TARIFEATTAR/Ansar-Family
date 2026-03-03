@@ -153,12 +153,12 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
   const updateAnsar = useMutation(api.ansars.update);
   const approvePartner = useMutation(api.partners.approveAndCreateOrg);
   const updatePartner = useMutation(api.partners.update);
+  const updateOrganizationSlug = useMutation(api.organizations.updateSlug);
   const deleteIntake = useMutation(api.intakes.deleteIntake);
   const assignIntakeToOrg = useMutation(api.intakes.assignToOrganization);
   const deleteAnsar = useMutation(api.ansars.deleteAnsar);
   const deletePartner = useMutation(api.partners.deletePartner);
   const rejectPartner = useMutation(api.partners.rejectPartner);
-  const clearAllData = useMutation(api.admin.clearAllData);
   const createContact = useMutation(api.contacts.create);
   const updateContact = useMutation(api.contacts.update);
   const deleteContact = useMutation(api.contacts.deleteContact);
@@ -223,14 +223,6 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
   const handleDeleteUser = useCallback(async (id: Id<"users">) => {
     if (confirm("Delete this user? This cannot be undone.")) await deleteUser({ id });
   }, [deleteUser]);
-
-  const handleClearAllData = useCallback(async () => {
-    const confirmation = prompt("WARNING: This will delete ALL data. Type 'DELETE ALL' to confirm:");
-    if (confirmation === "DELETE ALL") {
-      const result = await clearAllData();
-      alert(`Deleted:\n- ${result.deleted.intakes} Intakes\n- ${result.deleted.ansars} Ansars\n- ${result.deleted.partners} Partners\n- ${result.deleted.organizations} Organizations`);
-    }
-  }, [clearAllData]);
 
   // Active section info
   const activeSection = navConfig.find((n) => n.id === activeTab) || navConfig[0];
@@ -301,12 +293,6 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
 
         {/* Footer */}
         <div className="px-4 py-4 border-t border-[rgba(61,61,61,0.06)] space-y-3">
-          <button
-            onClick={handleClearAllData}
-            className="w-full text-[11px] text-ansar-error/70 border border-ansar-error/15 px-3 py-2 rounded-lg hover:bg-ansar-error/5 hover:text-ansar-error transition-colors font-body text-center"
-          >
-            Clear All Data
-          </button>
           <div className="flex items-center gap-3">
             <UserButton afterSignOutUrl="/" />
             <div className="flex-1 min-w-0">
@@ -508,6 +494,7 @@ function AdminDashboard({ currentUser }: { currentUser: { _id: Id<"users">; role
                 onReject={handleRejectPartner}
                 onDelete={handleDeletePartner}
                 onUpdate={updatePartner}
+                onUpdateSlug={updateOrganizationSlug}
               />
             )}
             {activeTab === "users" && (
@@ -1180,12 +1167,13 @@ function AnsarsTab({
 // ═══════════════════════════════════════════════════════════════
 
 function PartnersTab({
-  partners, organizations, search, setSearch, statusFilter, setStatusFilter, onApprove, onReject, onDelete, onUpdate,
+  partners, organizations, search, setSearch, statusFilter, setStatusFilter, onApprove, onReject, onDelete, onUpdate, onUpdateSlug,
 }: {
   partners: any[]; organizations: any[]; search: string; setSearch: (v: string) => void;
   statusFilter: string; setStatusFilter: (v: string) => void;
   onApprove: (id: Id<"partners">) => void; onReject: (id: Id<"partners">) => void; onDelete: (id: Id<"partners">) => void;
   onUpdate: (args: any) => Promise<any>;
+  onUpdateSlug: (args: { id: Id<"organizations">; slug: string }) => Promise<any>;
 }) {
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -1366,6 +1354,14 @@ function PartnersTab({
             })()}
 
             <DetailField label="Hub Level">Level {selectedPartner.hubLevel}</DetailField>
+            {selectedPartner.organizationId && orgMap[selectedPartner.organizationId] && (
+              <EditableField
+                label="Hub Slug"
+                value={orgMap[selectedPartner.organizationId].slug}
+                alwaysShowEditButton
+                onSave={(v) => onUpdateSlug({ id: selectedPartner.organizationId, slug: v })}
+              />
+            )}
             <EditableField label="Organization Name" value={selectedPartner.orgName} onSave={(v) => onUpdate({ id: selectedPartner._id, orgName: v })} />
             <EditableField label="Organization Type" type="select" value={selectedPartner.orgType} options={[{ value: "masjid", label: "Masjid" }, { value: "msa", label: "MSA" }, { value: "nonprofit", label: "Nonprofit" }, { value: "informal_circle", label: "Community Circle" }, { value: "other", label: "Other" }]} onSave={(v) => onUpdate({ id: selectedPartner._id, orgType: v })} />
             <EditableField label="Lead Name" value={selectedPartner.leadName} onSave={(v) => onUpdate({ id: selectedPartner._id, leadName: v })} />

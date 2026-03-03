@@ -6,6 +6,16 @@ import { v } from "convex/values";
  * Queries for active Partner Hubs / Organizations.
  */
 
+function normalizeSlug(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+}
+
 // ═══════════════════════════════════════════════════════════════
 // QUERIES
 // ═══════════════════════════════════════════════════════════════
@@ -83,5 +93,56 @@ export const deleteOrganization = mutation({
     }
 
     await ctx.db.delete(args.id);
+  },
+});
+
+/**
+ * Updates an organization's URL slug.
+ * Super admin only.
+ */
+export const updateSlug = mutation({
+  args: {
+    id: v.id("organizations"),
+    slug: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const requestingUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!requestingUser || requestingUser.role !== "super_admin") {
+      throw new Error("Only super admins can update hub slugs.");
+    }
+
+    const org = await ctx.db.get(args.id);
+    if (!org) {
+      throw new Error("Organization not found.");
+    }
+
+    const nextSlug = normalizeSlug(args.slug);
+    if (!nextSlug) {
+      throw new Error("Slug cannot be empty.");
+    }
+
+    const existing = await ctx.db
+      .query("organizations")
+      .withIndex("by_slug", (q) => q.eq("slug", nextSlug))
+      .first();
+
+    if (existing && existing._id !== args.id) {
+      throw new Error("This slug is already in use by another hub.");
+    }
+
+    if (org.slug !== nextSlug) {
+      await ctx.db.patch(args.id, { slug: nextSlug });
+    }
+
+    return { id: args.id, slug: nextSlug };
   },
 });

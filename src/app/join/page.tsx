@@ -7,7 +7,7 @@ import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, Loader2, Heart, Shield, Lock } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Shield, Lock } from "lucide-react";
 
 /**
  * SEEKER INTAKE FORM — "The New Journey"
@@ -29,6 +29,7 @@ interface FormData {
   city: string;
   stateRegion: string;
   journeyType: JourneyType | "";
+  heardAboutAnsar: string;
   supportAreas: string[];
   otherDetails: string;
 
@@ -37,6 +38,7 @@ interface FormData {
   email: string;
   password: string;
   confirmPassword: string;
+  returnToIslamReason: string;
   consentGiven: boolean;
   
   // Removed/Optional (Backend handles undefined)
@@ -51,12 +53,14 @@ const initialFormData: FormData = {
   city: "",
   stateRegion: "",
   journeyType: "",
+  heardAboutAnsar: "",
   supportAreas: [],
   otherDetails: "",
   phone: "",
   email: "",
   password: "",
   confirmPassword: "",
+  returnToIslamReason: "",
   consentGiven: false,
 };
 
@@ -86,6 +90,26 @@ const journeyOptions: { value: JourneyType; label: string; description: string }
     value: "seeker",
     label: "I am a Seeker",
     description: "I am interested in Islam but haven't converted yet",
+  },
+];
+
+const heardAboutOptions = [
+  "A friend or family member",
+  "A local masjid or mosque",
+  "Online search",
+  "Social media",
+  "Community event",
+  "Other",
+];
+
+const inspirationVideos = [
+  {
+    title: "Jalil Jan's Story",
+    embedUrl: "https://www.youtube.com/embed/T0eWFYF5GNU",
+  },
+  {
+    title: "Shaykh Hashim Story",
+    embedUrl: "https://www.youtube.com/embed/djgMCgDV9EI",
   },
 ];
 
@@ -173,10 +197,12 @@ export default function JoinPage() {
         email: formData.email,
         gender: formData.gender as Gender,
         journeyType: formData.journeyType as JourneyType,
+        heardAboutAnsar: formData.heardAboutAnsar || undefined,
         city: formData.city,
         stateRegion: formData.stateRegion, // In UI it's required now, but schema allows optional
         supportAreas: formData.supportAreas,
         otherDetails: formData.otherDetails || undefined,
+        returnToIslamReason: formData.returnToIslamReason || undefined,
         consentGiven: formData.consentGiven,
         clerkId: authData.clerkUserId,
         // Optional fields not in 2-step form:
@@ -244,9 +270,8 @@ export default function JoinPage() {
           
           {step === 1 && (
             <FormStep 
-              title="The Human Connection" 
+              title="New Muslims" 
               subtitle="Tell us a bit about yourself so we can find your people."
-              icon={<Heart className="w-6 h-6 text-ansar-terracotta-600" />}
             >
               <div className="space-y-6">
                 
@@ -325,6 +350,25 @@ export default function JoinPage() {
                         <span className="font-body text-sm text-ansar-gray">{option.description}</span>
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label">How did you hear about Ansar?</label>
+                  <div className="relative">
+                    <select
+                      className="form-input appearance-none pr-10"
+                      value={formData.heardAboutAnsar}
+                      onChange={(e) => updateField("heardAboutAnsar", e.target.value)}
+                    >
+                      <option value="">Select one (optional)</option>
+                      {heardAboutOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <ArrowRight className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 rotate-90 text-ansar-gray/50 pointer-events-none" />
                   </div>
                 </div>
 
@@ -432,6 +476,41 @@ export default function JoinPage() {
                       onChange={(e) => updateField("confirmPassword", e.target.value)}
                       placeholder="Re-enter to confirm"
                     />
+                  </div>
+
+                  <div>
+                    <label className="form-label">Would love to hear your story.</label>
+                    <textarea
+                      className="form-input min-h-[110px]"
+                      value={formData.returnToIslamReason}
+                      onChange={(e) => updateField("returnToIslamReason", e.target.value)}
+                      placeholder="Share what brought you back to Islam (optional)."
+                    />
+                    <p className="form-helper">Here are some powerful stories that inspire us.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {inspirationVideos.map((video) => (
+                      <div
+                        key={video.title}
+                        className="bg-white/60 border border-ansar-sage-100 rounded-xl overflow-hidden"
+                      >
+                        <div className="aspect-video bg-ansar-cream">
+                          <iframe
+                            className="w-full h-full"
+                            src={video.embedUrl}
+                            title={video.title}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            allowFullScreen
+                          />
+                        </div>
+                        <div className="px-3 py-2">
+                          <p className="font-body text-sm text-ansar-charcoal">{video.title}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

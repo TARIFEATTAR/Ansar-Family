@@ -160,7 +160,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 16 }}
               animate={isLoaded ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-              className="w-full max-w-[540px] mx-auto lg:mx-0 order-2 lg:order-1"
+              className="w-full max-w-[540px] mx-auto lg:mx-0 order-1"
             >
               <h1 className="font-playfair text-4xl md:text-5xl lg:text-[3.5rem] text-ansar-charcoal mb-4 leading-[1.1] tracking-tight">
                 A convert care model
@@ -186,7 +186,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 8 }}
               animate={isLoaded ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-              className="flex flex-col items-center justify-center order-1 lg:order-2"
+              className="flex flex-col items-center justify-center order-2"
             >
               <div className="w-full max-w-[520px]">
                 <div className="relative rounded-2xl border border-[rgba(61,61,61,0.10)] bg-white/70 backdrop-blur-sm shadow-soft overflow-hidden">

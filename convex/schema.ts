@@ -56,6 +56,7 @@ export default defineSchema({
       v.literal("reconnecting"),
       v.literal("seeker")
     ),
+    heardAboutAnsar: v.optional(v.string()),
 
     // Location
     address: v.optional(v.string()),
@@ -65,6 +66,7 @@ export default defineSchema({
     // Support Areas
     supportAreas: v.array(v.string()),
     otherDetails: v.optional(v.string()),
+    returnToIslamReason: v.optional(v.string()),
 
     // Consent
     consentGiven: v.boolean(),
@@ -102,6 +104,7 @@ export default defineSchema({
     city: v.string(),
     stateRegion: v.optional(v.string()),
     isConvert: v.boolean(),
+    heardAboutAnsar: v.optional(v.string()),
 
     // Islamic Practice & Knowledge
     practiceLevel: v.union(

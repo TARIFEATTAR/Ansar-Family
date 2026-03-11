@@ -37,6 +37,7 @@ export const create = mutation({
     city: v.string(),
     stateRegion: v.optional(v.string()),
     isConvert: v.boolean(),
+    heardAboutAnsar: v.optional(v.string()),
     practiceLevel: v.union(
       v.literal("consistent"),
       v.literal("steady"),
@@ -76,6 +77,7 @@ export const create = mutation({
       city: args.city,
       stateRegion: args.stateRegion,
       isConvert: args.isConvert,
+      heardAboutAnsar: args.heardAboutAnsar,
       practiceLevel: args.practiceLevel,
       knowledgeBackground: args.knowledgeBackground,
       studyDetails: args.studyDetails,

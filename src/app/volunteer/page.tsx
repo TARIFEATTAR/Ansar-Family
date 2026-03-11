@@ -32,6 +32,7 @@ interface FormData {
   city: string;
   stateRegion: string;
   isConvert: boolean | null;
+  heardAboutAnsar: string;
   practiceLevel: PracticeLevel | "";
   knowledgeBackground: string[];
   studyDetails: string;
@@ -58,6 +59,7 @@ const initialFormData: FormData = {
   city: "",
   stateRegion: "",
   isConvert: null,
+  heardAboutAnsar: "",
   practiceLevel: "",
   knowledgeBackground: [],
   studyDetails: "",
@@ -116,6 +118,15 @@ const checkInFrequencyOptions: { value: CheckInFrequency; label: string }[] = [
   { value: "weekly", label: "Weekly" },
   { value: "biweekly", label: "Every 2 weeks" },
   { value: "monthly", label: "Monthly" },
+];
+
+const heardAboutOptions = [
+  "Social media",
+  "A friend or family member",
+  "A local masjid or mosque",
+  "Online search",
+  "Community event",
+  "Other",
 ];
 
 export default function VolunteerPage() {
@@ -218,6 +229,7 @@ export default function VolunteerPage() {
         city: formData.city,
         stateRegion: formData.stateRegion || undefined,
         isConvert: formData.isConvert,
+        heardAboutAnsar: formData.heardAboutAnsar || undefined,
         practiceLevel: formData.practiceLevel,
         knowledgeBackground: formData.knowledgeBackground,
         studyDetails: formData.studyDetails || undefined,
@@ -325,7 +337,7 @@ export default function VolunteerPage() {
       <div className="flex-1 flex items-center justify-center px-6 md:px-12 py-12">
         <div className="w-full max-w-xl">
           {step === 1 && (
-            <FormStep title="About You" subtitle="Become an Ansar">
+            <FormStep title="Become an Ansar" subtitle="About You">
               <div className="space-y-5">
                 <div>
                   <label className="form-label">Full Name *</label>
@@ -468,6 +480,24 @@ export default function VolunteerPage() {
                     </button>
                   </div>
                 </div>
+                <div>
+                  <label className="form-label">How did you hear about Ansar?</label>
+                  <div className="relative">
+                    <select
+                      className="form-input appearance-none pr-10"
+                      value={formData.heardAboutAnsar}
+                      onChange={(e) => updateField("heardAboutAnsar", e.target.value)}
+                    >
+                      <option value="">Select one (optional)</option>
+                      {heardAboutOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <ArrowRight className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 rotate-90 text-ansar-gray/50 pointer-events-none" />
+                  </div>
+                </div>
               </div>
             </FormStep>
           )}
@@ -596,12 +626,12 @@ export default function VolunteerPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="form-label">Why do you want to support someone on their faith journey? *</label>
+                  <label className="form-label">What made you want to become an Ansar? *</label>
                   <textarea
                     className="form-input min-h-[120px]"
                     value={formData.motivation}
                     onChange={(e) => updateField("motivation", e.target.value)}
-                    placeholder="Share your heart..."
+                    placeholder="Share what drew you to this role..."
                   />
                 </div>
 
@@ -748,7 +778,7 @@ function FormStep({
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3, ease: EASE_OUT_QUINT }}
     >
-      <p className="font-body text-sm text-ansar-sage-600 mb-2">
+      <p className="font-body text-xs text-ansar-sage-600 mb-2">
         {subtitle}
       </p>
       <h1 className="font-heading text-3xl md:text-4xl text-ansar-charcoal mb-8">

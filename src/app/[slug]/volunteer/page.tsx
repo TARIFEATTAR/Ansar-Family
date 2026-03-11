@@ -33,6 +33,7 @@ interface FormData {
   city: string;
   stateRegion: string;
   isConvert: boolean | null;
+  heardAboutAnsar: string;
   practiceLevel: PracticeLevel | "";
   knowledgeBackground: string[];
   studyDetails: string;
@@ -58,6 +59,7 @@ const initialFormData: FormData = {
   city: "",
   stateRegion: "",
   isConvert: null,
+  heardAboutAnsar: "",
   practiceLevel: "",
   knowledgeBackground: [],
   studyDetails: "",
@@ -98,6 +100,15 @@ const practiceLevelOptions: { value: PracticeLevel; label: string; description: 
   { value: "consistent", label: "Consistent", description: "I pray 5 times daily and feel comfortable modeling the basics." },
   { value: "steady", label: "Steady", description: "I pray 5 times daily but prefer to focus on social support." },
   { value: "reconnecting", label: "Reconnecting", description: "I am strengthening my own practice, but can offer friendship." },
+];
+
+const heardAboutOptions = [
+  "Social media",
+  "A friend or family member",
+  "A local masjid or mosque",
+  "Online search",
+  "Community event",
+  "Other",
 ];
 
 export default function PartnerVolunteerPage() {
@@ -209,6 +220,7 @@ export default function PartnerVolunteerPage() {
         city: formData.city,
         stateRegion: formData.stateRegion || undefined,
         isConvert: formData.isConvert,
+        heardAboutAnsar: formData.heardAboutAnsar || undefined,
         practiceLevel: formData.practiceLevel,
         knowledgeBackground: formData.knowledgeBackground,
         studyDetails: formData.studyDetails || undefined,
@@ -278,7 +290,7 @@ export default function PartnerVolunteerPage() {
       <div className="flex-1 flex items-center justify-center px-6 md:px-12 py-12">
         <div className="w-full max-w-xl">
           {step === 1 && (
-            <FormStep title="About You" subtitle={`Become an Ansar at ${organization.name}`}>
+            <FormStep title={`Become an Ansar at ${organization.name}`} subtitle="About You">
               <div className="space-y-5">
                 <div>
                   <label className="form-label">Full Name *</label>
@@ -352,6 +364,24 @@ export default function PartnerVolunteerPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <button type="button" className={`selection-option ${formData.isConvert === true ? "selected" : ""}`} onClick={() => updateField("isConvert", true)}><span className="font-body">Yes</span></button>
                     <button type="button" className={`selection-option ${formData.isConvert === false ? "selected" : ""}`} onClick={() => updateField("isConvert", false)}><span className="font-body">No</span></button>
+                  </div>
+                </div>
+                <div>
+                  <label className="form-label">How did you hear about Ansar?</label>
+                  <div className="relative">
+                    <select
+                      className="form-input appearance-none pr-10"
+                      value={formData.heardAboutAnsar}
+                      onChange={(e) => updateField("heardAboutAnsar", e.target.value)}
+                    >
+                      <option value="">Select one (optional)</option>
+                      {heardAboutOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <ArrowRight className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 rotate-90 text-ansar-gray/50 pointer-events-none" />
                   </div>
                 </div>
               </div>
@@ -431,8 +461,8 @@ export default function PartnerVolunteerPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="form-label">Why do you want to support someone on their faith journey? *</label>
-                  <textarea className="form-input min-h-[120px]" value={formData.motivation} onChange={(e) => updateField("motivation", e.target.value)} placeholder="Share your heart..." />
+                  <label className="form-label">What made you want to become an Ansar? *</label>
+                  <textarea className="form-input min-h-[120px]" value={formData.motivation} onChange={(e) => updateField("motivation", e.target.value)} placeholder="Share what drew you to this role..." />
                 </div>
                 <div className="border-t border-ansar-sage-100 pt-6">
                   <label className="form-label mb-4">The "Ansar Way" Agreement</label>
@@ -506,7 +536,7 @@ export default function PartnerVolunteerPage() {
 function FormStep({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3, ease: EASE_OUT_QUINT }}>
-      <p className="font-body text-sm text-ansar-sage-600 mb-2">{subtitle}</p>
+      <p className="font-body text-xs text-ansar-sage-600 mb-2">{subtitle}</p>
       <h1 className="font-heading text-3xl md:text-4xl text-ansar-charcoal mb-8">{title}</h1>
       {children}
     </motion.div>

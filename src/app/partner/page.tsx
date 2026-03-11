@@ -334,12 +334,13 @@ export default function PartnerPage() {
           className="px-6 md:px-12 mt-12 mb-8"
         >
           <div className="max-w-3xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            <div className="relative">
               {/* Connecting Line (Desktop) */}
               <div className="hidden md:block absolute top-1/2 left-0 w-full h-px bg-ansar-sage-200 -z-10 -translate-y-1/2" />
-              
+
+              <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto md:overflow-visible pb-2 md:pb-0 snap-x snap-mandatory">
               {/* Step 1 */}
-              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center min-w-[180px] md:min-w-0 shrink-0 snap-start">
                 <div className="w-10 h-10 bg-ansar-sage-100 rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-700 shadow-sm">
                   <ClipboardCheck className="w-5 h-5" strokeWidth={1.5} />
                 </div>
@@ -350,7 +351,7 @@ export default function PartnerPage() {
               </div>
 
               {/* Step 2 */}
-              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center min-w-[180px] md:min-w-0 shrink-0 snap-start">
                 <div className="w-10 h-10 bg-white rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-400 shadow-sm">
                   <Video className="w-5 h-5" strokeWidth={1.5} />
                 </div>
@@ -361,7 +362,7 @@ export default function PartnerPage() {
               </div>
 
               {/* Step 3 */}
-              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center min-w-[180px] md:min-w-0 shrink-0 snap-start">
                 <div className="w-10 h-10 bg-white rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-400 shadow-sm">
                   <Rocket className="w-5 h-5" strokeWidth={1.5} />
                 </div>
@@ -369,6 +370,7 @@ export default function PartnerPage() {
                 <p className="font-body text-xs text-ansar-gray max-w-[180px]">
                   Access your dashboard and start welcoming seekers.
                 </p>
+              </div>
               </div>
             </div>
           </div>

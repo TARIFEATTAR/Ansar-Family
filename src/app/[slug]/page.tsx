@@ -3,7 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import Link from "next/link";
-import { useParams, notFound } from "next/navigation";
+import { usePathname, notFound } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowRight, ArrowLeft, Heart, Users, Building2, Loader2, LayoutDashboard } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
@@ -32,8 +32,8 @@ const fadeInUp = {
 };
 
 export default function PartnerLandingPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+  const pathname = usePathname();
+  const slug = pathname.split("/").filter(Boolean)[0] || "";
   const { isSignedIn } = useUser();
 
   const organization = useQuery(api.organizations.getBySlug, { slug });

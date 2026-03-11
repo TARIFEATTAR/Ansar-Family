@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "convex/react";
 import { useSignIn } from "@clerk/nextjs";
 import { api } from "../../../../convex/_generated/api";
 import Link from "next/link";
-import { useParams, useRouter, notFound } from "next/navigation";
+import { usePathname, useRouter, notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Loader2, Building2 } from "lucide-react";
 
 /**
@@ -87,8 +87,8 @@ const journeyOptions: { value: JourneyType; label: string; description: string }
 ];
 
 export default function PartnerJoinPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+  const pathname = usePathname();
+  const slug = pathname.split("/").filter(Boolean)[0] || "";
 
   const organization = useQuery(api.organizations.getBySlug, { slug });
 

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import Link from "next/link";
-import { useParams, notFound } from "next/navigation";
+import { usePathname, notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Loader2, Heart, Building2 } from "lucide-react";
 
 /**
@@ -112,8 +112,8 @@ const heardAboutOptions = [
 ];
 
 export default function PartnerVolunteerPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+  const pathname = usePathname();
+  const slug = pathname.split("/").filter(Boolean)[0] || "";
 
   const organization = useQuery(api.organizations.getBySlug, { slug });
 

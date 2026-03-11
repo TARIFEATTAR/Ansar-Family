@@ -5,7 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import Link from "next/link";
-import { useParams, notFound } from "next/navigation";
+import { usePathname, notFound } from "next/navigation";
 import {
   Heart, Users, Building2, Link2, MessageSquare,
   LayoutDashboard, Loader2, Trash2, Eye, Check,
@@ -30,8 +30,8 @@ import { QRCodeSVG } from "qrcode.react";
  */
 
 export default function PartnerDashboardPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+  const pathname = usePathname();
+  const slug = pathname.split("/").filter(Boolean)[1] || "";
   const { user, isLoaded } = useUser();
 
   const organization = useQuery(api.organizations.getBySlug, { slug });

@@ -284,20 +284,21 @@ export default function VolunteerPage() {
 
       {/* Intro Text & Journey (First step only) */}
       {step === 1 && (
-        <div className="px-6 md:px-12 mt-8 mb-6">
-          <div className="max-w-3xl mx-auto">
+        <div className="px-4 sm:px-6 md:px-12 mt-5 sm:mt-6 md:mt-8 mb-5 md:mb-6">
+          <div className="w-full max-w-3xl mx-auto min-w-0">
             {/* Mission Statement */}
-            <p className="font-body text-sm text-ansar-gray text-center max-w-xl mx-auto mb-10 leading-relaxed">
+            <p className="font-body text-[13px] sm:text-sm text-ansar-gray text-center max-w-full sm:max-w-xl mx-auto mb-6 sm:mb-7 md:mb-10 leading-relaxed px-1 sm:px-0">
               Ansar Family pairs practicing Muslims with those new to Islam or reconnecting with their faith, so no one walks this path alone. We need brothers and sisters who can offer support rooted in sincerity, presence, and good company.
             </p>
 
             {/* 3-Step Journey */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            <div className="relative">
               {/* Connecting Line (Desktop) */}
               <div className="hidden md:block absolute top-1/2 left-0 w-full h-px bg-ansar-sage-200 -z-10 -translate-y-1/2" />
 
+              <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto md:overflow-visible pb-2 md:pb-0 snap-x snap-mandatory">
               {/* Step 1 */}
-              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center min-w-[180px] md:min-w-0 shrink-0 snap-start">
                 <div className="w-10 h-10 bg-ansar-sage-100 rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-700 shadow-sm">
                   <FileText className="w-5 h-5" strokeWidth={1.5} />
                 </div>
@@ -308,7 +309,7 @@ export default function VolunteerPage() {
               </div>
 
               {/* Step 2 */}
-              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center min-w-[180px] md:min-w-0 shrink-0 snap-start">
                 <div className="w-10 h-10 bg-white rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-400 shadow-sm">
                   <BookOpen className="w-5 h-5" strokeWidth={1.5} />
                 </div>
@@ -319,7 +320,7 @@ export default function VolunteerPage() {
               </div>
 
               {/* Step 3 */}
-              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center">
+              <div className="bg-ansar-cream md:bg-transparent relative z-10 flex flex-col items-center text-center min-w-[180px] md:min-w-0 shrink-0 snap-start">
                 <div className="w-10 h-10 bg-white rounded-full border border-ansar-sage-200 flex items-center justify-center mb-3 text-ansar-sage-400 shadow-sm">
                   <Users className="w-5 h-5" strokeWidth={1.5} />
                 </div>
@@ -327,6 +328,7 @@ export default function VolunteerPage() {
                 <p className="font-body text-xs text-ansar-gray max-w-[180px]">
                   Get matched with a seeker in your local area.
                 </p>
+              </div>
               </div>
             </div>
           </div>
